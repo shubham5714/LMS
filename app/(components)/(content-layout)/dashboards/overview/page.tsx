@@ -8,7 +8,7 @@ export default function Overview() {
   return (
     <Fragment>
       <Seo title="Dashboards Overview" />
-      <div className="analytics-page-full-dashboard" style={{ marginLeft: '-1.5rem', marginRight: '-1.5rem' }}>
+      <div className="analytics-page-full-dashboard">
         <div className="analytics-security-dashboard-wrapper">
           <SecurityDashboardWidget />
         </div>

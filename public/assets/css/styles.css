@@ -27135,10 +27135,6 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
   fill: var(--default-text-color) !important;
 }
 
-ul.analytics-activity li {
-  margin-block-end: 1.36rem;
-}
-
 #orders .apexcharts-pie line,
 #orders .apexcharts-pie circle {
   stroke: transparent;
@@ -27764,6 +27760,51 @@ ul.analytics-activity li {
   min-width: 9.5rem;
 }
 
+/* Analytics page - fill from content area down to footer */
+.page:has(.analytics-page-full-dashboard) {
+  justify-content: flex-start;
+  height: 100vh;
+}
+
+.page:has(.analytics-page-full-dashboard) .main-content.app-content {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-inline: 0;
+  padding-block-end: 0;
+}
+
+.page:has(.analytics-page-full-dashboard) .main-content .container-fluid {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-inline: 0;
+  padding-block-end: 0;
+}
+
+.analytics-page-full-dashboard {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.analytics-page-full-dashboard .analytics-security-dashboard-wrapper {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  background: #0d0c20 !important;
+  color-scheme: dark;
+}
+
+.analytics-page-full-dashboard .analytics-security-dashboard-wrapper .sec-dash-dashboard {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* New Styles */
 /* End:: dashboard_styles */
 /* Start:: Sales Dashboard new*/
@@ -27863,16 +27904,6 @@ ul.top-countries-list li .progress.progress-sm {
 
 /* End:: Sales Dashboard new*/
 /* Start:: Analytics Dashboard */
-.analytics-visitors-countries {
-  margin-block-end: 0;
-}
-.analytics-visitors-countries li {
-  margin-block-end: 1.445rem;
-}
-.analytics-visitors-countries li:last-child {
-  margin-block-end: 0;
-}
-
 #referrals-chart .apexcharts-pie line,
 #referrals-chart .apexcharts-pie circle {
   stroke: transparent;

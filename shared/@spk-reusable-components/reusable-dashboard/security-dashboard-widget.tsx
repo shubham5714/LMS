@@ -360,9 +360,21 @@ export default function SecurityDashboardWidget() {
           border-radius: 0;
           display: grid;
           grid-template-columns: 1fr 0.65fr 1fr;
+          grid-template-rows: auto 1fr;
           overflow: hidden;
           position: relative;
           color-scheme: dark;
+          padding-inline-start: 0.75rem;
+        }
+        .sec-dash-dashboard .sec-dash-title {
+          grid-column: 1 / -1;
+          margin: 0;
+          padding: 0.75rem 1rem;
+          font-family: var(--default-font-family, "Poppins", sans-serif);
+          font-size: 1.125rem;
+          font-weight: 500;
+          color: #e8f4f8 !important;
+          flex-shrink: 0;
         }
         .sec-dash-left {
           display: flex;
@@ -376,7 +388,7 @@ export default function SecurityDashboardWidget() {
           flex-direction: column;
           justify-content: space-around;
           padding: 16px 12px 16px 16px;
-          min-width: 140px;
+          min-width: 188px;
         }
         .sec-dash-flow-wrap {
           flex: 1;
@@ -396,18 +408,18 @@ export default function SecurityDashboardWidget() {
         .sec-dash-source-row {
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 11px;
+          gap: 7px;
+          font-size: 13px;
           color: #90a4ae !important;
         }
         .sec-dash-source-row .sec-dash-badge {
-          width: 22px;
-          height: 14px;
+          width: 26px;
+          height: 17px;
           border-radius: 3px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 8px;
+          font-size: 9px;
           font-weight: 700;
           flex-shrink: 0;
         }
@@ -433,7 +445,7 @@ export default function SecurityDashboardWidget() {
           flex-shrink: 0;
         }
         .sec-dash-top-label {
-          font-size: 11px;
+          font-size: 13px;
           font-weight: 700;
           color: #7961f5 !important;
         }
@@ -546,6 +558,8 @@ export default function SecurityDashboardWidget() {
         .sec-dash-sev-warning { color: #fab632 !important; }
         .sec-dash-sev-info { color: #28c8eb !important; }
       `}</style>
+
+      <h2 className="sec-dash-title">Investigations Overview</h2>
 
       <div className="sec-dash-left">
         <div className="sec-dash-sources">
