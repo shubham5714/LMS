@@ -208,7 +208,7 @@ const Page = () => {
                     }
                     
                     // MFA is either not required or verified - proceed to dashboard
-                    router.replace("/dashboards/executive");
+                    router.replace("/dashboards/overview");
                     return;
                 }
             } catch (error) {
@@ -304,7 +304,7 @@ const Page = () => {
                 showToast('success', 'Login successful');
                 
                 setTimeout(() => {
-                    router.push("/dashboards/executive");
+                    router.push("/dashboards/overview");
                 }, 1500);
                 return;
             }
@@ -424,11 +424,11 @@ const Page = () => {
                 // Show loading spinner while contexts are being processed
                 setIsProcessingLogin(true);
                 
-                // Get redirected URL from query params or default to executive dashboard
+                // Get redirected URL from query params or default to Overview dashboard
                 setTimeout(() => {
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectedFrom = urlParams.get('redirectedFrom');
-                    const targetUrl = redirectedFrom || "/dashboards/executive";
+                    const targetUrl = redirectedFrom || "/dashboards/overview";
                     router.push(targetUrl);
                 }, 1500);
         } catch (err: any) {
@@ -585,7 +585,7 @@ const Page = () => {
             showToast('success', 'MFA successfully enabled! Login successful.');
             
             setTimeout(() => {
-                router.push("/dashboards/executive");
+                router.push("/dashboards/overview");
             }, 3000);
         } catch (error: any) {
             console.error('Error verifying MFA enrollment:', error);

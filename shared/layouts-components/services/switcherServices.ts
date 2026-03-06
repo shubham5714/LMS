@@ -38,10 +38,10 @@ interface InitialState {
 const initialState: InitialState = {
     lang: "en",                     
     dir: "ltr",
-    dataThemeMode: "light",
-    dataMenuStyles: "light",
+    dataThemeMode: "dark",
+    dataMenuStyles: "dark",
     dataNavLayout: "vertical",
-    dataHeaderStyles: "light",
+    dataHeaderStyles: "dark",
     dataVerticalStyle: "overlay",
     toggled: "",
     dataNavStyle: "",

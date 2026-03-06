@@ -67,7 +67,7 @@ export const MENUITEMS: Menuitemtype[] = [
   {
     title: "Dashboards", icon: Dashboardicon, type: "sub", active: false, dirchange: false, children: [
       { path: "/dashboards/sales", type: "link", active: false, selected: false, dirchange: false, title: "Sales" },
-      { path: "/dashboards/analytics", type: "link", active: false, selected: false, dirchange: false, title: "Analytics" },
+      { path: "/dashboards/overview", type: "link", active: false, selected: false, dirchange: false, title: "Overview" },
       { path: "/dashboards/executive", type: "link", active: false, selected: false, dirchange: false, title: "Executive" },
       { path: "/dashboards/crm", type: "link", active: false, selected: false, dirchange: false, title: "CRM" },
       { path: "/dashboards/hrm", type: "link", active: false, selected: false, dirchange: false, title: "HRM" },

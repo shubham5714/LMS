@@ -102,7 +102,7 @@ export default function SecurityDashboardWidget() {
       particles.push({
         sy: 0,
         t: Math.random(),
-        speed: 0.004 + Math.random() * 0.003,
+        speed: 0.0022 + Math.random() * 0.0018,
         size: 2 + Math.random(),
       });
     }
@@ -502,7 +502,7 @@ export default function SecurityDashboardWidget() {
           background: linear-gradient(135deg, rgba(121, 97, 245, 0.5), #7961f5) !important;
           border: 2px solid #7961f5 !important;
           box-shadow: 0 0 16px rgba(121, 97, 245, 0.4);
-          top: 22%;
+          top: 24%;
           left: 30%;
           transform: translate(-50%, -50%);
         }

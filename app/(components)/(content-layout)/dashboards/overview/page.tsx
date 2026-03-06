@@ -4,10 +4,10 @@ import SecurityDashboardWidget from '@/shared/@spk-reusable-components/reusable-
 import Seo from '@/shared/layouts-components/seo/seo';
 import React, { Fragment } from 'react';
 
-export default function Analytics() {
+export default function Overview() {
   return (
     <Fragment>
-      <Seo title="Dashboards Analytics" />
+      <Seo title="Dashboards Overview" />
       <div className="analytics-page-full-dashboard" style={{ marginLeft: '-1.5rem', marginRight: '-1.5rem' }}>
         <div className="analytics-security-dashboard-wrapper">
           <SecurityDashboardWidget />

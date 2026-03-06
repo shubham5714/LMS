@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   /* config options here */
   // output: "export",  // ← COMMENTED OUT - This prevents middleware from working!
   trailingSlash: true,
+  async redirects() {
+    return [
+      { source: '/dashboards/analytics', destination: '/dashboards/overview/', permanent: true },
+      { source: '/dashboards/analytics/', destination: '/dashboards/overview/', permanent: true },
+    ];
+  },
   // basePath: isProd ? "/bootstrap/app-router/zeno-ts/preview" : undefined,
 	// assetPrefix : isProd ? "/bootstrap/app-router/zeno-ts/preview" : undefined,
   basePath: isProd ? "" : undefined,

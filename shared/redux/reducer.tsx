@@ -64,8 +64,8 @@ type Action =
 const initialState: State = {
     lang: "en",
     dir: "ltr",
-    className: "light",
-    dataMenuStyles: "light",
+    className: "dark",
+    dataMenuStyles: "dark",
     dataNavLayout: "vertical",
     dataHeaderStyles: "transparent",
     dataVerticalStyle: "overlay",
