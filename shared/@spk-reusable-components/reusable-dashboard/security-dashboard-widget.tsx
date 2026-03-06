@@ -2,35 +2,36 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
-// Theme-aligned colors (match app CSS variables: primary, info, success, danger, warning)
 const THEME = {
-  primary: 'rgb(121, 97, 245)',
   primaryHex: '#7961f5',
-  info: 'rgb(40, 200, 235)',
   infoHex: '#28c8eb',
-  success: 'rgb(133, 204, 65)',
-  danger: 'rgb(250, 75, 66)',
   dangerHex: '#fa4b42',
-  warning: 'rgb(250, 182, 50)',
-  warningHex: '#fab632',
-  orange: 'rgb(255, 129, 0)',
   orangeHex: '#ff8100',
-  successHex: '#85cc41',
-  gray: 'rgb(121, 114, 142)',
   grayHex: '#7987a1',
 };
 
-const SOURCES = [
-  { label: '19.2K', icon: '🖥', name: 'Endpoints', themeKey: 'primary' as const },
-  { badge: 'NG', name: 'NGFW', themeKey: 'danger' as const },
-  { badge: 'G', name: 'Google Cloud', themeKey: 'info' as const },
-  { badge: 'AW', name: 'Amazon AWS', themeKey: 'warning' as const },
-  { badge: 'Az', name: 'Azure', themeKey: 'info' as const },
-  { badge: 'O3', name: 'Office 365', themeKey: 'orange' as const },
-  { badge: 'PP', name: 'Proofpoint', themeKey: 'info' as const },
-  { badge: 'Ok', name: 'Okta', themeKey: 'info' as const },
-  { badge: 'AP', name: 'Apache', themeKey: 'danger' as const },
-  { badge: 'PC', name: 'Prisma Cloud', themeKey: 'teal' as const },
+/** Data source: name + optional icon (emoji, Remix class, or image src). */
+export interface DataSourceItem {
+  name: string;
+  /** Emoji or similar character. */
+  icon?: string;
+  /** Remix Icon class (e.g. "ri-cloud-line"). */
+  iconClass?: string;
+  /** Image src for logo (e.g. "/assets/images/brand-logos/azure-sentinel.png"). */
+  iconImage?: string;
+}
+
+const DEFAULT_SOURCES: DataSourceItem[] = [
+  { name: 'Endpoints', iconClass: 'ri-server-line' },
+  { name: 'NGFW', iconClass: 'ri-shield-line' },
+  { name: 'Google Cloud', iconClass: 'ri-cloud-line' },
+  { name: 'Amazon AWS', iconClass: 'ri-cloud-line' },
+  { name: 'Azure', iconImage: '/assets/images/brand-logos/azure-sentinel.png' },
+  { name: 'Office 365', iconClass: 'ri-mail-line' },
+  { name: 'Proofpoint', iconClass: 'ri-shield-check-line' },
+  { name: 'Okta', iconClass: 'ri-shield-user-line' },
+  { name: 'Apache', iconClass: 'ri-server-line' },
+  { name: 'Prisma Cloud', iconClass: 'ri-cloud-line' },
 ];
 
 const OPEN_BY_SEVERITY = [
@@ -40,7 +41,12 @@ const OPEN_BY_SEVERITY = [
   { themeKey: 'info' as const, count: 0 },
 ];
 
-export default function SecurityDashboardWidget() {
+export interface SecurityDashboardWidgetProps {
+  /** Data sources shown in the left column. If omitted, default sources are used. */
+  sources?: DataSourceItem[];
+}
+
+export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: SecurityDashboardWidgetProps) {
   const flowCanvasRef = useRef<HTMLCanvasElement>(null);
   const orbCanvasRef = useRef<HTMLCanvasElement>(null);
   const caseCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -80,13 +86,13 @@ export default function SecurityDashboardWidget() {
     if (!canvas || !parent) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const cvs = canvas;
-    const ctx2 = ctx;
+    const ctxNonNull = ctx;
+    const canvasEl = canvas;
 
     const resize = () => {
       const rect = parent.getBoundingClientRect();
-      cvs.width = rect.width;
-      cvs.height = rect.height;
+      canvasEl.width = rect.width;
+      canvasEl.height = rect.height;
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -94,8 +100,8 @@ export default function SecurityDashboardWidget() {
 
     const flowColor = THEME.grayHex;
     let animId: number;
-    let W = cvs.width;
-    let H = cvs.height;
+    let W = canvasEl.width;
+    let H = canvasEl.height;
     const sourceCount = 10;
     const particles: { sy: number; t: number; speed: number; size: number }[] = [];
     for (let i = 0; i < 100; i++) {
@@ -123,25 +129,25 @@ export default function SecurityDashboardWidget() {
       color: string,
       w: number
     ) {
-      const g = ctx2.createLinearGradient(p0.x, p0.y, p3.x, p3.y);
+      const g = ctxNonNull.createLinearGradient(p0.x, p0.y, p3.x, p3.y);
       g.addColorStop(0, color + '50');
       g.addColorStop(1, color + '25');
-      ctx2.beginPath();
-      ctx2.moveTo(p0.x, p0.y);
-      ctx2.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-      ctx2.strokeStyle = g;
-      ctx2.lineWidth = w;
-      ctx2.stroke();
+      ctxNonNull.beginPath();
+      ctxNonNull.moveTo(p0.x, p0.y);
+      ctxNonNull.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+      ctxNonNull.strokeStyle = g;
+      ctxNonNull.lineWidth = w;
+      ctxNonNull.stroke();
     }
 
     function draw() {
-      W = cvs.width;
-      H = cvs.height;
+      W = canvasEl.width;
+      H = canvasEl.height;
       const cy = H * 0.5;
       const issuesEnd = { x: W, y: cy };
       const srcs = Array.from({ length: sourceCount }, (_, i) => H * 0.05 + i * (H * 0.9 / (sourceCount - 1)));
 
-      ctx2.clearRect(0, 0, W, H);
+      ctxNonNull.clearRect(0, 0, W, H);
       srcs.forEach((sy) => {
         const src = { x: 0, y: sy };
         const c1 = { x: W * 0.25, y: sy };
@@ -160,10 +166,10 @@ export default function SecurityDashboardWidget() {
         const c1 = { x: W * 0.25, y: p.sy };
         const c2 = { x: W * 0.7, y: cy };
         const pos = bez(p.t, src, c1, c2, issuesEnd);
-        ctx2.beginPath();
-        ctx2.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
-        ctx2.fillStyle = flowColor + 'cc';
-        ctx2.fill();
+        ctxNonNull.beginPath();
+        ctxNonNull.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
+        ctxNonNull.fillStyle = flowColor + 'cc';
+        ctxNonNull.fill();
       });
       animId = requestAnimationFrame(draw);
     }
@@ -180,8 +186,7 @@ export default function SecurityDashboardWidget() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const cvs = canvas;
-    const ctx2 = ctx;
+    const ctxNonNull = ctx;
     const cx = 80;
     const cy = 80;
     let angle = 0;
@@ -195,30 +200,29 @@ export default function SecurityDashboardWidget() {
     ];
 
     function draw() {
-      ctx2.clearRect(0, 0, 160, 160);
-      const g = ctx2.createRadialGradient(cx, cy, 0, cx, cy, 70);
+      ctxNonNull.clearRect(0, 0, 160, 160);
+      const g = ctxNonNull.createRadialGradient(cx, cy, 0, cx, cy, 70);
       g.addColorStop(0, THEME.infoHex + '18');
       g.addColorStop(1, 'transparent');
-      ctx2.beginPath();
-      ctx2.arc(cx, cy, 70, 0, Math.PI * 2);
-      ctx2.fillStyle = g;
-      ctx2.fill();
+      ctxNonNull.beginPath();
+      ctxNonNull.arc(cx, cy, 70, 0, Math.PI * 2);
+      ctxNonNull.fillStyle = g;
+      ctxNonNull.fill();
 
       rings.forEach((ring) => {
-        const dotSize = 'dotSize' in ring ? ring.dotSize : 2.2;
-        ctx2.beginPath();
-        ctx2.arc(cx, cy, ring.r, 0, Math.PI * 2);
-        ctx2.strokeStyle = ring.color + '30';
-        ctx2.lineWidth = 0.5;
-        ctx2.stroke();
+        ctxNonNull.beginPath();
+        ctxNonNull.arc(cx, cy, ring.r, 0, Math.PI * 2);
+        ctxNonNull.strokeStyle = ring.color + '30';
+        ctxNonNull.lineWidth = 0.5;
+        ctxNonNull.stroke();
         for (let i = 0; i < ring.count; i++) {
           const a = angle * ring.speed + (Math.PI * 2 / ring.count) * i;
           const x = cx + ring.r * Math.cos(a);
           const y = cy + ring.r * Math.sin(a);
-          ctx2.beginPath();
-          ctx2.arc(x, y, dotSize, 0, Math.PI * 2);
-          ctx2.fillStyle = ring.color + 'cc';
-          ctx2.fill();
+          ctxNonNull.beginPath();
+          ctxNonNull.arc(x, y, ring.dotSize, 0, Math.PI * 2);
+          ctxNonNull.fillStyle = ring.color + 'cc';
+          ctxNonNull.fill();
         }
       });
       angle += 0.012;
@@ -235,20 +239,20 @@ export default function SecurityDashboardWidget() {
     if (!canvas || !parent) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const cvs = canvas;
-    const ctx2 = ctx;
+    const ctxNonNull = ctx;
+    const canvasEl = canvas;
 
     const resize = () => {
       const rect = parent.getBoundingClientRect();
-      cvs.width = rect.width;
-      cvs.height = rect.height;
+      canvasEl.width = rect.width;
+      canvasEl.height = rect.height;
     };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
 
-    let W = cvs.width;
-    let H = cvs.height;
+    let W = canvasEl.width;
+    let H = canvasEl.height;
     const particles: { t: number; speed: number; toAuto: boolean; toOpenFromAuto: boolean; toResolvedFromManual: boolean; size: number }[] = [];
     for (let i = 0; i < 50; i++) {
       const toAuto = i < 36;
@@ -278,28 +282,28 @@ export default function SecurityDashboardWidget() {
       color: string,
       w: number
     ) {
-      const g = ctx2.createLinearGradient(p0.x, p0.y, p3.x, p3.y);
+      const g = ctxNonNull.createLinearGradient(p0.x, p0.y, p3.x, p3.y);
       g.addColorStop(0, color + '50');
       g.addColorStop(1, color + '25');
-      ctx2.beginPath();
-      ctx2.moveTo(p0.x, p0.y);
-      ctx2.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-      ctx2.strokeStyle = g;
-      ctx2.lineWidth = w;
-      ctx2.stroke();
+      ctxNonNull.beginPath();
+      ctxNonNull.moveTo(p0.x, p0.y);
+      ctxNonNull.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+      ctxNonNull.strokeStyle = g;
+      ctxNonNull.lineWidth = w;
+      ctxNonNull.stroke();
     }
 
     let animId: number;
     function draw() {
-      W = cvs.width;
-      H = cvs.height;
+      W = canvasEl.width;
+      H = canvasEl.height;
       const src = { x: W * 0.04, y: H * 0.5 };
       const autoN = { x: W * 0.3, y: H * 0.24 };
       const manN = { x: W * 0.3, y: H * 0.72 };
       const resolvedEnd = { x: W, y: H * 0.24 };
       const openEnd = { x: W, y: H * 0.72 };
 
-      ctx2.clearRect(0, 0, W, H);
+      ctxNonNull.clearRect(0, 0, W, H);
       drawPath(src, { x: src.x + 60, y: src.y }, { x: autoN.x - 60, y: autoN.y }, autoN, THEME.primaryHex, 20);
       drawPath(src, { x: src.x + 60, y: src.y }, { x: manN.x - 60, y: manN.y }, manN, THEME.grayHex, 8);
       drawPath(autoN, { x: autoN.x + 60, y: autoN.y }, { x: resolvedEnd.x - 60, y: resolvedEnd.y }, resolvedEnd, THEME.primaryHex, 18);
@@ -333,10 +337,10 @@ export default function SecurityDashboardWidget() {
             pos = bez((p.t - 0.5) * 2, manN, { x: manN.x + 60, y: manN.y }, { x: openEnd.x - 60, y: openEnd.y }, openEnd);
           }
         }
-        ctx2.beginPath();
-        ctx2.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
-        ctx2.fillStyle = (p.toAuto ? THEME.primaryHex : THEME.grayHex) + 'cc';
-        ctx2.fill();
+        ctxNonNull.beginPath();
+        ctxNonNull.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
+        ctxNonNull.fillStyle = (p.toAuto ? THEME.primaryHex : THEME.grayHex) + 'cc';
+        ctxNonNull.fill();
       });
       animId = requestAnimationFrame(draw);
     }
@@ -409,32 +413,9 @@ export default function SecurityDashboardWidget() {
           display: flex;
           align-items: center;
           gap: 7px;
-          font-size: 13px;
+          font-size: 14px;
           color: #90a4ae !important;
         }
-        .sec-dash-source-row .sec-dash-badge {
-          width: 26px;
-          height: 17px;
-          border-radius: 3px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 9px;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-        .sec-dash-badge.sec-dash-t-primary { background: rgba(121, 97, 245, 0.2); color: #7961f5 !important; border: 1px solid rgba(121, 97, 245, 0.4); }
-        .sec-dash-badge.sec-dash-t-danger { background: rgba(250, 75, 66, 0.2); color: #fa4b42 !important; border: 1px solid rgba(250, 75, 66, 0.4); }
-        .sec-dash-badge.sec-dash-t-info { background: rgba(40, 200, 235, 0.2); color: #28c8eb !important; border: 1px solid rgba(40, 200, 235, 0.4); }
-        .sec-dash-badge.sec-dash-t-warning { background: rgba(250, 182, 50, 0.2); color: #fab632 !important; border: 1px solid rgba(250, 182, 50, 0.4); }
-        .sec-dash-badge.sec-dash-t-orange { background: rgba(255, 129, 0, 0.2); color: #ff8100 !important; border: 1px solid rgba(255, 129, 0, 0.4); }
-        .sec-dash-badge.sec-dash-t-teal { background: rgba(0, 216, 216, 0.2); color: #00d8d8 !important; border: 1px solid rgba(0, 216, 216, 0.4); }
-        .sec-dash-dot.sec-dash-t-primary { color: #7961f5 !important; }
-        .sec-dash-dot.sec-dash-t-danger { color: #fa4b42 !important; }
-        .sec-dash-dot.sec-dash-t-info { color: #28c8eb !important; }
-        .sec-dash-dot.sec-dash-t-warning { color: #fab632 !important; }
-        .sec-dash-dot.sec-dash-t-orange { color: #ff8100 !important; }
-        .sec-dash-dot.sec-dash-t-teal { color: #00d8d8 !important; }
         .sec-dash-source-row .sec-dash-dot {
           width: 6px;
           height: 6px;
@@ -444,10 +425,22 @@ export default function SecurityDashboardWidget() {
           margin-right: 4px;
           flex-shrink: 0;
         }
-        .sec-dash-top-label {
-          font-size: 13px;
-          font-weight: 700;
-          color: #7961f5 !important;
+        .sec-dash-source-row .sec-dash-dot-manual {
+          color: #9ba5b8 !important;
+        }
+        .sec-dash-source-row .sec-dash-source-icon {
+          font-size: 14px;
+          color: #90a4ae !important;
+          flex-shrink: 0;
+        }
+        .sec-dash-source-row .sec-dash-source-emoji {
+          font-size: 12px;
+        }
+        .sec-dash-source-row .sec-dash-source-logo {
+          width: 20px;
+          height: 20px;
+          object-fit: contain;
+          flex-shrink: 0;
         }
         .sec-dash-center {
           display: flex;
@@ -563,17 +556,16 @@ export default function SecurityDashboardWidget() {
 
       <div className="sec-dash-left">
         <div className="sec-dash-sources">
-          {SOURCES.map((s, i) => (
+          {sources.map((s, i) => (
             <div key={i} className="sec-dash-source-row">
-              {'label' in s && <span className="sec-dash-top-label">{s.label}</span>}
-              {'badge' in s && (
-                <span className={`sec-dash-badge sec-dash-t-${s.themeKey}`}>
-                  {s.badge}
-                </span>
-              )}
-              {'icon' in s && <span style={{ fontSize: 10 }}>{s.icon}</span>}
+              {s.icon && <span className="sec-dash-source-emoji">{s.icon}</span>}
+              {s.iconImage ? (
+                <img src={s.iconImage} alt="" className="sec-dash-source-logo" />
+              ) : s.iconClass ? (
+                <i className={`${s.iconClass} sec-dash-source-icon`} />
+              ) : null}
               <span>{s.name}</span>
-              <span className={`sec-dash-dot sec-dash-t-${s.themeKey}`} />
+              <span className="sec-dash-dot sec-dash-dot-manual" />
             </div>
           ))}
         </div>
