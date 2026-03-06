@@ -7,7 +7,7 @@ import Switcher from '@/shared/layouts-components/switcher/switcher'
 import { ThemeChanger } from '@/shared/redux/actions'
 import { Product } from '@/shared/redux/reducer'
 import React, { Fragment, memo, ReactNode } from 'react'
-import { connect } from 'react-redux';
+import { connect } from 'react-redux'
 
 interface layoutProps {
   children: ReactNode
