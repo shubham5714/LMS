@@ -11,7 +11,7 @@ const Footer: React.FC<FooterProps> = () => {
 
   return (
     <Fragment>
-      <footer className="footer mt-auto py-3 bg-white text-center">
+      <footer className="footer mt-auto py-2 bg-white text-center">
         <div className="container">
           <span className="text-muted"> Copyright © <span id="year"> {currentYear} </span> </span>
         </div>
