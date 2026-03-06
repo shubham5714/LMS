@@ -32,6 +32,8 @@ interface SunEditorProps {
   onCopy?: (event: ClipboardEvent, clipboardData: DataTransfer | null) => boolean;
   onCut?: (event: ClipboardEvent, clipboardData: DataTransfer | null) => boolean;
   setoptions?: SunEditorOptions;
+  onChange?: (content: string) => void;
+  onEditorReady?: (editor: SunEditorCore) => void;
 }
 
 const SpkSunEditor: React.FC<SunEditorProps> = ({
@@ -48,15 +50,20 @@ const SpkSunEditor: React.FC<SunEditorProps> = ({
   hidetoolbar,
   disabletoolbar,
   defaulContent,
-  setoptions
+  setoptions,
+  onChange,
+  onEditorReady
 }) => {
   const editor = useRef<SunEditorCore | null>(null);
 
   const getSunEditorInstance = (sunEditor: SunEditorCore) => {
     editor.current = sunEditor;
+    onEditorReady?.(sunEditor);
   };
 
-  const handleChange = (_content: string): void => { };
+  const handleChange = (content: string): void => {
+    onChange?.(content);
+  };
 
   const handleScroll = (_event: UIEvent): void => { };
 

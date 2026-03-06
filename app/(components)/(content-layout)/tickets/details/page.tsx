@@ -2,6 +2,8 @@
 // Ticket Details Page - Restructured based on wireframe
 import SpkButton from "@/shared/@spk-reusable-components/reusable-uiElements/spk-buttons";
 import SpkBadge from "@/shared/@spk-reusable-components/reusable-uiElements/spk-badge";
+import SpkSunEditor from "@/shared/@spk-reusable-components/reusable-plugins/spk-suneditor";
+import { Lightboxcomponent } from "@/shared/@spk-reusable-components/reusable-plugins/spk-lightbox";
 import SpkDropdown from "@/shared/@spk-reusable-components/reusable-uiElements/spk-dropdown";
 import SpkButtongroup from "@/shared/@spk-reusable-components/reusable-uiElements/spk-buttongroup";
 import SpkSelect from "@/shared/@spk-reusable-components/reusable-plugins/spk-reactselect";
@@ -167,6 +169,31 @@ const normalizeRelatedAlerts = (data: any): RelatedAlertsData => {
 
 const DUMMY_POLICY_ALERTS_PER_DAY = 25;
 
+interface TicketNote {
+    id: number;
+    author: string;
+    authorInitial: string;
+    content: string;
+    createdAt: string;
+}
+
+function normalizeNotesFromDb(raw: unknown): TicketNote[] {
+    if (!raw || !Array.isArray(raw)) return [];
+    return raw.map((item: Record<string, unknown>) => {
+        if (!item || typeof item !== 'object') return null;
+        const created = item.createdAt ?? item.created_at ?? new Date().toISOString();
+        const author = item.author;
+        const initial = item.authorInitial ?? item.author_initial ?? (typeof author === 'string' ? author.charAt(0).toUpperCase() : '');
+        return {
+            id: Number(item.id) || Date.now(),
+            author: typeof author === 'string' ? author : '',
+            authorInitial: String(initial),
+            content: typeof item.content === 'string' ? item.content : '',
+            createdAt: typeof created === 'string' ? created : new Date().toISOString(),
+        };
+    }).filter((n): n is TicketNote => n !== null);
+}
+
 const TicketDetails: React.FC<TicketDetailsProps> = () => {
     const searchParams = useSearchParams();
     const ticketId = searchParams.get('id');
@@ -204,6 +231,40 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
     const [aiTuningError, setAiTuningError] = useState<string | null>(null);
     const [existingSuggestions, setExistingSuggestions] = useState<Record<string, Record<string, { suggestion_type: string; valid_until: string | 'permanent'; permanent: boolean; suggestion_text: string }>> | null>(null);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+    const [ticketNotes, setTicketNotes] = useState<TicketNote[]>([]);
+    const [noteEditorContent, setNoteEditorContent] = useState('');
+    const [noteEditorKey, setNoteEditorKey] = useState(0);
+    const [notesSaving, setNotesSaving] = useState(false);
+    const [noteLightboxOpen, setNoteLightboxOpen] = useState(false);
+    const [noteLightboxSlides, setNoteLightboxSlides] = useState<{ src: string }[]>([]);
+    const [noteLightboxIndex, setNoteLightboxIndex] = useState(0);
+    const noteEditorRef = React.useRef<{ insertImage?: (files: FileList | File[]) => void } | null>(null);
+    const noteImageInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleNoteContentClick = (e: React.MouseEvent) => {
+        const target = e.target;
+        if (!(target instanceof HTMLImageElement)) return;
+        const container = target.closest('.ticket-note-content');
+        if (!container) return;
+        e.preventDefault();
+        const imgs = Array.from(container.querySelectorAll('img'));
+        const slides = imgs.map((img) => ({ src: img.currentSrc || img.getAttribute('src') || '' })).filter((s) => s.src);
+        const index = imgs.indexOf(target);
+        if (slides.length) {
+            setNoteLightboxSlides(slides);
+            setNoteLightboxIndex(index >= 0 ? index : 0);
+            setNoteLightboxOpen(true);
+        }
+    };
+
+    const handleNoteImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files?.length && noteEditorRef.current?.insertImage) {
+            noteEditorRef.current.insertImage(files);
+        }
+        e.target.value = '';
+    };
 
     // Function to export raw_logs to CSV
     const handleExportLogs = () => {
@@ -434,7 +495,8 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
 
                 if (data) {
                     setTicket(data);
-                    
+                    setTicketNotes(normalizeNotesFromDb(data.notes));
+
                     // Set status from ticket data
                     if (data.status) {
                         setStatus(data.status);
@@ -730,6 +792,43 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
         const name = ticket.name?.trim() ?? '';
         setAiTuningForm((prev) => (prev.scopeValue === name ? prev : { ...prev, scopeValue: name }));
     }, [ticket?.id, ticket?.name, aiTuningForm.scopeType]);
+
+    const handleAddNote = async () => {
+        const text = (noteEditorContent || '').replace(/<[^>]*>/g, '').trim();
+        if (!text || !ticket) return;
+        const loggedInUsername = userData?.username ?? 'You';
+        const initial = loggedInUsername.charAt(0).toUpperCase();
+        const newNote: TicketNote = {
+            id: Date.now(),
+            author: loggedInUsername,
+            authorInitial: initial,
+            content: noteEditorContent || text,
+            createdAt: new Date().toISOString(),
+        };
+        const updatedNotes = [newNote, ...ticketNotes];
+        setTicketNotes(updatedNotes);
+        setNoteEditorContent('');
+        setNoteEditorKey((k) => k + 1);
+
+        setNotesSaving(true);
+        try {
+            const { error } = await supabase
+                .from('tickets')
+                .update({
+                    notes: updatedNotes,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', ticket.id)
+                .eq('tenant_id', ticket.tenant_id);
+
+            if (error) {
+                console.error('Error saving note to ticket:', error);
+                setTicketNotes(ticketNotes);
+            }
+        } finally {
+            setNotesSaving(false);
+        }
+    };
 
     const rawLogsCount = React.useMemo(() => {
         const val = ticket?.raw_logs;
@@ -2048,6 +2147,91 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                 </Row>
                             </Tab.Pane>
                             <Tab.Pane eventKey='notes' className="pt-3 px-4 pb-4" role="tabpanel">
+                                <Card className="custom-card">
+                                    <Card.Header>
+                                        <Card.Title>Notes</Card.Title>
+                                    </Card.Header>
+                                    <Card.Body className="overflow-auto" style={{ maxHeight: '50vh' }} onClick={handleNoteContentClick}>
+                                        <ul className="list-unstyled profile-timeline mb-0">
+                                            {ticketNotes.length === 0 ? (
+                                                <li className="text-muted text-center py-4">No notes yet. Add one below.</li>
+                                            ) : (
+                                                ticketNotes.map((note) => (
+                                                    <li key={note.id} className="mb-4">
+                                                        <div>
+                                                            <span className="avatar avatar-sm bg-primary-transparent avatar-rounded profile-timeline-avatar">
+                                                                {note.authorInitial}
+                                                            </span>
+                                                            <div className="mb-2">
+                                                                <span className="fw-medium d-block">{note.author}</span>
+                                                                <span className="text-muted small" style={{ marginTop: '2px' }}>
+                                                                    {formatUtcToUserTimezone(note.createdAt, userData?.timezone || 'UTC')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-muted mb-0 fs-13 ticket-note-content" dangerouslySetInnerHTML={{ __html: note.content || '' }} />
+                                                        </div>
+                                                    </li>
+                                                ))
+                                            )}
+                                        </ul>
+                                    </Card.Body>
+                                    <Card.Footer>
+                                        <div className="d-sm-flex align-items-start lh-1 gap-2">
+                                            <span className="avatar avatar-sm bg-primary-transparent avatar-rounded flex-shrink-0 mt-1">
+                                                {(userData?.username ?? 'Y').charAt(0).toUpperCase()}
+                                            </span>
+                                            <div className="flex-fill min-w-0">
+                                                <div className="position-relative mb-2" style={{ minHeight: '120px' }}>
+                                                    <SpkSunEditor
+                                                        key={noteEditorKey}
+                                                        defaulContent={noteEditorContent}
+                                                        height="120px"
+                                                        setoptions={{
+                                                            buttonList: [['bold', 'italic', 'underline'], ['list']],
+                                                            minHeight: '100px',
+                                                            showPathLabel: false,
+                                                        }}
+                                                        onChange={setNoteEditorContent}
+                                                        onEditorReady={(editor) => { noteEditorRef.current = editor as any; }}
+                                                    />
+                                                    <input
+                                                        ref={noteImageInputRef}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="d-none"
+                                                        onChange={handleNoteImageSelect}
+                                                    />
+                                                    <div className="position-absolute" style={{ top: '6px', left: '152px', zIndex: 10 }}>
+                                                        <button
+                                                            type="button"
+                                                            className="ticket-note-image-btn border-0 rounded bg-transparent d-flex align-items-center justify-content-center p-0"
+                                                            style={{ width: 34, height: 34, margin: 1, color: 'inherit', cursor: 'pointer' }}
+                                                            onClick={() => noteImageInputRef.current?.click()}
+                                                        >
+                                                            <i className="ri-image-line" style={{ fontSize: 19 }} aria-hidden="true"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <SpkButton
+                                                    Buttonvariant="primary"
+                                                    Customclass="btn btn-wave"
+                                                    Buttontype="button"
+                                                    onClickfunc={handleAddNote}
+                                                    Disabled={notesSaving}
+                                                >
+                                                    {notesSaving ? 'Saving...' : 'Post'}
+                                                </SpkButton>
+                                            </div>
+                                        </div>
+                                    </Card.Footer>
+                                </Card>
+                                <Lightboxcomponent
+                                    open={noteLightboxOpen}
+                                    close={() => setNoteLightboxOpen(false)}
+                                    slides={noteLightboxSlides}
+                                    index={noteLightboxIndex}
+                                    zoom={{ maxZoomPixelRatio: 10, scrollToZoom: true }}
+                                />
                             </Tab.Pane>
                         </Tab.Content>
                     </Card.Body>
@@ -2059,6 +2243,41 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                     padding-bottom: 0.25rem !important;
                     line-height: 1.4 !important;
                     min-height: 28px !important;
+                }
+                /* Ticket Notes: tighten line spacing, keep images viewable */
+                .ticket-note-content p,
+                .ticket-note-content div {
+                    margin-bottom: 0.25em !important;
+                    line-height: 1.4 !important;
+                }
+                .ticket-note-content p:last-child,
+                .ticket-note-content div:last-child {
+                    margin-bottom: 0 !important;
+                }
+                .ticket-note-content ul,
+                .ticket-note-content ol {
+                    margin-top: 0.25em !important;
+                    margin-bottom: 0.25em !important;
+                    padding-left: 1.25em !important;
+                }
+                .ticket-note-content li {
+                    margin-bottom: 0.15em !important;
+                    line-height: 1.4 !important;
+                }
+                .ticket-note-content li:last-child {
+                    margin-bottom: 0 !important;
+                }
+                .ticket-note-content img {
+                    max-width: 100% !important;
+                    max-height: 420px !important;
+                    width: auto !important;
+                    height: auto !important;
+                    object-fit: contain !important;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+                .ticket-note-image-btn:hover {
+                    background-color: #e1e1e1 !important;
                 }
                 /* Related Alerts Text Colors - Light Mode (default) */
                 .related-alerts-text {
