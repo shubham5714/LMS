@@ -10,11 +10,9 @@ const THEME = {
   grayHex: '#7987a1',
 };
 
-/** Data source: name + optional icon (emoji, Remix class, or image src). */
+/** Data source: name + optional icon (Remix class or image src). */
 export interface DataSourceItem {
   name: string;
-  /** Emoji or similar character. */
-  icon?: string;
   /** Remix Icon class (e.g. "ri-cloud-line"). */
   iconClass?: string;
   /** Image src for logo (e.g. "/assets/images/brand-logos/azure-sentinel.png"). */
@@ -433,11 +431,14 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           color: #90a4ae !important;
           flex-shrink: 0;
         }
-        .sec-dash-source-row .sec-dash-source-emoji {
-          font-size: 12px;
-        }
         .sec-dash-source-row .sec-dash-source-logo {
           width: 20px;
+          height: 20px;
+          object-fit: contain;
+          flex-shrink: 0;
+        }
+        .sec-dash-source-row .sec-dash-source-logo-only {
+          width: 90px;
           height: 20px;
           object-fit: contain;
           flex-shrink: 0;
@@ -558,13 +559,14 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
         <div className="sec-dash-sources">
           {sources.map((s, i) => (
             <div key={i} className="sec-dash-source-row">
-              {s.icon && <span className="sec-dash-source-emoji">{s.icon}</span>}
               {s.iconImage ? (
-                <img src={s.iconImage} alt="" className="sec-dash-source-logo" />
-              ) : s.iconClass ? (
-                <i className={`${s.iconClass} sec-dash-source-icon`} />
-              ) : null}
-              <span>{s.name}</span>
+                <img src={s.iconImage} alt="" className="sec-dash-source-logo-only" />
+              ) : (
+                <>
+                  {s.iconClass && <i className={`${s.iconClass} sec-dash-source-icon`} />}
+                  <span>{s.name}</span>
+                </>
+              )}
               <span className="sec-dash-dot sec-dash-dot-manual" />
             </div>
           ))}
