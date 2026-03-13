@@ -7,7 +7,6 @@ import { Lightboxcomponent } from "@/shared/@spk-reusable-components/reusable-pl
 import SpkDropdown from "@/shared/@spk-reusable-components/reusable-uiElements/spk-dropdown";
 import SpkButtongroup from "@/shared/@spk-reusable-components/reusable-uiElements/spk-buttongroup";
 import SpkSelect from "@/shared/@spk-reusable-components/reusable-plugins/spk-reactselect";
-import SpkTables from "@/shared/@spk-reusable-components/reusable-tables/spk-tables";
 import Seo from "@/shared/layouts-components/seo/seo";
 import { supabase } from "@/shared/lib/supabase";
 import { useTenantContext } from "@/shared/contextapi/TenantContext";
@@ -1297,42 +1296,66 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                     <Row>
                                 <Col xl={12}>
                             <div className="fs-14 fw-medium mb-2">MITRE ATT&CK® <span className="fs-11">{activeTacticsCount} Tactics and {activeTechniquesCount} Techniques</span></div>
-                            <div className="d-flex align-items-center gap-0 border rounded p-2" style={{ overflowX: 'auto', width: '100%' }}>
+                            <div
+                                className="d-flex align-items-center border rounded px-2 py-1"
+                                style={{
+                                    overflowX: 'hidden',
+                                    width: '100%',
+                                    columnGap: '0.5rem',
+                                }}
+                            >
                                 {mitreStages.map((phase, index, array) => (
                                     <React.Fragment key={phase.name}>
-                                        <div 
-                                            className="text-center px-2" 
-                                            style={{ 
-                                                minWidth: phase.active ? '120px' : '80px',
-                                                color: phase.active ? '#dc3545' : '#6c757d',
-                                                flex: '1 1 auto'
+                                        <div
+                                            className="text-center"
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'stretch',
+                                                flex: '1 1 0',
+                                                minWidth: 0,
+                                                color: (phase.active || phase.count > 0) ? '#dc3545' : '#6c757d',
+                                                overflow: 'hidden',
+                                                padding: (phase.active || phase.count > 0) ? '0.3rem 0.1rem' : '0.1rem 0.05rem',
                                             }}
                                         >
                                             <div 
                                                 className="fw-semibold mb-1" 
                                                 style={{ 
                                                     fontSize: '0.95rem',
-                                                    color: phase.active ? '#dc3545' : '#6c757d'
+                                                    color: (phase.active || phase.count > 0) ? '#dc3545' : '#6c757d',
+                                                    textAlign: 'center',
                                                 }}
                                             >
                                                 {phase.count}
                                             </div>
                                             <div 
-                                                className="fs-12 text-nowrap" 
+                                                className="fs-12 text-truncate" 
                                                 style={{ 
-                                                    color: phase.active ? '#dc3545' : '#6c757d',
-                                                    fontWeight: phase.active ? '500' : '400'
+                                                    color: (phase.active || phase.count > 0) ? '#dc3545' : '#6c757d',
+                                                    fontWeight: (phase.active || phase.count > 0) ? '500' : '400',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    textAlign: 'center',
                                                 }}
+                                                title={phase.name}
                                             >
                                                 {phase.name}
                                             </div>
-                                            {phase.active && phase.technique && (
+                                            {(phase.active || phase.count > 0) && phase.technique && (
                                                 <div 
-                                                    className="fs-10 mt-1 text-nowrap" 
+                                                    className="fs-10 mt-1 text-truncate" 
                                                     style={{ 
                                                         color: '#dc3545',
-                                                        fontWeight: '400'
+                                                        fontWeight: '400',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        display: 'block',
+                                                        textAlign: 'left',
                                                     }}
+                                                    title={phase.technique}
                                                 >
                                                     {phase.technique}
                                                 </div>
@@ -1415,44 +1438,70 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                             <Tab.Pane eventKey='overview' className="pt-3 px-4 pb-4" role="tabpanel">
                                 {/* Three Column Layout for Overview Tab */}
                                 <Row>
-                                    <Col xl={5}>
-                                        <Card className="custom-card">
+                                    <Col xl={4}>
+                                        <Card className="custom-card overflow-hidden">
                                             <Card.Header className="py-2">
-                                                <Card.Title className="mb-0">Alert Analysis</Card.Title>
+                                                <Card.Title className="mb-0">Attributes</Card.Title>
                                             </Card.Header>
-                                            <Card.Body>
-                                                {alertAnalysis && alertAnalysis.sections && alertAnalysis.sections.length > 0 ? (
-                                                    alertAnalysis.sections.map((section, sectionIndex) => (
-                                                        <div key={sectionIndex} className={sectionIndex < alertAnalysis.sections.length - 1 ? 'mb-4' : ''}>
-                                                            <h6 className="fw-medium">{section.heading}</h6>
-                                                            {section.type === 'paragraphs' ? (
-                                                                section.content.map((paragraph, paraIndex) => (
-                                                                    <p key={paraIndex} className={paraIndex < section.content.length - 1 ? 'op-9 mb-2' : 'op-9 mb-0'}>
-                                                                        {paragraph}
-                                                                    </p>
-                                                                ))
-                                                            ) : section.type === 'list' ? (
-                                                                <ListGroup as='ul' className="list-group border-0 list-unstyled list-group-numbered mb-3">
-                                                                    {section.content.map((item, itemIndex) => (
-                                                                        <ListGroup.Item key={itemIndex} className="border-0 py-1">
-                                                                            {item}
-                                                                        </ListGroup.Item>
-                                                                    ))}
-                                                                </ListGroup>
-                                                            ) : null}
+                                            <Card.Body className="p-0">
+                                                <div className="table-responsive">
+                                                    <div className="table text-nowrap mb-0">
+                                                        <div className="d-flex py-2 px-3 border-bottom">
+                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">ID :</div>
+                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.id || 'N/A'}</div>
                                                         </div>
-                                                    ))
-                                                ) : (
-                                                    <p className="text-muted mb-0">No alert analysis available.</p>
-                                                )}
+                                                        <div className="d-flex py-2 px-3 border-bottom">
+                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Source ID :</div>
+                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.source_id || 'N/A'}</div>
+                                                        </div>
+                                                        <div className="d-flex py-2 px-3 border-bottom">
+                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Occurred At :</div>
+                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">
+                                                                {formatUtcToUserTimezone(ticket.occurred_at, userData?.timezone || 'UTC')}
+                                                            </div>
+                                                        </div>
+                                                        <div className="d-flex py-2 px-3 border-bottom">
+                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Name :</div>
+                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.name || 'N/A'}</div>
+                                                        </div>
+                                                        <div className="d-flex py-2 px-3 border-bottom">
+                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Severity :</div>
+                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.severity || 'N/A'}</div>
+                                                        </div>
+                                                        <div className="d-flex py-2 px-3 border-bottom">
+                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Instance Name :</div>
+                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.instance_name || 'N/A'}</div>
+                                                        </div>
+                                                        <div className="d-flex py-2 px-3 border-bottom">
+                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Tenant Name :</div>
+                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.tenant_name || 'N/A'}</div>
+                                                        </div>
+                                                        {/* Dynamic fields from alert_fields JSONB column */}
+                                                        {alertFields && Object.keys(alertFields).length > 0 && Object.entries(alertFields).map(([key, value]) => (
+                                                            <div key={key} className="d-flex py-2 px-3 border-bottom">
+                                                                <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">
+                                                                    {key} :
+                                                                </div>
+                                                                <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">
+                                                                    {value === null || value === undefined || value === '' 
+                                                                        ? 'N/A' 
+                                                                        : typeof value === 'string' && (value.includes('T') || value.includes('-')) && !isNaN(Date.parse(value))
+                                                                            ? new Date(value).toLocaleString()
+                                                                            : String(value)
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </Card.Body>
                                         </Card>
                                     </Col>
                                     <Col xl={3}>
                     <Card className="custom-card">
                                             <Card.Header className="py-2">
-                                                <Card.Title className="mb-0">Artifacts & Assets</Card.Title>
-                            </Card.Header>
+                                                <Card.Title className="mb-0">Entities</Card.Title>
+                                            </Card.Header>
                                             <Card.Body>
                                                 <div className="d-flex flex-column gap-2">
                                                     {/* IP Addresses */}
@@ -1669,61 +1718,39 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                             </Card.Body>
                                         </Card>
                                     </Col>
-                                    <Col xl={4}>
-                    <Card className="custom-card overflow-hidden">
+                                    <Col xl={5}>
+                                        <Card className="custom-card">
                                             <Card.Header className="py-2">
-                                                <Card.Title className="mb-0">Alert Details</Card.Title>
-                        </Card.Header>
-                                            <Card.Body className="p-0">
-                            <div className="table-responsive">
-                                <SpkTables tableClass="table text-nowrap">
-                                    <tr>
-                                        <td><span className="fw-medium">ID :</span></td>
-                                        <td>{ticket.id || 'N/A'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span className="fw-medium">Source ID :</span></td>
-                                        <td>{ticket.source_id || 'N/A'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span className="fw-medium">Occurred At :</span></td>
-                                        <td>{formatUtcToUserTimezone(ticket.occurred_at, userData?.timezone || 'UTC')}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span className="fw-medium">Name :</span></td>
-                                        <td>{ticket.name || 'N/A'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span className="fw-medium">Severity :</span></td>
-                                        <td>{ticket.severity || 'N/A'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span className="fw-medium">Instance Name :</span></td>
-                                        <td>{ticket.instance_name || 'N/A'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span className="fw-medium">Tenant Name :</span></td>
-                                        <td>{ticket.tenant_name || 'N/A'}</td>
-                                    </tr>
-                                    {/* Dynamic fields from alert_fields JSONB column */}
-                                    {alertFields && Object.keys(alertFields).length > 0 && Object.entries(alertFields).map(([key, value]) => (
-                                        <tr key={key}>
-                                            <td><span className="fw-medium">{key} :</span></td>
-                                            <td>
-                                                {value === null || value === undefined || value === '' 
-                                                    ? 'N/A' 
-                                                    : typeof value === 'string' && (value.includes('T') || value.includes('-')) && !isNaN(Date.parse(value))
-                                                        ? new Date(value).toLocaleString()
-                                                        : String(value)
-                                                }
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </SpkTables>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
+                                                <Card.Title className="mb-0">Analysis</Card.Title>
+                                            </Card.Header>
+                                            <Card.Body>
+                                                {alertAnalysis && alertAnalysis.sections && alertAnalysis.sections.length > 0 ? (
+                                                    alertAnalysis.sections.map((section, sectionIndex) => (
+                                                        <div key={sectionIndex} className={sectionIndex < alertAnalysis.sections.length - 1 ? 'mb-4' : ''}>
+                                                            <h6 className="fw-medium">{section.heading}</h6>
+                                                            {section.type === 'paragraphs' ? (
+                                                                section.content.map((paragraph, paraIndex) => (
+                                                                    <p key={paraIndex} className={paraIndex < section.content.length - 1 ? 'op-9 mb-2' : 'op-9 mb-0'}>
+                                                                        {paragraph}
+                                                                    </p>
+                                                                ))
+                                                            ) : section.type === 'list' ? (
+                                                                <ListGroup as='ul' className="list-group border-0 list-unstyled list-group-numbered mb-3">
+                                                                    {section.content.map((item, itemIndex) => (
+                                                                        <ListGroup.Item key={itemIndex} className="border-0 py-1">
+                                                                            {item}
+                                                                        </ListGroup.Item>
+                                                                    ))}
+                                                                </ListGroup>
+                                                            ) : null}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-muted mb-0">No alert analysis available.</p>
+                                                )}
+                                            </Card.Body>
+                                        </Card>
+                                    </Col>
             </Row>
                             </Tab.Pane>
                             <Tab.Pane eventKey='assets' className="pt-3 px-4 pb-4" role="tabpanel">

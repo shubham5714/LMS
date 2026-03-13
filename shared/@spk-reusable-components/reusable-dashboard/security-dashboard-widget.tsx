@@ -1,6 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
+import { supabase } from '@/shared/lib/supabase';
+import { useTenantContext } from '@/shared/contextapi/TenantContext';
+import { useDateRangeContext } from '@/shared/contextapi/DateRangeContext';
+import { useUserContext } from '@/shared/contextapi/UserContext';
+import { convertUserTimezoneToUTC } from '@/shared/lib/timezone';
 
 const THEME = {
   primaryHex: '#7961f5',
@@ -32,11 +37,11 @@ const DEFAULT_SOURCES: DataSourceItem[] = [
   { name: 'Prisma Cloud', iconClass: 'ri-cloud-line' },
 ];
 
-const OPEN_BY_SEVERITY = [
-  { themeKey: 'danger' as const, count: 3 },
-  { themeKey: 'danger' as const, count: 2 },
-  { themeKey: 'warning' as const, count: 5 },
-  { themeKey: 'info' as const, count: 0 },
+// Default structure for open investigations by severity (High / Medium / Low)
+const DEFAULT_OPEN_BY_SEVERITY = [
+  { themeKey: 'danger' as const, count: 0 },  // High
+  { themeKey: 'warning' as const, count: 0 }, // Medium
+  { themeKey: 'info' as const, count: 0 },    // Low
 ];
 
 export interface SecurityDashboardWidgetProps {
@@ -51,13 +56,20 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
   const containerRef = useRef<HTMLDivElement>(null);
   const [issueCount, setIssueCount] = useState(0);
   const [caseCount, setCaseCount] = useState(0);
+  const [openInvestigations, setOpenInvestigations] = useState(0);
+  const [resolvedInvestigations, setResolvedInvestigations] = useState(0);
+  const [automatedInvestigations, setAutomatedInvestigations] = useState(0);
+  const [manualInvestigations, setManualInvestigations] = useState(0);
+  const [openBySeverity, setOpenBySeverity] = useState(DEFAULT_OPEN_BY_SEVERITY);
+
+  const { assignedTenants, selectedTenantIds, isLoading: tenantsLoading } = useTenantContext();
+  const { dateRange, isLoading: dateRangeLoading } = useDateRangeContext();
+  const { userData, isLoading: userLoading } = useUserContext();
 
   // Count-up animation
   useEffect(() => {
     const issueTarget = 2404;
-    const caseTarget = 1024;
     const issueDur = 1600;
-    const caseDur = 1200;
     let start: number | null = null;
     function step(ts: number) {
       if (!start) start = ts;
@@ -66,16 +78,145 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
       if (p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
-
-    start = null;
-    function stepCase(ts: number) {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / caseDur, 1);
-      setCaseCount(Math.floor(p * caseTarget));
-      if (p < 1) requestAnimationFrame(stepCase);
-    }
-    setTimeout(() => requestAnimationFrame(stepCase), 200);
   }, []);
+
+  // Investigations (cases) count: match tickets table filters (tenants + date range)
+  useEffect(() => {
+    let cancelled = false;
+    let animId: number | null = null;
+
+    const fetchAndAnimateCases = async () => {
+      try {
+        // Helper to apply the same tenant + date filters as the tickets page
+        const applyCommonFilters = (q: ReturnType<typeof supabase.from>) => {
+          let query = q;
+
+          // Tenant filter
+          if (selectedTenantIds === 'all') {
+            const tenantIds = assignedTenants.map((t) => t.id);
+            if (tenantIds.length > 0) {
+              query = query.in('tenant_id', tenantIds);
+            }
+          } else if (Array.isArray(selectedTenantIds) && selectedTenantIds.length > 0) {
+            query = query.in('tenant_id', selectedTenantIds);
+          } else if (typeof selectedTenantIds === 'string' && selectedTenantIds !== 'all') {
+            query = query.eq('tenant_id', selectedTenantIds);
+          }
+
+          // Date range filter (created_at in UTC, converted from user's timezone)
+          if (dateRange && dateRange[0] && dateRange[1] && userData?.timezone) {
+            const startDate = new Date(dateRange[0].getTime());
+            const endDate = new Date(dateRange[1].getTime());
+            const startUTC = convertUserTimezoneToUTC(startDate, userData.timezone);
+            const endUTC = convertUserTimezoneToUTC(endDate, userData.timezone);
+            query = query.gte('created_at', startUTC).lte('created_at', endUTC);
+          }
+
+          return query;
+        };
+
+        // Total, open, resolved (closed), and automated ticket counts for the current filters.
+        const { count: totalCount = 0 } = await applyCommonFilters(
+          supabase.from('tickets').select('*', { count: 'exact', head: true })
+        );
+        const { count: openCount = 0 } = await applyCommonFilters(
+          supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('status', 'open')
+        );
+        const { count: closedCount = 0 } = await applyCommonFilters(
+          supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('status', 'closed')
+        );
+        const { count: automatedCount = 0 } = await applyCommonFilters(
+          supabase
+            .from('tickets')
+            .select('*', { count: 'exact', head: true })
+            .in('ai_status', ['Investigating', 'Completed'])
+        );
+
+        const target = totalCount;
+        const openValue = openCount;
+        const resolvedValue = closedCount;
+        const automatedValue = automatedCount;
+        const manualValue = Math.max(target - automatedValue, 0);
+
+        // Open investigations by severity (High / Medium / Low) for current filters
+        const [{ count: highCount = 0 }, { count: medCount = 0 }, { count: lowCount = 0 }] = await Promise.all([
+          applyCommonFilters(
+            supabase
+              .from('tickets')
+              .select('*', { count: 'exact', head: true })
+              .eq('status', 'open')
+              .eq('severity', 'High')
+          ),
+          applyCommonFilters(
+            supabase
+              .from('tickets')
+              .select('*', { count: 'exact', head: true })
+              .eq('status', 'open')
+              .eq('severity', 'Medium')
+          ),
+          applyCommonFilters(
+            supabase
+              .from('tickets')
+              .select('*', { count: 'exact', head: true })
+              .eq('status', 'open')
+              .eq('severity', 'Low')
+          ),
+        ]);
+
+        if (cancelled) return;
+
+        // Update per-severity open investigations counts (snapshot)
+        setOpenBySeverity([
+          { themeKey: 'danger', count: highCount },
+          { themeKey: 'warning', count: medCount },
+          { themeKey: 'info', count: lowCount },
+        ]);
+
+        // Animate all investigation-related counters together
+        const caseDur = 1200;
+        let start: number | null = null;
+
+        const stepCase = (ts: number) => {
+          if (!start) start = ts;
+          const p = Math.min((ts - start) / caseDur, 1);
+          const factor = p;
+          setCaseCount(Math.floor(factor * target));
+          setOpenInvestigations(Math.floor(factor * openValue));
+          setResolvedInvestigations(Math.floor(factor * resolvedValue));
+          setAutomatedInvestigations(Math.floor(factor * automatedValue));
+          setManualInvestigations(Math.floor(factor * manualValue));
+          if (p < 1 && !cancelled) {
+            animId = requestAnimationFrame(stepCase);
+          }
+        };
+
+        animId = requestAnimationFrame(stepCase);
+      } catch (e) {
+        console.error('Unexpected error fetching investigations counts:', e);
+      }
+    };
+
+    // Avoid firing before contexts are ready
+    if (!tenantsLoading && !dateRangeLoading && !userLoading) {
+      fetchAndAnimateCases();
+    }
+
+    return () => {
+      cancelled = true;
+      if (animId !== null) {
+        cancelAnimationFrame(animId);
+      }
+    };
+  }, [
+    tenantsLoading,
+    dateRangeLoading,
+    userLoading,
+    JSON.stringify(assignedTenants.map((t) => t.id)),
+    typeof selectedTenantIds === 'string' ? selectedTenantIds : JSON.stringify(selectedTenantIds),
+    dateRange[0]?.getTime(),
+    dateRange[1]?.getTime(),
+    userData?.timezone,
+  ]);
 
   // Left flow canvas (sized to the flow area only, right of the sources list)
   useEffect(() => {
@@ -578,7 +719,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
 
       <div className="sec-dash-center">
         <div className="sec-dash-center-block sec-dash-issues">
-          <div className="sec-dash-big-num">{issueCount.toLocaleString()}</div>
+          <div className="sec-dash-big-num">{caseCount.toLocaleString()}</div>
           <div className="sec-dash-label">Alerts</div>
         </div>
         <canvas ref={orbCanvasRef} width={160} height={160} />
@@ -594,26 +735,30 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           <div className="sec-dash-node sec-dash-node-auto">⚙️</div>
           <div className="sec-dash-node sec-dash-node-manual">👤</div>
           <div className="sec-dash-stat" style={{ top: '10%', left: '30%', transform: 'translate(-50%, 0)', textAlign: 'center' }}>
-            <div className="sec-dash-n">76</div>
+            <div className="sec-dash-n">{automatedInvestigations.toLocaleString()}</div>
             <div className="sec-dash-l">Automated</div>
           </div>
           <div className="sec-dash-stat" style={{ top: '78%', left: '30%', transform: 'translate(-50%, 0)', textAlign: 'center' }}>
-            <div className="sec-dash-n">16</div>
+            <div className="sec-dash-n">{manualInvestigations.toLocaleString()}</div>
             <div className="sec-dash-l">Manual</div>
           </div>
           <div className="sec-dash-stat" style={{ top: '12%', right: '8%', textAlign: 'right' }}>
-            <div className="sec-dash-n">82</div>
+            <div className="sec-dash-n">{resolvedInvestigations.toLocaleString()}</div>
             <div className="sec-dash-l">Resolved Investigations</div>
           </div>
           <div className="sec-dash-stat" style={{ top: '52%', right: '8%', textAlign: 'right' }}>
             <div className="sec-dash-open-rows">
-              {OPEN_BY_SEVERITY.map((row, i) => (
-                <div key={i} className={`sec-dash-open-row sec-dash-sev-${row.themeKey}`} style={{ justifyContent: 'flex-end' }}>
+              {openBySeverity.map((row, i) => (
+                <div
+                  key={i}
+                  className={`sec-dash-open-row sec-dash-sev-${row.themeKey}`}
+                  style={{ justifyContent: 'flex-end' }}
+                >
                   ▲ {row.count}
                 </div>
               ))}
             </div>
-            <div className="sec-dash-n">10</div>
+            <div className="sec-dash-n">{openInvestigations.toLocaleString()}</div>
             <div className="sec-dash-l">Open Investigations</div>
           </div>
         </div>
