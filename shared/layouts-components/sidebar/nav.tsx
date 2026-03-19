@@ -90,7 +90,7 @@ export const MENUITEMS: Menuitemtype[] = [
   },
 
   {
-    title: "Approvals", icon: Approvalsicon, type: "link", path: "/integrations", active: false, selected: false, dirchange: false
+    title: "Approvals", icon: Approvalsicon, type: "link", path: "/approvals", active: false, selected: false, dirchange: false
   },
 
   {

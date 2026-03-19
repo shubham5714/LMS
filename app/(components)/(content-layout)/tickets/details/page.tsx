@@ -241,6 +241,12 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
     const noteEditorRef = React.useRef<{ insertImage?: (files: FileList | File[]) => void } | null>(null);
     const noteImageInputRef = React.useRef<HTMLInputElement>(null);
 
+    const [irAgentInput, setIrAgentInput] = useState('');
+    const [irAgentMessages, setIrAgentMessages] = useState<{ id: number; role: 'user' | 'assistant'; content: string }[]>([]);
+    const [irAgentStreaming, setIrAgentStreaming] = useState(false);
+    const irAgentAbortRef = React.useRef<AbortController | null>(null);
+    const irAgentMessagesEndRef = React.useRef<HTMLDivElement | null>(null);
+
     const handleNoteContentClick = (e: React.MouseEvent) => {
         const target = e.target;
         if (!(target instanceof HTMLImageElement)) return;
@@ -263,6 +269,97 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
             noteEditorRef.current.insertImage(files);
         }
         e.target.value = '';
+    };
+
+    useEffect(() => {
+        if (irAgentMessagesEndRef.current) {
+            irAgentMessagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }, [irAgentMessages]);
+
+    const handleIrAgentAsk = async () => {
+        if (!irAgentInput.trim() || irAgentStreaming) return;
+
+        const question = irAgentInput.trim();
+        setIrAgentInput('');
+
+        const userMessageId = Date.now();
+        const assistantMessageId = userMessageId + 1;
+
+        setIrAgentMessages((prev) => [
+            ...prev,
+            { id: userMessageId, role: 'user', content: question },
+            { id: assistantMessageId, role: 'assistant', content: '' },
+        ]);
+
+        const controller = new AbortController();
+        irAgentAbortRef.current = controller;
+        setIrAgentStreaming(true);
+
+        try {
+            const response = await fetch("https://astran8n.dpdns.org/webhook/4d27e668-eeb8-46a6-b5e1-52b6fb03ac85", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: question }),
+                signal: controller.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+
+            if (!response.body) {
+                throw new Error('No response body received from IR Agent.');
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                if (!chunk) continue;
+
+                buffer += chunk;
+                const lines = buffer.split('\n');
+                buffer = lines.pop() ?? '';
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+                    try {
+                        const parsed = JSON.parse(trimmed) as { type?: string; content?: string };
+                        if (parsed.type === 'item' && typeof parsed.content === 'string' && parsed.content) {
+                            setIrAgentMessages((prev) =>
+                                prev.map((msg) =>
+                                    msg.id === assistantMessageId
+                                        ? { ...msg, content: (msg.content || '') + parsed.content }
+                                        : msg
+                                )
+                            );
+                        }
+                    } catch {
+                        // Ignore malformed JSON lines
+                    }
+                }
+            }
+        } catch (error: any) {
+            const message =
+                error?.name === 'AbortError'
+                    ? 'Request was cancelled.'
+                    : (error?.message || 'Failed to reach IR Agent.');
+            setIrAgentMessages((prev) => [
+                ...prev,
+                { id: Date.now(), role: 'assistant', content: `Error: ${message}` },
+            ]);
+        } finally {
+            setIrAgentStreaming(false);
+            irAgentAbortRef.current = null;
+        }
     };
 
     // Function to export raw_logs to CSV
@@ -1416,6 +1513,11 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                     </Nav.Link>
                                 </Nav.Item>
                                 <Nav.Item as='li' role="presentation">
+                                    <Nav.Link as='button' eventKey='ir-agent' className="px-4 py-2 d-flex align-items-center gap-2" role="tab" aria-selected="false">
+                                        IR Agent
+                                    </Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item as='li' role="presentation">
                                     <Nav.Link as='button' eventKey='notes' className="px-4 py-2" role="tab" aria-selected="false">
                                         Notes
                                     </Nav.Link>
@@ -2170,6 +2272,114 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                                 </div>
                                             )}
                                         </div>
+                                    </Col>
+                                </Row>
+                            </Tab.Pane>
+                            <Tab.Pane eventKey='ir-agent' className="pt-3 px-4 pb-4" role="tabpanel">
+                                <Row className="gy-3">
+                                    <Col xl={8} lg={8}>
+                                        <Card className="custom-card h-100">
+                                            <Card.Header className="d-flex justify-content-between align-items-center">
+                                            </Card.Header>
+                                            <Card.Body className="p-3">
+                                                <div
+                                                    className="overflow-auto"
+                                                    style={{ maxHeight: '60vh' }}
+                                                >
+                                                    {irAgentMessages.length === 0 ? (
+                                                        <div className="text-center py-5">
+                                                            <i className="ri-robot-2-line fs-40 text-muted mb-3 d-block"></i>
+                                                            <p className="text-muted mb-0">
+                                                                Ask a question on the right to see IR Agent responses here.
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="d-flex flex-column gap-3">
+                                                            {irAgentMessages.map((msg) => (
+                                                                <div
+                                                                    key={msg.id}
+                                                                    className={`d-flex align-items-start gap-2 ${msg.role === 'assistant' ? '' : 'justify-content-end'}`}
+                                                                >
+                                                                    {msg.role === 'assistant' && (
+                                                                        <div
+                                                                            className="avatar avatar-sm avatar-rounded d-flex align-items-center justify-content-center bg-primary-transparent text-primary flex-shrink-0"
+                                                                            style={{ marginTop: '2px' }}
+                                                                        >
+                                                                            <i className="ri-robot-2-line"></i>
+                                                                        </div>
+                                                                    )}
+
+                                                                    <div
+                                                                        className={`p-2 rounded-2 ${msg.role === 'assistant'
+                                                                            ? 'bg-light text-start'
+                                                                            : 'bg-primary text-white text-end'
+                                                                            }`}
+                                                                        style={{ maxWidth: '100%' }}
+                                                                    >
+                                                                        <div className="fw-semibold fs-12 mb-1">
+                                                                            {msg.role === 'assistant' ? 'IR Agent' : (userData?.username ?? 'You')}
+                                                                        </div>
+                                                                        <div className="fs-13" style={{ whiteSpace: 'pre-wrap' }}>
+                                                                            {msg.content}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {msg.role !== 'assistant' && (
+                                                                        <div
+                                                                            className="avatar avatar-sm avatar-rounded d-flex align-items-center justify-content-center bg-secondary text-white flex-shrink-0"
+                                                                            style={{ marginTop: '2px' }}
+                                                                        >
+                                                                            <span className="fw-semibold">{(userData?.username ?? 'Y').charAt(0).toUpperCase()}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                            <div ref={irAgentMessagesEndRef} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </Card.Body>
+                                        </Card>
+                                    </Col>
+                                    <Col xl={4} lg={4}>
+                                        <Card className="custom-card h-100">
+                                            <Card.Header>
+                                            </Card.Header>
+                                            <Card.Body>
+                                                <Form.Group className="mb-3" controlId="irAgentQuestion">
+                                                    <Form.Label className="fw-medium fs-13">Question</Form.Label>
+                                                    <Form.Control
+                                                        as="textarea"
+                                                        rows={6}
+                                                        value={irAgentInput}
+                                                        onChange={(e) => setIrAgentInput(e.target.value)}
+                                                        placeholder="Describe what you want IR Agent to analyze or explain..."
+                                                        disabled={irAgentStreaming}
+                                                    />
+                                                </Form.Group>
+                                            </Card.Body>
+                                            <Card.Footer className="d-flex justify-content-end">
+                                                <SpkButton
+                                                    Buttontype="button"
+                                                    Buttonvariant="primary"
+                                                    Customclass="btn btn-wave"
+                                                    onClickfunc={handleIrAgentAsk}
+                                                    Disabled={irAgentStreaming || !irAgentInput.trim()}
+                                                >
+                                                    {irAgentStreaming && (
+                                                        <Spinner
+                                                            as="span"
+                                                            animation="border"
+                                                            size="sm"
+                                                            role="status"
+                                                            aria-hidden="true"
+                                                            className="me-2"
+                                                        />
+                                                    )}
+                                                    Ask
+                                                </SpkButton>
+                                            </Card.Footer>
+                                        </Card>
                                     </Col>
                                 </Row>
                             </Tab.Pane>
