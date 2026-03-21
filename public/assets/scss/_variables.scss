@@ -213,8 +213,8 @@ $black-9: var(--black-9);
 
 /* dark mode */
 [data-theme-mode="dark"] {
-	--body-bg-rgb: 29, 29, 66;
-    --body-bg-rgb2: 20, 20, 50;
+	--body-bg-rgb: 10, 10, 10;
+	--body-bg-rgb2: 24, 24, 24;
 	--menu-bg: rgb(var(--body-bg-rgb));
 	--menu-border-color: rgba(255, 255, 255, 0.1);
 	--menu-prime-color: rgba(255,255,255,0.4);

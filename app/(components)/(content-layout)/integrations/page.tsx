@@ -1,9 +1,32 @@
 "use client"
 import React, { useState, useEffect, useMemo, Fragment } from "react";
 import { Card, Col, Row, Button, Form, InputGroup, Dropdown, Modal, Spinner } from "react-bootstrap";
-import Pageheader from "@/shared/layouts-components/pageheader/pageheader";
+import Image from "next/image";
 import Seo from "@/shared/layouts-components/seo/seo";
-// Integration interfaces
+import { supabase } from "@/shared/lib/supabase";
+import { useTenantContext } from "@/shared/contextapi/TenantContext";
+
+interface ToolFieldRequirement {
+    id: string;
+    type: 'string' | 'boolean' | 'string_list' | 'select' | 'number';
+    label: string;
+    required?: boolean;
+    default?: unknown;
+    options?: { label: string; value: string }[];
+    required_when?: { all?: Array<{ field: string; equals: unknown }> };
+    help?: string;
+    min?: number;
+    max?: number;
+    placeholder?: string;
+}
+
+interface MarketplaceTool {
+    name: string;
+    type?: string;
+    description?: string;
+    when_enabled?: { fields: ToolFieldRequirement[] };
+}
+
 interface IntegrationType {
     id: number;
     name: string;
@@ -15,6 +38,7 @@ interface IntegrationType {
     status: 'active' | 'inactive' | 'pending';
     statusColor: string;
     parameters: IntegrationParameter[];
+    tools?: MarketplaceTool[];
     modal_info?: string;
 }
 
@@ -28,11 +52,7 @@ interface IntegrationParameter {
     description?: string;
     options?: { label: string; value: string }[];
 }
-import { supabase } from "@/shared/lib/supabase";
-import Image from "next/image";
-import { useTenantContext } from "@/shared/contextapi/TenantContext";
 
-// Supabase integration instances table interface
 interface IntegrationInstance {
     id: number;
     integration_id: number;
@@ -50,26 +70,149 @@ interface IntegrationInstance {
     updated_at?: string;
 }
 
-// Supabase marketplace table interface
-interface SupabaseIntegration {
-    id: number;
-    name: string;
-    version: string;
-    category: string;
-    logo: string;
-    description: string;
-    configured_instances: number;
-    content_pack: string;
-    status: 'active' | 'inactive' | 'pending';
-    status_color: string;
-    parameters: IntegrationParameter[];
-    created_at?: string;
-    updated_at?: string;
+interface InstanceToolRow {
+    tool_name: string;
+    status?: string;
+    allowed_role?: string | null;
+    approval_required?: boolean | null;
+    approver_emails?: string | null;
+    severity?: string | null;
+    type?: string | null;
 }
 
-interface IntegrationsListProps {}
+function getToolFieldList(tool: MarketplaceTool): ToolFieldRequirement[] {
+    return tool.when_enabled?.fields ?? [];
+}
 
-const IntegrationsList: React.FC<IntegrationsListProps> = () => {
+function initEmptyToolConfig(tool: MarketplaceTool): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const f of getToolFieldList(tool)) {
+        if (f.default !== undefined) {
+            out[f.id] = f.default;
+        } else if (f.type === 'boolean') {
+            out[f.id] = false;
+        } else if (f.type === 'string_list') {
+            out[f.id] = '';
+        } else if (f.type === 'number') {
+            out[f.id] = '';
+        } else {
+            out[f.id] = '';
+        }
+    }
+    return out;
+}
+
+function shouldShowToolField(field: ToolFieldRequirement, values: Record<string, unknown>): boolean {
+    const cond = field.required_when?.all;
+    if (!cond?.length) return true;
+    return cond.every((c) => values[c.field] === c.equals);
+}
+
+function isToolFieldRequiredNow(field: ToolFieldRequirement, values: Record<string, unknown>): boolean {
+    if (!shouldShowToolField(field, values)) return false;
+    if (field.required === true) return true;
+    // Only `required_when` (no `required`) → treat as required when the conditional block is visible
+    if (field.required_when?.all?.length) return true;
+    return false;
+}
+
+function validateToolPolicies(
+    tools: MarketplaceTool[],
+    toolToggles: Record<string, boolean>,
+    toolConfigs: Record<string, Record<string, unknown>>
+): { [key: string]: string } {
+    const errors: { [key: string]: string } = {};
+    for (const tool of tools) {
+        if (!toolToggles[tool.name]) continue;
+        const values = toolConfigs[tool.name] ?? {};
+        for (const field of getToolFieldList(tool)) {
+            if (!shouldShowToolField(field, values)) continue;
+            const errKey = `tool_${tool.name}_${field.id}`;
+            const required = isToolFieldRequiredNow(field, values);
+            if (!required) continue;
+            const v = values[field.id];
+            if (field.type === 'boolean') {
+                if (v === undefined || v === null) {
+                    errors[errKey] = `${field.label} is required`;
+                }
+                continue;
+            }
+            if (field.type === 'string_list') {
+                const s = typeof v === 'string' ? v : '';
+                const parts = s
+                    .split(/[\n,]+/)
+                    .map((x) => x.trim())
+                    .filter(Boolean);
+                if (parts.length === 0) {
+                    errors[errKey] = `${field.label} is required`;
+                }
+                continue;
+            }
+            if (field.type === 'number') {
+                const n = v === '' || v === undefined || v === null ? NaN : Number(v);
+                if (Number.isNaN(n)) {
+                    errors[errKey] = `${field.label} is required`;
+                }
+                continue;
+            }
+            const str = v === undefined || v === null ? '' : String(v).trim();
+            if (str === '') {
+                errors[errKey] = `${field.label} is required`;
+            }
+        }
+    }
+    return errors;
+}
+
+function formatApproverEmailsForDb(val: unknown): string | null {
+    if (val == null || val === '') return null;
+    if (Array.isArray(val)) {
+        const parts = val.map((x) => String(x).trim()).filter(Boolean);
+        return parts.length ? parts.join(', ') : null;
+    }
+    const s = String(val).trim();
+    if (!s) return null;
+    const parts = s.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean);
+    return parts.length ? parts.join(', ') : null;
+}
+
+function buildInstanceToolInsertRow(
+    tool: MarketplaceTool,
+    config: Record<string, unknown>,
+    instanceName: string,
+    instanceId: number,
+    tenantId: string | null
+): Record<string, unknown> {
+    return {
+        tool_name: tool.name,
+        instance_name: instanceName,
+        instance_id: instanceId,
+        status: 'Enabled',
+        allowed_role: (config.allowed_role != null ? String(config.allowed_role).trim() : '') || null,
+        approval_required: config.approval_required === true,
+        approver_emails: formatApproverEmailsForDb(config.approver_emails),
+        severity: (config.severity != null ? String(config.severity).trim() : '') || null,
+        type: tool.type ?? null,
+        tenant_id: tenantId,
+    };
+}
+
+function applyInstanceRowToToolConfig(tool: MarketplaceTool, row?: InstanceToolRow): Record<string, unknown> {
+    const base = initEmptyToolConfig(tool);
+    if (!row) return base;
+    const ext = row as unknown as Record<string, unknown>;
+    for (const f of getToolFieldList(tool)) {
+        const id = f.id;
+        const val = ext[id];
+        if (val === undefined || val === null) continue;
+        if (f.type === 'boolean') base[id] = val === true;
+        else if (f.type === 'string_list') base[id] = String(val);
+        else base[id] = val;
+    }
+    return base;
+}
+
+const IntegrationsList = () => {
     // Context hooks
     const { assignedTenants, selectedTenantIds } = useTenantContext();
     
@@ -91,6 +234,9 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [checkboxStates, setCheckboxStates] = useState<{ [key: number]: boolean }>({});
+    const [toolToggles, setToolToggles] = useState<Record<string, boolean>>({});
+    /** Per-tool config: field id → value (from marketplace when_enabled.fields) */
+    const [toolConfigs, setToolConfigs] = useState<Record<string, Record<string, unknown>>>({});
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -156,6 +302,7 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
                     status: item.status,
                     statusColor: item.status_color,
                     parameters: item.parameters || [],
+                    tools: item.tools || [],
                     modal_info: item.modal_info || ''
                 })) || [];
                 setIntegrations(transformedData);
@@ -247,8 +394,25 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
         return integrationInstances.filter(instance => instance.integration_id === integrationId);
     };
 
+    const fetchEnabledToolsForInstance = async (instanceId: number): Promise<InstanceToolRow[]> => {
+        const { data, error } = await supabase
+            .from('instance_tools')
+            .select('*')
+            .eq('instance_id', instanceId);
+
+        if (error) {
+            console.error('Error fetching instance tools:', error);
+            return [];
+        }
+
+        return (data || []).filter((row: InstanceToolRow & { status?: string }) => {
+            const status = (row?.status || "").toString().toLowerCase();
+            return status === "enabled" || status === "true";
+        }) as InstanceToolRow[];
+    };
+
     // Handle edit instance
-    const handleEditInstance = (instance: IntegrationInstance, integration: IntegrationType) => {
+    const handleEditInstance = async (instance: IntegrationInstance, integration: IntegrationType) => {
         setSelectedInstance(instance);
         setSelectedIntegration(integration);
         setFormData({
@@ -259,6 +423,30 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
             mapper: instance.mapper || ''
         });
         setFormErrors({});
+
+        // Reset toggles immediately to avoid showing stale values
+        const tools = integration.tools || [];
+        const nextToolToggles: Record<string, boolean> = {};
+        const nextToolConfigs: Record<string, Record<string, unknown>> = {};
+        tools.forEach((tool) => {
+            nextToolToggles[tool.name] = false;
+            nextToolConfigs[tool.name] = initEmptyToolConfig(tool);
+        });
+        setToolToggles(nextToolToggles);
+        setToolConfigs(nextToolConfigs);
+
+        // Prefill tool toggles from instance_tools for the specific configured instance
+        const enabledTools = await fetchEnabledToolsForInstance(instance.id);
+        const enabledToolNames = new Set(enabledTools.map((t) => t.tool_name));
+
+        tools.forEach((tool) => {
+            nextToolToggles[tool.name] = enabledToolNames.has(tool.name);
+            const row = enabledTools.find((t) => t.tool_name === tool.name);
+            nextToolConfigs[tool.name] = applyInstanceRowToToolConfig(tool, row);
+        });
+
+        setToolToggles({ ...nextToolToggles });
+        setToolConfigs({ ...nextToolConfigs });
         setShowEditInstanceModal(true);
     };
 
@@ -278,8 +466,20 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
     // Handle add instance button click
     const handleAddInstance = (integration: IntegrationType) => {
         setSelectedIntegration(integration);
+
+        const tools = integration.tools || [];
+        const nextToolToggles: Record<string, boolean> = {};
+        const nextToolConfigs: Record<string, Record<string, unknown>> = {};
+        tools.forEach((tool) => {
+            nextToolToggles[tool.name] = false;
+            nextToolConfigs[tool.name] = initEmptyToolConfig(tool);
+        });
+        setToolToggles(nextToolToggles);
+        setToolConfigs(nextToolConfigs);
+
         setFormData({
-            instance_name: `${integration.name} Instance`,
+            // Start empty so the user explicitly enters the instance name.
+            instance_name: '',
             incident_type: '',
             classifier: '',
             mapper: ''
@@ -322,8 +522,11 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
             }
         });
 
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
+        const tools = selectedIntegration.tools || [];
+        const toolPolicyErrors = validateToolPolicies(tools, toolToggles, toolConfigs);
+        const merged = { ...errors, ...toolPolicyErrors };
+        setFormErrors(merged);
+        return Object.keys(merged).length === 0;
     };
 
     // Handle test connection (for form in modal)
@@ -338,9 +541,11 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
             // For now, just show success
             setModalMessage('Connection test successful!');
             setShowSuccessModal(true);
+            setShowErrorModal(false);
         } catch (error) {
             setModalMessage('Connection test failed. Please check your parameters.');
             setShowErrorModal(true);
+            setShowSuccessModal(false);
         } finally {
             setIsTesting(false);
         }
@@ -355,9 +560,11 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
             
             setModalMessage(`Connection test successful for ${instance.instance_name}!`);
             setShowSuccessModal(true);
+            setShowErrorModal(false);
         } catch (error) {
             setModalMessage(`Connection test failed for ${instance.instance_name}. Please check your configuration.`);
             setShowErrorModal(true);
+            setShowSuccessModal(false);
         } finally {
             setTestingInstanceId(null);
         }
@@ -390,6 +597,7 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
         if (!tenantId) {
             setModalMessage('No tenant selected. Please select a tenant first.');
             setShowErrorModal(true);
+            setShowSuccessModal(false);
             return;
         }
 
@@ -397,6 +605,7 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
         try {
             // Extract instance_name, incident_type, classifier, mapper from formData and create configuration without them
             const { instance_name, incident_type, classifier, mapper, ...configuration } = formData;
+            const instanceNameToSave = instance_name?.toString().trim() || `${selectedIntegration.name} Instance`;
             
             // Save instance to Supabase
             const { data, error } = await supabase
@@ -407,7 +616,7 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
                     tenant_name: tenantName,
                     name: selectedIntegration.name,
                     logo: selectedIntegration.logo,
-                    instance_name: instance_name?.toString().trim() || `${selectedIntegration.name} Instance`,
+                    instance_name: instanceNameToSave,
                     incident_type: incident_type?.toString().trim() || null,
                     classifier: classifier?.toString().trim() || null,
                     mapper: mapper?.toString().trim() || null,
@@ -420,7 +629,38 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
                 console.error('Error saving instance:', error);
                 setModalMessage(`Failed to save integration instance: ${error.message || 'Unknown error'}`);
                 setShowErrorModal(true);
+                setShowSuccessModal(false);
                 return;
+            }
+
+            // Save enabled tools for this instance
+            const insertedInstance = data?.[0];
+            const insertedInstanceId = insertedInstance?.id;
+            const tools = selectedIntegration.tools || [];
+            const enabledTools = tools.filter((tool) => toolToggles[tool.name]);
+
+            if (insertedInstanceId && enabledTools.length > 0) {
+                const { error: toolsError } = await supabase
+                    .from("instance_tools")
+                    .insert(
+                        enabledTools.map((tool) =>
+                            buildInstanceToolInsertRow(
+                                tool,
+                                toolConfigs[tool.name] ?? {},
+                                instanceNameToSave,
+                                insertedInstanceId,
+                                tenantId
+                            )
+                        )
+                    );
+
+                if (toolsError) {
+                    console.error("Error saving instance tools:", toolsError);
+                    setModalMessage(`Failed to save tools for integration instance: ${toolsError.message || "Unknown error"}`);
+                    setShowErrorModal(true);
+                    setShowSuccessModal(false);
+                    return;
+                }
             }
 
             // Update the integration's configured instances count
@@ -442,12 +682,16 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
             setShowAddInstanceModal(false);
             setFormData({});
             setFormErrors({});
+            setToolToggles({});
+            setToolConfigs({});
             setModalMessage('Integration instance saved successfully!');
             setShowSuccessModal(true);
+            setShowErrorModal(false);
         } catch (error: any) {
             console.error('Error saving instance:', error);
             setModalMessage(`Failed to save integration instance: ${error?.message || 'Unknown error'}`);
             setShowErrorModal(true);
+            setShowSuccessModal(false);
         } finally {
             setIsSaving(false);
         }
@@ -461,12 +705,13 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
         try {
             // Extract instance_name, incident_type, classifier, mapper from formData and create configuration without them
             const { instance_name, incident_type, classifier, mapper, ...configuration } = formData;
+            const instanceNameToSave = instance_name?.toString().trim() || selectedInstance.instance_name;
             
             // Update instance in Supabase
             const { error } = await supabase
                 .from('integration_instances')
                 .update({
-                    instance_name: instance_name?.toString().trim() || selectedInstance.instance_name,
+                    instance_name: instanceNameToSave,
                     incident_type: incident_type?.toString().trim() || null,
                     classifier: classifier?.toString().trim() || null,
                     mapper: mapper?.toString().trim() || null,
@@ -478,7 +723,49 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
                 console.error('Error updating instance:', error);
                 setModalMessage(`Failed to update integration instance: ${error.message || 'Unknown error'}`);
                 setShowErrorModal(true);
+                setShowSuccessModal(false);
                 return;
+            }
+
+            // Sync enabled tools in instance_tools table
+            const tools = selectedIntegration?.tools || [];
+            const enabledTools = tools.filter((tool) => toolToggles[tool.name]);
+
+            const { error: deleteToolsError } = await supabase
+                .from("instance_tools")
+                .delete()
+                .eq("instance_id", selectedInstance.id);
+
+            if (deleteToolsError) {
+                console.error("Error deleting instance tools:", deleteToolsError);
+                setModalMessage(`Failed to sync tools: ${deleteToolsError.message || "Unknown error"}`);
+                setShowErrorModal(true);
+                setShowSuccessModal(false);
+                return;
+            }
+
+            if (enabledTools.length > 0) {
+                const { error: insertToolsError } = await supabase
+                    .from("instance_tools")
+                    .insert(
+                        enabledTools.map((tool) =>
+                            buildInstanceToolInsertRow(
+                                tool,
+                                toolConfigs[tool.name] ?? {},
+                                instanceNameToSave,
+                                selectedInstance.id,
+                                selectedInstance.tenant_id ?? null
+                            )
+                        )
+                    );
+
+                if (insertToolsError) {
+                    console.error("Error inserting instance tools:", insertToolsError);
+                    setModalMessage(`Failed to sync tools: ${insertToolsError.message || "Unknown error"}`);
+                    setShowErrorModal(true);
+                    setShowSuccessModal(false);
+                    return;
+                }
             }
 
             // Refresh instances list
@@ -487,12 +774,16 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
             setShowEditInstanceModal(false);
             setFormData({});
             setFormErrors({});
+            setToolToggles({});
+            setToolConfigs({});
             setModalMessage('Integration instance updated successfully!');
             setShowSuccessModal(true);
+            setShowErrorModal(false);
         } catch (error: any) {
             console.error('Error updating instance:', error);
             setModalMessage(`Failed to update integration instance: ${error?.message || 'Unknown error'}`);
             setShowErrorModal(true);
+            setShowSuccessModal(false);
         } finally {
             setIsUpdating(false);
         }
@@ -500,7 +791,11 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
 
     // Render parameter input based on type
     const renderParameterInput = (param: IntegrationParameter) => {
-        const value = formData[param.id] || param.defaultValue || '';
+        // When adding a new instance we should not prefill any defaults from the marketplace.
+        // When editing an instance, we keep showing whatever is in `formData` (loaded from instance configuration).
+        const rawValue = formData[param.id];
+        const shouldUseDefault = showEditInstanceModal && rawValue === undefined;
+        const value = rawValue ?? (shouldUseDefault ? (param.defaultValue ?? '') : '');
         const error = formErrors[param.id];
 
         switch (param.type) {
@@ -585,6 +880,225 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
                     />
                 );
         }
+    };
+
+    const setToolConfigValue = (toolName: string, fieldId: string, value: unknown) => {
+        setToolConfigs((prev) => ({
+            ...prev,
+            [toolName]: { ...(prev[toolName] || {}), [fieldId]: value },
+        }));
+        const errKey = `tool_${toolName}_${fieldId}`;
+        setFormErrors((prev) => {
+            if (!prev[errKey]) return prev;
+            const next = { ...prev };
+            delete next[errKey];
+            return next;
+        });
+    };
+
+    const renderToolMarketplaceField = (tool: MarketplaceTool, field: ToolFieldRequirement, idPrefix: string) => {
+        const merged = { ...initEmptyToolConfig(tool), ...(toolConfigs[tool.name] || {}) };
+        if (!shouldShowToolField(field, merged)) return null;
+        const errKey = `tool_${tool.name}_${field.id}`;
+        const err = formErrors[errKey];
+        const v = merged[field.id];
+
+        const label = (
+            <Form.Label className="small mb-1">
+                {field.label}
+                {isToolFieldRequiredNow(field, merged) && <span className="text-danger ms-1">*</span>}
+            </Form.Label>
+        );
+
+        let control: React.ReactElement | null = null;
+        switch (field.type) {
+            case 'boolean':
+                control = (
+                    <Form.Check
+                        type="switch"
+                        id={`${idPrefix}-tool-${tool.name}-${field.id}`}
+                        label={
+                            <span className="form-label small mb-0">
+                                {field.label}
+                            </span>
+                        }
+                        checked={v === true}
+                        onChange={(e) => setToolConfigValue(tool.name, field.id, e.target.checked)}
+                        isInvalid={!!err}
+                    />
+                );
+                break;
+            case 'string_list':
+                control = (
+                    <>
+                        {label}
+                        <Form.Control
+                            as="textarea"
+                            rows={2}
+                            id={`${idPrefix}-tool-${tool.name}-${field.id}`}
+                            size="sm"
+                            value={v == null ? '' : String(v)}
+                            placeholder={field.placeholder || field.help}
+                            onChange={(e) => setToolConfigValue(tool.name, field.id, e.target.value)}
+                            isInvalid={!!err}
+                        />
+                    </>
+                );
+                break;
+            case 'select':
+                control = (
+                    <>
+                        {label}
+                        <Form.Select
+                            size="sm"
+                            id={`${idPrefix}-tool-${tool.name}-${field.id}`}
+                            value={v == null ? '' : String(v)}
+                            onChange={(e) => setToolConfigValue(tool.name, field.id, e.target.value)}
+                            isInvalid={!!err}
+                        >
+                            <option value="">Select {field.label}</option>
+                            {field.options?.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </>
+                );
+                break;
+            case 'number':
+                control = (
+                    <>
+                        {label}
+                        <Form.Control
+                            type="number"
+                            size="sm"
+                            id={`${idPrefix}-tool-${tool.name}-${field.id}`}
+                            value={
+                                v === '' || v === undefined || v === null
+                                    ? ''
+                                    : String(v)
+                            }
+                            min={field.min}
+                            max={field.max}
+                            onChange={(e) => {
+                                const raw = e.target.value;
+                                setToolConfigValue(
+                                    tool.name,
+                                    field.id,
+                                    raw === '' ? '' : Number(raw)
+                                );
+                            }}
+                            isInvalid={!!err}
+                        />
+                    </>
+                );
+                break;
+            default:
+                control = (
+                    <>
+                        {label}
+                        <Form.Control
+                            type="text"
+                            size="sm"
+                            id={`${idPrefix}-tool-${tool.name}-${field.id}`}
+                            value={v == null ? '' : String(v)}
+                            placeholder={field.placeholder}
+                            onChange={(e) => setToolConfigValue(tool.name, field.id, e.target.value)}
+                            isInvalid={!!err}
+                        />
+                    </>
+                );
+        }
+
+        return (
+            <Form.Group key={field.id} className="mb-2">
+                {field.type === 'boolean' ? (
+                    <>
+                        {control}
+                        {err && <div className="text-danger small mt-1">{err}</div>}
+                    </>
+                ) : (
+                    <>
+                        {control}
+                        {field.help && <Form.Text className="text-muted">{field.help}</Form.Text>}
+                        {err && <div className="invalid-feedback d-block">{err}</div>}
+                    </>
+                )}
+            </Form.Group>
+        );
+    };
+
+    const renderToolsSidebar = (switchIdPrefix: string, marketplaceFieldPrefix: string) => {
+        const tools = selectedIntegration?.tools || [];
+        return (
+            <div className="mt-4">
+                <div className="d-flex justify-content-between align-items-center">
+                    <h6 className="mb-0">Tools</h6>
+                </div>
+                <div className="d-flex flex-column gap-2 mt-2">
+                    {tools.length === 0 ? (
+                        <div className="text-muted">No tools defined for this integration.</div>
+                    ) : (
+                        tools.map((tool) => {
+                            const enabled = !!toolToggles[tool.name];
+                            const fields = getToolFieldList(tool);
+                            return (
+                                <div key={tool.name} className="border rounded p-2">
+                                    <div className="d-flex justify-content-between align-items-start gap-2">
+                                        <div>
+                                            <span className="fw-medium">{tool.name}</span>
+                                            {tool.type ? (
+                                                <span className="text-muted small ms-2">({tool.type})</span>
+                                            ) : null}
+                                        </div>
+                                        <Form.Check
+                                            type="switch"
+                                            id={`${switchIdPrefix}-${tool.name}`}
+                                            label={enabled ? 'Enabled' : 'Disabled'}
+                                            checked={enabled}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setToolToggles((prev) => ({
+                                                    ...prev,
+                                                    [tool.name]: checked,
+                                                }));
+                                                if (checked) {
+                                                    setToolConfigs((prev) => ({
+                                                        ...prev,
+                                                        [tool.name]: {
+                                                            ...initEmptyToolConfig(tool),
+                                                            ...prev[tool.name],
+                                                        },
+                                                    }));
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    {enabled && fields.length > 0 && (
+                                        <Card className="mt-2 bg-light border-0">
+                                            <Card.Body className="py-2 px-2">
+                                                <div className="small fw-semibold text-muted mb-2">
+                                                    Tool configuration
+                                                </div>
+                                                {fields.map((field) =>
+                                                    renderToolMarketplaceField(tool, field, marketplaceFieldPrefix)
+                                                )}
+                                            </Card.Body>
+                                        </Card>
+                                    )}
+                                    {enabled && fields.length === 0 && (
+                                        <div className="text-muted small mt-2">
+                                            No extra configuration for this tool.
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -906,6 +1420,8 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
                                             __html: selectedIntegration.modal_info || '<p class="text-muted">No information available.</p>' 
                                         }}
                                     />
+
+                                    {renderToolsSidebar('tool-switch-right', 'add')}
                                 </div>
                             </Col>
                         </Row>
@@ -1043,6 +1559,7 @@ const IntegrationsList: React.FC<IntegrationsListProps> = () => {
                                             __html: selectedIntegration.modal_info || '<p class="text-muted">No information available.</p>' 
                                         }}
                                     />
+                                    {renderToolsSidebar('tool-switch-edit-right', 'edit')}
                                 </div>
                             </Col>
                         </Row>

@@ -101,6 +101,7 @@ export const MENUITEMS: Menuitemtype[] = [
     title: "Context Memory", icon: ContextMemoryicon, type: "sub", active: false, dirchange: false, children: [
       { path: "/environment-context", type: "link", active: false, selected: false, dirchange: false, title: "Environment Context" },
       { path: "/investigation-context", type: "link", active: false, selected: false, dirchange: false, title: "Investigation Context" },
+      { path: "/response-context", type: "link", active: false, selected: false, dirchange: false, title: "Response Context" },
     ]
   },
 

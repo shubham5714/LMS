@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { supabase } from '@/shared/lib/supabase';
 import { useTenantContext } from '@/shared/contextapi/TenantContext';
 import { useDateRangeContext } from '@/shared/contextapi/DateRangeContext';
@@ -14,6 +14,23 @@ const THEME = {
   orangeHex: '#ff8100',
   grayHex: '#7987a1',
 };
+
+const FLOW_LINE_LIGHT = '#64748b';
+
+function subscribeHtmlThemeMode(onChange: () => void) {
+  const root = document.documentElement;
+  const obs = new MutationObserver(onChange);
+  obs.observe(root, { attributes: true, attributeFilter: ['data-theme-mode'] });
+  return () => obs.disconnect();
+}
+
+function getIsDarkThemeMode(): boolean {
+  return document.documentElement.getAttribute('data-theme-mode') === 'dark';
+}
+
+function useIsDarkThemeMode(): boolean {
+  return useSyncExternalStore(subscribeHtmlThemeMode, getIsDarkThemeMode, () => false);
+}
 
 /** Data source: name + optional icon (Remix class or image src). */
 export interface DataSourceItem {
@@ -50,6 +67,7 @@ export interface SecurityDashboardWidgetProps {
 }
 
 export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: SecurityDashboardWidgetProps) {
+  const isDark = useIsDarkThemeMode();
   const flowCanvasRef = useRef<HTMLCanvasElement>(null);
   const orbCanvasRef = useRef<HTMLCanvasElement>(null);
   const caseCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -237,7 +255,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
 
-    const flowColor = THEME.grayHex;
+    const flowColor = isDark ? THEME.grayHex : FLOW_LINE_LIGHT;
     let animId: number;
     let W = canvasEl.width;
     let H = canvasEl.height;
@@ -317,7 +335,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
       cancelAnimationFrame(animId);
       ro.disconnect();
     };
-  }, []);
+  }, [isDark]);
 
   // Orb canvas
   useEffect(() => {
@@ -432,6 +450,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
       ctxNonNull.stroke();
     }
 
+    const flowGray = isDark ? THEME.grayHex : FLOW_LINE_LIGHT;
     let animId: number;
     function draw() {
       W = canvasEl.width;
@@ -444,9 +463,9 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
 
       ctxNonNull.clearRect(0, 0, W, H);
       drawPath(src, { x: src.x + 60, y: src.y }, { x: autoN.x - 60, y: autoN.y }, autoN, THEME.primaryHex, 20);
-      drawPath(src, { x: src.x + 60, y: src.y }, { x: manN.x - 60, y: manN.y }, manN, THEME.grayHex, 8);
+      drawPath(src, { x: src.x + 60, y: src.y }, { x: manN.x - 60, y: manN.y }, manN, flowGray, 8);
       drawPath(autoN, { x: autoN.x + 60, y: autoN.y }, { x: resolvedEnd.x - 60, y: resolvedEnd.y }, resolvedEnd, THEME.primaryHex, 18);
-      drawPath(manN, { x: manN.x + 60, y: manN.y }, { x: openEnd.x - 60, y: openEnd.y }, openEnd, THEME.grayHex, 6);
+      drawPath(manN, { x: manN.x + 60, y: manN.y }, { x: openEnd.x - 60, y: openEnd.y }, openEnd, flowGray, 6);
       // Automated → Open Investigations: gentle S-bend (larger radius), with moving particles
       const autoToOpenC1 = { x: W * 0.48, y: H * 0.20 };
       const autoToOpenC2 = { x: W * 0.56, y: H * 0.78 };
@@ -454,7 +473,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
       // Manual → Auto Resolved: gentle S-bend (larger radius), manual color style
       const manToResolvedC1 = { x: W * 0.48, y: H * 0.80 };
       const manToResolvedC2 = { x: W * 0.56, y: H * 0.22 };
-      drawPath(manN, manToResolvedC1, manToResolvedC2, resolvedEnd, THEME.grayHex, 6);
+      drawPath(manN, manToResolvedC1, manToResolvedC2, resolvedEnd, flowGray, 6);
 
       particles.forEach((p) => {
         p.t += p.speed;
@@ -478,7 +497,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
         }
         ctxNonNull.beginPath();
         ctxNonNull.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
-        ctxNonNull.fillStyle = (p.toAuto ? THEME.primaryHex : THEME.grayHex) + 'cc';
+        ctxNonNull.fillStyle = (p.toAuto ? THEME.primaryHex : flowGray) + 'cc';
         ctxNonNull.fill();
       });
       animId = requestAnimationFrame(draw);
@@ -488,7 +507,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
       cancelAnimationFrame(animId);
       ro.disconnect();
     };
-  }, []);
+  }, [isDark]);
 
   return (
     <div ref={containerRef} className="sec-dash-dashboard">
@@ -498,7 +517,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           max-width: none;
           min-height: calc(100vh - 8rem);
           height: 100%;
-          background: #0d0c20 !important;
+          background: #ffffff !important;
           border: 1px solid rgba(121, 97, 245, 0.35) !important;
           border-radius: 0;
           display: grid;
@@ -506,8 +525,12 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           grid-template-rows: auto 1fr;
           overflow: hidden;
           position: relative;
-          color-scheme: dark;
+          color-scheme: light;
           padding-inline-start: 0.75rem;
+        }
+        [data-theme-mode="dark"] .sec-dash-dashboard {
+          background: var(--custom-white) !important;
+          color-scheme: dark;
         }
         .sec-dash-dashboard .sec-dash-title {
           grid-column: 1 / -1;
@@ -516,8 +539,11 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           font-family: var(--default-font-family, "Poppins", sans-serif);
           font-size: 1.125rem;
           font-weight: 500;
-          color: #e8f4f8 !important;
+          color: #191919 !important;
           flex-shrink: 0;
+        }
+        [data-theme-mode="dark"] .sec-dash-dashboard .sec-dash-title {
+          color: #e8f4f8 !important;
         }
         .sec-dash-left {
           display: flex;
@@ -553,6 +579,9 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           align-items: center;
           gap: 7px;
           font-size: 14px;
+          color: #5c708f !important;
+        }
+        [data-theme-mode="dark"] .sec-dash-source-row {
           color: #90a4ae !important;
         }
         .sec-dash-source-row .sec-dash-dot {
@@ -565,12 +594,18 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           flex-shrink: 0;
         }
         .sec-dash-source-row .sec-dash-dot-manual {
+          color: #7987a1 !important;
+        }
+        [data-theme-mode="dark"] .sec-dash-source-row .sec-dash-dot-manual {
           color: #9ba5b8 !important;
         }
         .sec-dash-source-row .sec-dash-source-icon {
           font-size: 14px;
-          color: #90a4ae !important;
+          color: #5c708f !important;
           flex-shrink: 0;
+        }
+        [data-theme-mode="dark"] .sec-dash-source-row .sec-dash-source-icon {
+          color: #90a4ae !important;
         }
         .sec-dash-source-row .sec-dash-source-logo {
           width: 20px;
@@ -606,15 +641,21 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
         .sec-dash-big-num {
           font-size: 42px;
           font-weight: 200;
-          color: #e8f4f8 !important;
+          color: #191919 !important;
           letter-spacing: -2px;
           line-height: 1;
         }
+        [data-theme-mode="dark"] .sec-dash-big-num {
+          color: #e8f4f8 !important;
+        }
         .sec-dash-label {
-          color: #fff !important;
+          color: #383853 !important;
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
+        }
+        [data-theme-mode="dark"] .sec-dash-label {
+          color: #fff !important;
         }
         .sec-dash-right {
           position: relative;
@@ -657,12 +698,17 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           width: 30px;
           height: 30px;
           background: transparent !important;
-          border: 1.5px solid #9ba5b8 !important;
-          color: #fff !important;
-          filter: brightness(0) invert(1);
+          border: 1.5px solid #64748b !important;
+          color: #334155 !important;
+          filter: none;
           top: 72%;
           left: 30%;
           transform: translate(-50%, -50%);
+        }
+        [data-theme-mode="dark"] .sec-dash-node-manual {
+          border: 1.5px solid #9ba5b8 !important;
+          color: #fff !important;
+          filter: brightness(0) invert(1);
         }
         .sec-dash-stat {
           position: absolute;
@@ -670,11 +716,17 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
         .sec-dash-stat .sec-dash-n {
           font-size: 30px;
           font-weight: 200;
-          color: #e8f4f8 !important;
+          color: #191919 !important;
           line-height: 1;
+        }
+        [data-theme-mode="dark"] .sec-dash-stat .sec-dash-n {
+          color: #e8f4f8 !important;
         }
         .sec-dash-stat .sec-dash-l {
           font-size: 13px;
+          color: #383853 !important;
+        }
+        [data-theme-mode="dark"] .sec-dash-stat .sec-dash-l {
           color: #fff !important;
         }
         .sec-dash-open-rows {

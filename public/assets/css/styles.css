@@ -162,8 +162,8 @@ typography
 /*black set*/
 /* dark mode */
 [data-theme-mode=dark] {
-  --body-bg-rgb: 29, 29, 66;
-  --body-bg-rgb2: 20, 20, 50;
+  --body-bg-rgb: 10, 10, 10;
+  --body-bg-rgb2: 24, 24, 24;
   --menu-bg: rgb(var(--body-bg-rgb));
   --menu-border-color: rgba(255, 255, 255, 0.1);
   --menu-prime-color: rgba(255,255,255,0.4);
@@ -4425,6 +4425,12 @@ textarea.form-control-lg {
 
 [data-bs-theme=dark] .form-switch .form-check-input:not(:checked):not(:focus) {
   --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255, 255, 255, 0.25%29'/%3e%3c/svg%3e");
+}
+
+[data-theme-mode=dark] .form-switch .form-check-input:not(:checked):not(:focus) {
+  --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255, 255, 255, 0.5%29'/%3e%3c/svg%3e");
+  --bs-form-check-bg: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .form-range {
@@ -27795,8 +27801,7 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
   flex: 1 1 0;
   min-height: 0;
   display: flex;
-  background: #0d0c20 !important;
-  color-scheme: dark;
+  background: transparent !important;
 }
 
 .analytics-page-full-dashboard .analytics-security-dashboard-wrapper .sec-dash-dashboard {

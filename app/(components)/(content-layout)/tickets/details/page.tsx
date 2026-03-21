@@ -244,8 +244,32 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
     const [irAgentInput, setIrAgentInput] = useState('');
     const [irAgentMessages, setIrAgentMessages] = useState<{ id: number; role: 'user' | 'assistant'; content: string }[]>([]);
     const [irAgentStreaming, setIrAgentStreaming] = useState(false);
+    const [irAgentButtonText, setIrAgentButtonText] = useState<string>('Thinking...');
+    const [irAgentPendingAssistantId, setIrAgentPendingAssistantId] = useState<number | null>(null);
     const irAgentAbortRef = React.useRef<AbortController | null>(null);
     const irAgentMessagesEndRef = React.useRef<HTMLDivElement | null>(null);
+    const irAgentStatusIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startIrAgentStatusCycle = () => {
+        setIrAgentButtonText('Thinking...');
+        if (irAgentStatusIntervalRef.current) {
+            clearInterval(irAgentStatusIntervalRef.current);
+            irAgentStatusIntervalRef.current = null;
+        }
+
+        irAgentStatusIntervalRef.current = setInterval(() => {
+            setIrAgentButtonText((prev) =>
+                prev === 'Thinking...' ? 'Checking Knowledgebase....' : 'Thinking...'
+            );
+        }, 2000);
+    };
+
+    const stopIrAgentStatusCycle = () => {
+        if (irAgentStatusIntervalRef.current) {
+            clearInterval(irAgentStatusIntervalRef.current);
+            irAgentStatusIntervalRef.current = null;
+        }
+    };
 
     const handleNoteContentClick = (e: React.MouseEvent) => {
         const target = e.target;
@@ -277,6 +301,12 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
         }
     }, [irAgentMessages]);
 
+    useEffect(() => {
+        return () => {
+            stopIrAgentStatusCycle();
+        };
+    }, []);
+
     const handleIrAgentAsk = async () => {
         if (!irAgentInput.trim() || irAgentStreaming) return;
 
@@ -295,14 +325,20 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
         const controller = new AbortController();
         irAgentAbortRef.current = controller;
         setIrAgentStreaming(true);
+        startIrAgentStatusCycle();
+        setIrAgentPendingAssistantId(assistantMessageId);
+
+        let assistantContent = '';
+        let assistantErrorMessage: string | null = null;
 
         try {
-            const response = await fetch("https://astran8n.dpdns.org/webhook/4d27e668-eeb8-46a6-b5e1-52b6fb03ac85", {
+            const response = await fetch("https://khuspeshubham--ir-agent-agent-endpoint.modal.run/", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': 'Network@5714',
                 },
-                body: JSON.stringify({ prompt: question }),
+                body: JSON.stringify({ input: question, stream: true }),
                 signal: controller.signal,
             });
 
@@ -332,15 +368,20 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                     const trimmed = line.trim();
                     if (!trimmed) continue;
                     try {
-                        const parsed = JSON.parse(trimmed) as { type?: string; content?: string };
-                        if (parsed.type === 'item' && typeof parsed.content === 'string' && parsed.content) {
-                            setIrAgentMessages((prev) =>
-                                prev.map((msg) =>
-                                    msg.id === assistantMessageId
-                                        ? { ...msg, content: (msg.content || '') + parsed.content }
-                                        : msg
-                                )
-                            );
+                        // Support both "JSON-per-line" and "SSE-style: data: {...}" payloads.
+                        const jsonCandidate = trimmed.startsWith('data:')
+                            ? trimmed.replace(/^data:\s*/, '')
+                            : trimmed;
+
+                        const parsed = JSON.parse(jsonCandidate) as { type?: string; content?: string };
+                        const chunkType = (parsed.type ?? '').toString().toLowerCase();
+                        const chunkContent = parsed.content;
+
+                        if (typeof chunkContent === 'string' && chunkContent) {
+                            // Prefer existing "item" chunks, but also accept other types that look webhook-related.
+                            if (!parsed.type || chunkType === 'item' || chunkType.includes('webhook')) {
+                                assistantContent += chunkContent;
+                            }
                         }
                     } catch {
                         // Ignore malformed JSON lines
@@ -350,15 +391,29 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
         } catch (error: any) {
             const message =
                 error?.name === 'AbortError'
-                    ? 'Request was cancelled.'
+                    ? 'Stopped.'
                     : (error?.message || 'Failed to reach IR Agent.');
-            setIrAgentMessages((prev) => [
-                ...prev,
-                { id: Date.now(), role: 'assistant', content: `Error: ${message}` },
-            ]);
+
+            assistantErrorMessage = error?.name === 'AbortError' ? message : `Error: ${message}`;
         } finally {
+            stopIrAgentStatusCycle();
             setIrAgentStreaming(false);
             irAgentAbortRef.current = null;
+            setIrAgentPendingAssistantId(null);
+
+            setIrAgentMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === assistantMessageId
+                        ? { ...msg, content: assistantErrorMessage ?? assistantContent }
+                        : msg
+                )
+            );
+        }
+    };
+
+    const handleIrAgentStop = () => {
+        if (irAgentAbortRef.current) {
+            irAgentAbortRef.current.abort();
         }
     };
 
@@ -2312,24 +2367,29 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                                                     <div
                                                                         className={`p-2 rounded-2 ${msg.role === 'assistant'
                                                                             ? 'bg-light text-start'
-                                                                            : 'bg-primary text-white text-end'
+                                                                            : 'bg-primary text-white text-start ir-agent-user-message'
                                                                             }`}
                                                                         style={{ maxWidth: '100%' }}
                                                                     >
-                                                                        <div className="fw-semibold fs-12 mb-1">
+                                                                        <div className="d-flex align-items-center gap-2 fw-semibold fs-13 mb-1">
                                                                             {msg.role === 'assistant' ? 'IR Agent' : (userData?.username ?? 'You')}
+                                                                            {msg.role === 'assistant' && irAgentStreaming && msg.id === irAgentPendingAssistantId && (
+                                                                                <span className="text-muted fw-normal fs-11" style={{ lineHeight: 1.2 }}>
+                                                                                    {irAgentButtonText}
+                                                                                </span>
+                                                                            )}
                                                                         </div>
-                                                                        <div className="fs-13" style={{ whiteSpace: 'pre-wrap' }}>
+                                                                        <div className="fs-14" style={{ whiteSpace: 'pre-wrap' }}>
                                                                             {msg.content}
                                                                         </div>
                                                                     </div>
 
                                                                     {msg.role !== 'assistant' && (
                                                                         <div
-                                                                            className="avatar avatar-sm avatar-rounded d-flex align-items-center justify-content-center bg-secondary text-white flex-shrink-0"
+                                                                            className="avatar avatar-sm avatar-rounded d-flex align-items-center justify-content-center bg-primary-transparent text-primary flex-shrink-0"
                                                                             style={{ marginTop: '2px' }}
                                                                         >
-                                                                            <span className="fw-semibold">{(userData?.username ?? 'Y').charAt(0).toUpperCase()}</span>
+                                                                            <i className="ri-user-line fs-16"></i>
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -2341,7 +2401,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                             </Card.Body>
                                         </Card>
                                     </Col>
-                                    <Col xl={4} lg={4}>
+                                    <Col xl={4} lg={4} style={{ position: 'sticky', top: '1rem', alignSelf: 'flex-start', zIndex: 1 }}>
                                         <Card className="custom-card h-100">
                                             <Card.Header>
                                             </Card.Header>
@@ -2361,22 +2421,19 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                             <Card.Footer className="d-flex justify-content-end">
                                                 <SpkButton
                                                     Buttontype="button"
-                                                    Buttonvariant="primary"
+                                                    Buttonvariant={irAgentStreaming ? "danger-light" : "primary"}
                                                     Customclass="btn btn-wave"
-                                                    onClickfunc={handleIrAgentAsk}
+                                                    onClickfunc={irAgentStreaming ? handleIrAgentStop : handleIrAgentAsk}
                                                     Disabled={irAgentStreaming || !irAgentInput.trim()}
                                                 >
-                                                    {irAgentStreaming && (
-                                                        <Spinner
-                                                            as="span"
-                                                            animation="border"
-                                                            size="sm"
-                                                            role="status"
-                                                            aria-hidden="true"
-                                                            className="me-2"
-                                                        />
+                                                    {irAgentStreaming ? (
+                                                        <>
+                                                            <i className="ri-stop-circle-line me-2" aria-hidden="true"></i>
+                                                            Stop
+                                                        </>
+                                                    ) : (
+                                                        'Ask'
                                                     )}
-                                                    Ask
                                                 </SpkButton>
                                             </Card.Footer>
                                         </Card>
@@ -2572,6 +2629,10 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                     color: #94a3b8 !important;
                 }
                 [data-theme-mode="dark"] .react-select-container .react-select__indicator:hover {
+                    color: #fff !important;
+                }
+                [data-theme-mode="dark"] .ir-agent-user-message,
+                [data-theme-mode="dark"] .ir-agent-user-message * {
                     color: #fff !important;
                 }
             `}} />
