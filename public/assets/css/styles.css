@@ -16296,20 +16296,20 @@ html[dir=rtl] .carousel-item-prev:not(.carousel-item-end) {
 }
 
 /* btn-outline-primary end */
-/* btn-outline-secondary start */
+/* btn-outline-secondary: use primary (secondary token is pink in this theme) */
 .btn-outline-secondary {
-  color: rgb(var(--secondary-rgb));
-  border-color: rgb(var(--secondary-rgb));
+  color: rgb(var(--primary-rgb));
+  border-color: rgb(var(--primary-rgb));
 }
 .btn-outline-secondary:hover, .btn-outline-secondary:active {
   color: #fff;
-  background-color: rgb(var(--secondary-rgb));
-  border-color: rgb(var(--secondary-rgb));
+  background-color: rgb(var(--primary-rgb));
+  border-color: rgb(var(--primary-rgb));
 }
 .btn-outline-secondary:focus {
   color: #fff;
-  background-color: rgb(var(--secondary-rgb));
-  border-color: rgb(var(--secondary-rgb));
+  background-color: rgb(var(--primary-rgb));
+  border-color: rgb(var(--primary-rgb));
   box-shadow: none;
 }
 .btn-outline-secondary:focus:active {
@@ -16893,8 +16893,8 @@ html[dir=rtl] .carousel-item-prev:not(.carousel-item-end) {
 .btn-outline-secondary:active,
 .btn-check + .btn.btn-outline-secondary:hover {
   color: #fff !important;
-  background-color: rgb(var(--secondary-rgb)) !important;
-  border-color: rgb(var(--secondary-rgb)) !important;
+  background-color: rgb(var(--primary-rgb)) !important;
+  border-color: rgb(var(--primary-rgb)) !important;
 }
 
 .btn-check:active + .btn-outline-info,
@@ -16979,7 +16979,7 @@ html[dir=rtl] .carousel-item-prev:not(.carousel-item-end) {
 }
 
 .btn-check:checked + .btn-outline-secondary:focus {
-  box-shadow: 0 0.25rem 1rem rgba(var(--secondary-rgb), 0.5);
+  box-shadow: 0 0.25rem 1rem rgba(var(--primary-rgb), 0.5);
 }
 
 .btn-check:checked + .btn-outline-success:focus {
@@ -17019,15 +17019,15 @@ html[dir=rtl] .carousel-item-prev:not(.carousel-item-end) {
 
 .btn-check:checked + .btn.btn-outline-secondary {
   color: #fff;
-  background-color: rgb(var(--secondary-rgb));
-  border-color: rgb(var(--secondary-rgb));
-  box-shadow: 0 0.25rem 1rem rgba(var(--secondary-rgb), 0.3);
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0.25rem 1rem rgba(var(--primary-rgb), 0.3);
 }
 
 .btn.show.btn-outline-secondary {
-  background-color: rgb(var(--secondary-rgb));
+  background-color: var(--primary-color);
   color: #fff;
-  border-color: rgb(var(--secondary-rgb));
+  border-color: var(--primary-color);
 }
 
 /* Start:: Light Buttons */
@@ -17665,10 +17665,12 @@ html[dir=rtl] .carousel-item-prev:not(.carousel-item-end) {
 }
 /* End:: Checkbox buttons */
 .btn-outline-secondary {
-  --bs-btn-hover-color: rgb(var(--secondary-rgb));
-  --bs-btn-hover-bg: #fff;
-  --bs-btn-hover-border-color: rgb(var(--secondary-rgb));
-  --bs-btn-active-color: rgb(var(--secondary-rgb));
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--primary-color);
+  --bs-btn-hover-border-color: var(--primary-color);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--primary-color);
+  --bs-btn-active-border-color: var(--primary-color);
 }
 
 .btn-check:checked + .btn.btn-outline-light, .btn.btn-outline-light.active, .btn.btn-outline-light.show, .btn.btn-outline-light:first-child:active, :not(.btn-check) + .btn.btn-outline-light:active {
@@ -18431,6 +18433,12 @@ html[dir=rtl] .carousel-item-prev:not(.carousel-item-end) {
 }
 .form-check-input:focus {
   box-shadow: none;
+}
+
+/* Dark: $input-border is too low-contrast on dark table/card surfaces */
+[data-theme-mode=dark] .form-check-input:not(:checked):not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.42);
+  background-color: rgba(255, 255, 255, 0.06);
 }
 
 .form-checked-outline:checked[type=checkbox] {
@@ -19680,7 +19688,7 @@ input[type=range]::-webkit-slider-runnable-track {
 /* End:: list_group */
 /* Start:: modals */
 .modal {
-  z-index: 105;
+  z-index: var(--bs-modal-zindex, 1055);
 }
 .modal.show {
   padding-left: 0 !important;
@@ -19688,7 +19696,7 @@ input[type=range]::-webkit-slider-runnable-track {
 }
 
 .modal-backdrop {
-  z-index: 104;
+  z-index: var(--bs-backdrop-zindex, 1050);
 }
 
 .modal-content {
@@ -19715,6 +19723,16 @@ input[type=range]::-webkit-slider-runnable-track {
 .modal-footer {
   padding: 1rem 1rem;
   border-block-start: 1px solid var(--default-border);
+}
+
+/* Dark: lift dialog off page (same token issue as cards vs body) */
+[data-theme-mode=dark] .modal-content {
+  background-color: rgb(var(--body-bg-rgb2));
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.55), 0 1.25rem 3rem rgba(0, 0, 0, 0.65);
+}
+[data-theme-mode=dark] .modal-backdrop {
+  --bs-backdrop-opacity: 0.65;
 }
 
 /* modal animations */

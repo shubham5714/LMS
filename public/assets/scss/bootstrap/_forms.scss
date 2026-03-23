@@ -184,6 +184,12 @@
   }
 }
 
+/* Dark: $input-border is too low-contrast on dark table/card surfaces */
+[data-theme-mode="dark"] .form-check-input:not(:checked):not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.42);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
 .form-checked-outline:checked[type="checkbox"] {
   background-image: none;
   position: relative;

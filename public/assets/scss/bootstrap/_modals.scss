@@ -1,14 +1,14 @@
 @use "../variables";
 /* Start:: modals */
-.modal  {
-	z-index: 105;
+.modal {
+	z-index: var(--bs-modal-zindex, 1055);
 	&.show {
 		padding-left: 0 !important;
     	padding-right: 0 !important;
 	}
 }
 .modal-backdrop {
-	z-index: 104;
+	z-index: var(--bs-backdrop-zindex, 1050);
 }
 .modal-content {
     color: variables.$default-text-color;
@@ -32,6 +32,20 @@
 .modal-footer {
     padding: 1rem 1rem;
     border-block-start: 1px solid variables.$default-border;
+}
+
+/* Dark: lift dialog off page (same token issue as cards vs body) */
+[data-theme-mode="dark"] {
+	.modal-content {
+		background-color: rgb(var(--body-bg-rgb2));
+		border-color: rgba(255, 255, 255, 0.14);
+		box-shadow:
+			0 0.35rem 1rem rgba(0, 0, 0, 0.55),
+			0 1.25rem 3rem rgba(0, 0, 0, 0.65);
+	}
+	.modal-backdrop {
+		--bs-backdrop-opacity: 0.65;
+	}
 }
 
 /* modal animations */

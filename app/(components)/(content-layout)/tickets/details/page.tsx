@@ -1447,7 +1447,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                     </Row>
                     <Row>
                                 <Col xl={12}>
-                            <div className="fs-14 fw-medium mb-2">MITRE ATT&CK® <span className="fs-11">{activeTacticsCount} Tactics and {activeTechniquesCount} Techniques</span></div>
+                            <div className="fs-14 fw-medium mb-2"><span className="text-danger">MITRE ATT&CK®</span> <span className="fs-11">{activeTacticsCount} Tactics and {activeTechniquesCount} Techniques</span></div>
                             <div
                                 className="d-flex align-items-center border rounded px-2 py-1"
                                 style={{
@@ -1535,7 +1535,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                 <Tab.Container defaultActiveKey='overview'>
                     <Card.Header className="d-flex justify-content-between align-items-center p-0 border-bottom" style={{ position: 'relative', zIndex: 1, overflow: 'hidden', width: '100%' }}>
                         <div className="d-flex align-items-center flex-fill">
-                            <Nav as='ul' variant="tabs" className="nav-tabs tab-style-6 border-0 d-flex" role="tablist" style={{ position: 'relative', zIndex: 1, marginBottom: 0, marginLeft: '1rem' }}>
+                            <Nav as='ul' variant="tabs" className="nav-tabs tab-style-6 ticket-details-nav-tabs border-0 d-flex" role="tablist" style={{ position: 'relative', zIndex: 1, marginBottom: 0, marginLeft: '1rem' }}>
                                 <Nav.Item as='li' role="presentation">
                                     <Nav.Link as='button' eventKey='overview' className="px-4 py-2" role="tab" aria-selected="true">
                                         Overview
@@ -1918,7 +1918,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                                 {/* Entity Type Header */}
                                                 <div className="d-flex align-items-center mb-2">
                                                     <p className="mb-0 text-badge">
-                                                        <span className="text fw-semibold related-alerts-text" style={{ fontSize: '1.125rem' }}>
+                                                        <span className="text fw-semibold related-alerts-text" style={{ fontSize: '0.900rem' }}>
                                                             {entityType === 'ips' ? 'IPs' : 
                                                              entityType.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                                         </span>
@@ -2048,7 +2048,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                                 <Card.Body className="p-3">
                                                     <pre style={{
                                                         margin: 0,
-                                                        color: '#0f0',
+                                                        color: '#9be963',
                                                         backgroundColor: '#000',
                                                         fontFamily: 'monospace',
                                                         fontSize: '0.875rem',
@@ -2065,16 +2065,16 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                 </div>
                             </Tab.Pane>
                             <Tab.Pane eventKey='graph' className="pt-3 px-4 pb-4" role="tabpanel">
-                                <Row className="gy-3">
+                                <Row className="g-3 align-items-start">
                                     <Col xl={6} lg={7}>
+                                        <h5 className="fw-semibold mb-2 fs-6 ai-tuning-section-heading">
+                                            Help AI make better decisions for this policy
+                                        </h5>
+                                        <p className="text-muted mb-3 fs-12">
+                                            Configure suppression count and add known context to reduce alerts volume.
+                                        </p>
                                         <Card className="custom-card h-100">
                                             <Card.Body>
-                                                <div className="mb-3">
-                                                    <h5 className="fw-semibold mb-1">Help AI make better decisions for this policy</h5>
-                                                    <p className="text-muted mb-0 fs-12">
-                                                        Configure suppression count and add known context to reduce alerts volume.
-                                                    </p>
-                                                </div>
                                                 <Row className="gy-3">
                                                     <Col md={12}>
                                                         <div className="mb-3">
@@ -2262,9 +2262,11 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                             </Card.Body>
                                         </Card>
                                     </Col>
-                                    <Col xl={6} lg={5}>
-                                        <div className="h-100 d-flex flex-column gap-3 border-start ps-3 overflow-auto" style={{ maxHeight: '70vh' }}>
-                                            <p className="fw-semibold related-alerts-text mb-0" style={{ fontSize: '1rem' }}>Existing suggestions</p>
+                                    <Col xl={6} lg={5} className="border-start ps-3">
+                                        <h5 className="fw-semibold mb-2 fs-6 ai-tuning-section-heading">
+                                            Existing suggestions
+                                        </h5>
+                                        <div className="h-100 d-flex flex-column gap-3 overflow-auto" style={{ maxHeight: '70vh' }}>
                                             {loadingSuggestions ? (
                                                 <div className="d-flex align-items-center justify-content-center py-4">
                                                     <Spinner animation="border" variant="primary" size="sm" />
@@ -2532,6 +2534,10 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                 </Tab.Container>
             </Card>
             <style dangerouslySetInnerHTML={{__html: `
+                /* Overrides .tab-style-6 .nav-item .nav-link { font-size: 0.813rem } in _navs_tabs.scss */
+                .ticket-details-nav-tabs.tab-style-6 .nav-item .nav-link {
+                    font-size: 0.900rem !important;
+                }
                 #severity-dropdown.dropdown-toggle {
                     padding-top: 0.25rem !important;
                     padding-bottom: 0.25rem !important;

@@ -651,7 +651,7 @@ const Page = () => {
                                                 />
                                                 <Image 
                                                     fill 
-                                                    src={`${logoPath}/assets/images/brand-logos/desktop-white.png`} 
+                                                    src={`${logoPath}/assets/images/brand-logos/desktop-dark.png`} 
                                                     alt="logo" 
                                                     className='desktop-white' 
                                                 />

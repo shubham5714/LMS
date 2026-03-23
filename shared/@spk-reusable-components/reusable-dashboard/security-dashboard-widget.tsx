@@ -518,7 +518,7 @@ export default function SecurityDashboardWidget({ sources = DEFAULT_SOURCES }: S
           min-height: calc(100vh - 8rem);
           height: 100%;
           background: #ffffff !important;
-          border: 1px solid rgba(121, 97, 245, 0.35) !important;
+          border: none !important;
           border-radius: 0;
           display: grid;
           grid-template-columns: 1fr 0.65fr 1fr;

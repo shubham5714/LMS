@@ -444,9 +444,9 @@
   @include btn-outline(var(--primary-rgb));
 }
 /* btn-outline-primary end */
-/* btn-outline-secondary start */
+/* btn-outline-secondary: use primary (secondary token is pink in this theme) */
 .btn-outline-secondary {
-  @include btn-outline(var(--secondary-rgb));
+  @include btn-outline(var(--primary-rgb));
 }
 /* btn-outline-secondary end */
 
@@ -876,7 +876,7 @@
 .btn-outline-secondary.dropdown-toggle.show,
 .btn-outline-secondary:active,
 .btn-check + .btn.btn-outline-secondary:hover {
-  @include btn-check-outline(var(--secondary-rgb));
+  @include btn-check-outline(var(--primary-rgb));
 }
 .btn-check:active + .btn-outline-info,
 .btn-check:checked + .btn-outline-info,
@@ -944,7 +944,7 @@
   box-shadow: 0 .25rem 1rem rgba(variables.$primary, 0.5);
 }
 .btn-check:checked + .btn-outline-secondary:focus {
-  box-shadow: 0 .25rem 1rem rgba(var(--secondary-rgb), 0.5);
+  box-shadow: 0 .25rem 1rem rgba(var(--primary-rgb), 0.5);
 }
 .btn-check:checked + .btn-outline-success:focus {
   box-shadow: 0 .25rem 1rem rgba(var(--success-rgb), 0.5);
@@ -975,14 +975,14 @@
 }
 .btn-check:checked + .btn.btn-outline-secondary {
   color: variables.$white;
-  background-color: variables.$secondary;
-  border-color: variables.$secondary;
-  box-shadow: 0 .25rem 1rem rgba(var(--secondary-rgb), 0.3);
+  background-color: variables.$primary;
+  border-color: variables.$primary;
+  box-shadow: 0 .25rem 1rem rgba(var(--primary-rgb), 0.3);
 }
 .btn.show.btn-outline-secondary {
-  background-color: variables.$secondary;
+  background-color: variables.$primary;
   color: variables.$white;
-  border-color: variables.$secondary;
+  border-color: variables.$primary;
 }
 
 /* Start:: Light Buttons */
@@ -1685,11 +1685,14 @@
 /* End:: Checkbox buttons */
 
 .btn-outline-secondary {
-  --bs-btn-hover-color: #{variables.$secondary};
-  --bs-btn-hover-bg: #{variables.$white};
-  --bs-btn-hover-border-color: #{variables.$secondary};
-  --bs-btn-active-color: #{variables.$secondary};
+  --bs-btn-hover-color: #{variables.$white};
+  --bs-btn-hover-bg: #{variables.$primary};
+  --bs-btn-hover-border-color: #{variables.$primary};
+  --bs-btn-active-color: #{variables.$white};
+  --bs-btn-active-bg: #{variables.$primary};
+  --bs-btn-active-border-color: #{variables.$primary};
 }
+
 .btn-check:checked+.btn.btn-outline-light, .btn.btn-outline-light.active, .btn.btn-outline-light.show, .btn.btn-outline-light:first-child:active, :not(.btn-check)+.btn.btn-outline-light:active {
   background-color: variables.$light;
   border-color: variables.$light;
