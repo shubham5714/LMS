@@ -80,28 +80,31 @@ const RouteProtection: React.FC<RouteProtectionProps> = ({ children }) => {
       // Normalize the route path - remove trailing slash
       const normalizedPath = routePath.replace(/\/$/, '');
       
+      // Note: `tenant_routes` might (accidentally) contain duplicate rows for the same route.
+      // Fetch only one row to avoid Supabase `.single()` coercion failures.
       const { data, error } = await supabase
         .from('tenant_routes')
         .select('*')
         .eq('route', normalizedPath)
-        .single();
+        .limit(1);
 
       if (error) {
         console.error('Error fetching route data:', error.message);
         return null;
       }
 
-      if (!data) {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) {
         return null;
       }
       
       // Map the database fields to our expected interface
       const mappedData: TenantRoute = {
-        id: data.id,
-        route_path: data.route,
-        type: data.type,
-        allowed_tenants: data.allowed_tenants || [],
-        allowed_roles: data.allowed_roles || []
+        id: row.id,
+        route_path: row.route,
+        type: row.type,
+        allowed_tenants: row.allowed_tenants || [],
+        allowed_roles: row.allowed_roles || []
       };
       
       return mappedData;

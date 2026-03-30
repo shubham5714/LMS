@@ -58,6 +58,8 @@ const ThreatIntelligenceicon = <svg xmlns="http://www.w3.org/2000/svg" className
 
 const Approvalsicon = <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 side-menu__icon" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path> </svg>
 
+const Pipelinesicon = <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 side-menu__icon" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 4.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm12 12a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm-12 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm12-12a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM7.5 6h9m-9 12h9M6 7.5v9m12-9v9"></path></svg>
+
 export const MENUITEMS: Menuitemtype[] = [
 
   {
@@ -91,6 +93,10 @@ export const MENUITEMS: Menuitemtype[] = [
 
   {
     title: "Approvals", icon: Approvalsicon, type: "link", path: "/approvals", active: false, selected: false, dirchange: false
+  },
+
+  {
+    title: "Pipelines", icon: Pipelinesicon, type: "link", path: "/pipeline-builder", active: false, selected: false, dirchange: false
   },
 
   {
