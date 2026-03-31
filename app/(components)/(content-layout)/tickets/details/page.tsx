@@ -2,11 +2,11 @@
 // Ticket Details Page - Restructured based on wireframe
 import SpkButton from "@/shared/@spk-reusable-components/reusable-uiElements/spk-buttons";
 import SpkBadge from "@/shared/@spk-reusable-components/reusable-uiElements/spk-badge";
+import SpkRibbons from "@/shared/@spk-reusable-components/reusable-advancedui/spk-ribbons";
 import SpkSunEditor from "@/shared/@spk-reusable-components/reusable-plugins/spk-suneditor";
 import { Lightboxcomponent } from "@/shared/@spk-reusable-components/reusable-plugins/spk-lightbox";
 import SpkDropdown from "@/shared/@spk-reusable-components/reusable-uiElements/spk-dropdown";
 import SpkButtongroup from "@/shared/@spk-reusable-components/reusable-uiElements/spk-buttongroup";
-import SpkSelect from "@/shared/@spk-reusable-components/reusable-plugins/spk-reactselect";
 import Seo from "@/shared/layouts-components/seo/seo";
 import { supabase } from "@/shared/lib/supabase";
 import { useTenantContext } from "@/shared/contextapi/TenantContext";
@@ -579,8 +579,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
     };
 
     const getStatusVariant = () => {
-        if (status.toLowerCase() === 'open') return 'light';
-        return 'dark';
+        return 'light';
     };
 
     const handleStatusDropdownChange = async (eventKey: string | null) => {
@@ -1049,10 +1048,12 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
         }
     };
 
-    const statusOptions = [
-        { value: 'open', label: 'Open' },
-        { value: 'closed', label: 'Closed' },
-    ];
+    const handleAssignedToDropdownChange = async (eventKey: string | null) => {
+        if (!eventKey || loadingUsers) return;
+        const selectedOption = assignedToUsers.find((user) => user.value === eventKey);
+        if (!selectedOption) return;
+        await handleAssignedToChange(selectedOption);
+    };
 
     // Handle status change
     const handleStatusChange = async (selectedOption: any) => {
@@ -1290,50 +1291,6 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
         }
     };
 
-    // Custom styles for smaller select boxes
-    const selectStyles = {
-        control: (base: any) => ({
-            ...base,
-            minHeight: '32px',
-            height: '32px',
-            fontSize: '0.75rem',
-            width: '100%',
-            maxWidth: '200px',
-        }),
-        valueContainer: (base: any) => ({
-            ...base,
-            height: '32px',
-            padding: '0 8px',
-            fontSize: '0.75rem',
-        }),
-        input: (base: any) => ({
-            ...base,
-            margin: '0px',
-            padding: '0px',
-            fontSize: '0.75rem',
-        }),
-        singleValue: (base: any) => ({
-            ...base,
-            fontSize: '0.75rem',
-        }),
-        placeholder: (base: any) => ({
-            ...base,
-            fontSize: '0.75rem',
-        }),
-        menu: (base: any) => ({
-            ...base,
-            fontSize: '0.75rem',
-        }),
-        option: (base: any) => ({
-            ...base,
-            fontSize: '0.75rem',
-        }),
-        indicatorsContainer: (base: any) => ({
-            ...base,
-            height: '32px',
-        }),
-    };
-
     const mitreAttackStages = [
         { value: 'initial-access', label: 'Initial Access' },
         { value: 'execution', label: 'Execution' },
@@ -1375,11 +1332,18 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
     return (
         <Fragment>
             <Seo title="Ticket Details" />
-            
+
+            <Row className="g-0" style={{ marginLeft: "-1.5rem", marginRight: "-1.5rem" }}>
+                <Col xxl={12} xl={12}>
             {/* Header Section */}
-            <Card className="custom-card mb-3 mt-3">
+            <Card className="custom-card mb-0 ribbon-card overflow-hidden">
+                {status?.toLowerCase() === 'closed' && (
+                    <SpkRibbons ribbonClass="ribbon-6 ribbon-right ribbon-primary">
+                        Closed
+                    </SpkRibbons>
+                )}
                 <Card.Body>
-                    <Row className="align-items-center">
+                    <Row className="align-items-start">
                         <Col xl={8}>
                             <div className="mb-2 d-flex align-items-center gap-2">
                                 <SpkButtongroup>
@@ -1410,40 +1374,68 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                             </div>
                         </Col>
                         <Col xl={4} className="d-flex flex-column align-items-end pe-3">
-                            <div className="mb-2" style={{ width: '150px' }}>
-                                <div className="fs-13 fw-medium mb-1">Assigned To</div>
-                                <SpkSelect
-                                    option={assignedToUsers}
-                                    getValue={selectedAssignedTo}
-                                    placeholder={loadingUsers ? "Loading users..." : "Select user..."}
-                                    searchable={true}
-                                    clearable={false}
-                                    disabled={loadingUsers || assignedToUsers.length === 0}
-                                    mainClass="react-select-container"
-                                    classNameprefix="react-select"
-                                    styles={selectStyles}
-                                    onfunchange={handleAssignedToChange}
-                                />
+                            <div className="d-flex justify-content-end align-items-start gap-2 w-100">
+                                <div style={{ width: '150px' }}>
+                                    <div className="fs-11 text-muted mb-1">Assigned To</div>
+                                    <SpkButtongroup>
+                                        <SpkDropdown
+                                            Togglevariant={getStatusVariant()}
+                                            Toggletext={
+                                                loadingUsers
+                                                    ? "Loading..."
+                                                    : (selectedAssignedTo?.label || "Select user...")
+                                            }
+                                            Customtoggleclass={`shadow-${getStatusVariant()} btn-sm py-1 px-2 text-truncate`}
+                                            Customclass="assigned-to-dropdown-wrapper"
+                                            Size="sm"
+                                            Menuas="ul"
+                                            onSelectfunc={handleAssignedToDropdownChange}
+                                            Id="assigned-to-dropdown"
+                                        >
+                                            {assignedToUsers.length > 0 ? (
+                                                assignedToUsers.map((user) => (
+                                                    <Dropdown.Item as="li" eventKey={user.value} key={user.value}>
+                                                        {user.label}
+                                                    </Dropdown.Item>
+                                                ))
+                                            ) : (
+                                                <Dropdown.Item as="li" disabled>
+                                                    No users available
+                                                </Dropdown.Item>
+                                            )}
+                                        </SpkDropdown>
+                                    </SpkButtongroup>
+                                </div>
+                                <div style={{ width: '150px' }}>
+                                    <div className="fs-11 text-muted mb-1">Status</div>
+                                    <SpkButtongroup>
+                                        <SpkDropdown
+                                            Togglevariant={getStatusVariant()}
+                                            Toggletext={status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : 'Open'}
+                                            Customtoggleclass={`shadow-${getStatusVariant()} btn-sm py-1 px-2`}
+                                            Customclass="status-dropdown-wrapper"
+                                            Size="sm"
+                                            Menuas="ul"
+                                            onSelectfunc={handleStatusDropdownChange}
+                                            Id="status-dropdown"
+                                        >
+                                            <Dropdown.Item as="li" eventKey="open">Open</Dropdown.Item>
+                                            <Dropdown.Item as="li" eventKey="closed">Closed</Dropdown.Item>
+                                        </SpkDropdown>
+                                    </SpkButtongroup>
+                                </div>
                             </div>
-                            <div style={{ width: '150px' }}>
-                                <div className="fs-13 fw-medium mb-1">Status</div>
-                                <SpkButtongroup>
-                                    <SpkDropdown 
-                                        Togglevariant={getStatusVariant()}
-                                        Toggletext={status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : 'Open'}
-                                        Customtoggleclass={`shadow-${getStatusVariant()} btn-sm`}
-                                        Customclass="status-dropdown-wrapper"
-                                        Size="sm"
-                                        Menuas="ul"
-                                        onSelectfunc={handleStatusDropdownChange}
-                                        Id="status-dropdown"
-                                    >
-                                        <Dropdown.Item as="li" eventKey="open">Open</Dropdown.Item>
-                                        <Dropdown.Item as="li" eventKey="closed">Closed</Dropdown.Item>
-                                    </SpkDropdown>
-                                </SpkButtongroup>
-                            </div>
-                                </Col>
+                            {(ticket.closure_category || ticket.closure_reason) && (
+                                <blockquote className="blockquote custom-blockquote primary mt-2 mb-0 text-start w-100" style={{ maxWidth: '320px' }}>
+                                    {ticket.closure_category && (
+                                        <div className="fs-11 text-muted">Category: {ticket.closure_category}</div>
+                                    )}
+                                    {ticket.closure_reason && (
+                                        <div className="fs-11 text-muted mt-1">Reason: {ticket.closure_reason}</div>
+                                    )}
+                                </blockquote>
+                            )}
+                        </Col>
                     </Row>
                     <Row>
                                 <Col xl={12}>
@@ -1531,7 +1523,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                     </Card>
 
             {/* Navigation Tabs */}
-            <Card className="custom-card mb-3 overflow-hidden">
+            <Card className="custom-card border-0 mb-0 overflow-hidden" style={{ border: "none" }}>
                 <Tab.Container defaultActiveKey='overview'>
                     <Card.Header className="d-flex justify-content-between align-items-center p-0 border-bottom" style={{ position: 'relative', zIndex: 1, overflow: 'hidden', width: '100%' }}>
                         <div className="d-flex align-items-center flex-fill">
@@ -1591,7 +1583,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                     </div>
                     </Card.Header>
                     <Card.Body className="p-0" style={{ position: 'relative', zIndex: 0 }}>
-                        <Tab.Content style={{ position: 'relative' }}>
+                        <Tab.Content className="ticket-details-tab-content" style={{ position: 'relative', minHeight: '600px' }}>
                             <Tab.Pane eventKey='overview' className="pt-3 px-4 pb-4" role="tabpanel">
                                 {/* Three Column Layout for Overview Tab */}
                                 <Row>
@@ -1961,11 +1953,12 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                                             <Row className="ms-4">
                                                                 {alerts.map((alert) => (
                                                                     <Col key={alert.id} md={6} className="mb-2">
-                                                                        <Card className="custom-card mb-0" style={{ 
-                                                                            borderLeft: alert.severity === 'critical' ? '4px solid #dc3545' : 
-                                                                                      alert.severity === 'high' ? '4px solid #dc3545' : 
-                                                                                      alert.severity === 'medium' ? '4px solid #0dcaf0' : 
-                                                                                      '4px solid #6c757d',
+                                                                        <Card className="custom-card mb-0" style={{
+                                                                            borderLeft: alert.severity === 'high'
+                                                                                ? '4px solid rgba(220, 53, 69, 0.8)'
+                                                                                : alert.severity === 'medium'
+                                                                                    ? '4px solid rgba(253, 126, 20, 0.8)'
+                                                                                    : '4px solid rgba(52, 58, 64, 0.8)',
                                                                             borderTop: '1px solid #9ca3af',
                                                                             borderRight: '1px solid #9ca3af',
                                                                             borderBottom: '1px solid #9ca3af'
@@ -2533,10 +2526,17 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                     </Card.Body>
                 </Tab.Container>
             </Card>
+                </Col>
+            </Row>
             <style dangerouslySetInnerHTML={{__html: `
                 /* Overrides .tab-style-6 .nav-item .nav-link { font-size: 0.813rem } in _navs_tabs.scss */
                 .ticket-details-nav-tabs.tab-style-6 .nav-item .nav-link {
                     font-size: 0.900rem !important;
+                }
+                .ticket-details-tab-content,
+                .ticket-details-tab-content > .tab-pane {
+                    border: none !important;
+                    box-shadow: none !important;
                 }
                 #severity-dropdown.dropdown-toggle {
                     padding-top: 0.25rem !important;
