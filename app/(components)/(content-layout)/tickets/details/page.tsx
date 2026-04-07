@@ -12,8 +12,8 @@ import { supabase } from "@/shared/lib/supabase";
 import { useTenantContext } from "@/shared/contextapi/TenantContext";
 import { useUserContext } from "@/shared/contextapi/UserContext";
 import { useSearchParams } from "next/navigation";
-import React, { Fragment, useState, useEffect, useCallback } from "react";
-import { Card, Col, Dropdown, ListGroup, Nav, Row, Tab, Spinner, Modal, Form } from "react-bootstrap";
+import React, { Fragment, useState, useEffect, useCallback, useMemo } from "react";
+import { Accordion, Card, Col, Dropdown, ListGroup, Nav, Row, Tab, Spinner, Modal, Form } from "react-bootstrap";
 
 interface TicketDetailsProps { }
 
@@ -97,6 +97,45 @@ interface TicketData {
     raw_logs?: unknown[] | string;
     [key: string]: any;
 }
+
+const RELATED_ALERT_TYPE_LABELS: Record<string, string> = {
+    ips: "IPs",
+};
+
+const RELATED_ALERT_TYPE_ICONS: Record<string, string> = {
+    ips: "ri-router-line",
+    domains: "ri-global-line",
+    urls: "ri-link",
+    users: "ri-user-line",
+    assets: "ri-computer-line",
+    hashes: "ri-fingerprint-line",
+};
+
+const formatRelatedAlertTypeLabel = (entityType: string): string => {
+    if (RELATED_ALERT_TYPE_LABELS[entityType]) return RELATED_ALERT_TYPE_LABELS[entityType];
+    return entityType
+        .replace('_', ' ')
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const getRelatedAlertTypeIcon = (entityType: string): string =>
+    RELATED_ALERT_TYPE_ICONS[entityType] || "ri-folder-2-line";
+
+const getRelatedAlertSeverityBorder = (severity: string): string => {
+    if (severity === 'high') return '4px solid rgba(220, 53, 69, 0.8)';
+    if (severity === 'medium') return '4px solid rgba(253, 126, 20, 0.8)';
+    return '4px solid rgba(52, 58, 64, 0.8)';
+};
+
+const formatAttributeDisplayValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return 'N/A';
+    if (typeof value === 'string' && (value.includes('T') || value.includes('-')) && !isNaN(Date.parse(value))) {
+        return new Date(value).toLocaleString();
+    }
+    return String(value);
+};
 
 // Format a UTC datetime string to user's timezone for display
 const formatUtcToUserTimezone = (value?: string | null, timezone: string = 'UTC'): string => {
@@ -206,6 +245,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
     const [status, setStatus] = useState<string>('');
     const [artifactsAndAssets, setArtifactsAndAssets] = useState<ArtifactsAndAssets | null>(null);
     const [relatedAlertsData, setRelatedAlertsData] = useState<RelatedAlertsData>({});
+    const [activeRelatedAlertCategoryKey, setActiveRelatedAlertCategoryKey] = useState<string>('');
     const [alertAnalysis, setAlertAnalysis] = useState<AlertAnalysis | null>(null);
     const [alertFields, setAlertFields] = useState<AlertFields | null>(null);
     const [assignedToUsers, setAssignedToUsers] = useState<Array<{ value: string; label: string }>>([]);
@@ -230,6 +270,107 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
     const [aiTuningError, setAiTuningError] = useState<string | null>(null);
     const [existingSuggestions, setExistingSuggestions] = useState<Record<string, Record<string, { suggestion_type: string; valid_until: string | 'permanent'; permanent: boolean; suggestion_text: string }>> | null>(null);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+    const relatedAlertCategories = useMemo(() => {
+        return Object.entries(relatedAlertsData || {}).map(([entityType, entities]) => ({
+            key: entityType,
+            entityType,
+            entities: (entities || {}) as Record<string, RelatedAlert[]>,
+        }));
+    }, [relatedAlertsData]);
+
+    useEffect(() => {
+        if (relatedAlertCategories.length === 0) {
+            if (activeRelatedAlertCategoryKey) setActiveRelatedAlertCategoryKey('');
+            return;
+        }
+
+        const stillExists = relatedAlertCategories.some((c) => c.key === activeRelatedAlertCategoryKey);
+        if (!activeRelatedAlertCategoryKey || !stillExists) {
+            setActiveRelatedAlertCategoryKey(relatedAlertCategories[0].key);
+        }
+    }, [relatedAlertCategories, activeRelatedAlertCategoryKey]);
+
+    const overviewAttributeRows = useMemo(() => {
+        const baseRows: Array<{ label: string; value: string }> = [
+            { label: 'ID', value: String(ticket?.id ?? 'N/A') },
+            { label: 'Source ID', value: String(ticket?.source_id || 'N/A') },
+            { label: 'Occurred At', value: formatUtcToUserTimezone(ticket?.occurred_at, userData?.timezone || 'UTC') },
+            { label: 'Name', value: String(ticket?.name || 'N/A') },
+            { label: 'Severity', value: String(ticket?.severity || 'N/A') },
+            { label: 'Instance Name', value: String(ticket?.instance_name || 'N/A') },
+            { label: 'Tenant Name', value: String(ticket?.tenant_name || 'N/A') },
+        ];
+
+        const dynamicRows = alertFields && Object.keys(alertFields).length > 0
+            ? Object.entries(alertFields).map(([key, value]) => ({
+                label: key,
+                value: formatAttributeDisplayValue(value),
+            }))
+            : [];
+
+        return [...baseRows, ...dynamicRows];
+    }, [ticket, userData?.timezone, alertFields]);
+
+    const renderEntityCard = useCallback((item: ArtifactItem | AssetItem, key: string, monospaceValue = false) => (
+        <Card key={key} className="border custom-card mb-0">
+            <Card.Body className="py-3 px-3">
+                <div className="d-flex flex-column gap-2">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <div className="flex-fill">
+                            <p className={`fs-14 fw-medium mb-0 ${monospaceValue ? 'font-monospace' : ''} text-break`}>{item.value}</p>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            {'score' in item && item.score !== undefined && (
+                                <div className="text-center">
+                                    <div className={`fs-14 fw-semibold ${item.score === 0 ? 'text-muted' : `text-${item.color || 'primary'}`}`}>{item.score}</div>
+                                    <div className="fs-10 text-muted">Score</div>
+                                </div>
+                            )}
+                            {item.alerts !== undefined && (
+                                <div className="text-center">
+                                    <div className="fs-14 fw-semibold text-primary">{item.alerts}</div>
+                                    <div className="fs-10 text-muted">Alerts</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    {item.detail && <p className="fs-11 text-muted mb-0 text-break">{item.detail}</p>}
+                </div>
+            </Card.Body>
+        </Card>
+    ), []);
+
+    const overviewEntityAccordionItems = useMemo(() => {
+        const ipFamilyClass = 'custom-accordion-primary';
+        const assetFamilyClass = 'custom-accordion-danger';
+
+        const categories: Array<{ id: string; title: string; values: Array<ArtifactItem | AssetItem>; emptyLabel: string; monospace?: boolean }> = [
+            { id: 'ip_addresses', title: 'IP Addresses', values: artifactsAndAssets?.artifacts?.ip_addresses || [], emptyLabel: 'No IP addresses' },
+            { id: 'urls', title: 'URLs', values: artifactsAndAssets?.artifacts?.urls || [], emptyLabel: 'No URLs' },
+            { id: 'domains', title: 'Domains', values: artifactsAndAssets?.artifacts?.domains || [], emptyLabel: 'No domains' },
+            { id: 'hashes', title: 'Hashes', values: artifactsAndAssets?.artifacts?.hashes || [], emptyLabel: 'No hashes', monospace: true },
+            { id: 'assets', title: 'Assets', values: artifactsAndAssets?.assets || [], emptyLabel: 'No assets' },
+            { id: 'users', title: 'Users', values: artifactsAndAssets?.users || [], emptyLabel: 'No users' },
+        ];
+
+        return categories.map((cat) => ({
+            id: cat.id,
+            count: cat.values.length,
+            title: `${cat.title} (${cat.values.length})`,
+            itemClass: ['ip_addresses', 'urls', 'domains', 'hashes'].includes(cat.id)
+                ? ipFamilyClass
+                : assetFamilyClass,
+            bodyClass: '',
+            content: cat.values.length > 0 ? (
+                <div className="d-flex flex-column gap-2">
+                    {cat.values.map((item, index) => renderEntityCard(item, `${cat.id}-${index}`, Boolean(cat.monospace)))}
+                </div>
+            ) : (
+                <p className="fs-12 text-muted mb-0">{cat.emptyLabel}</p>
+            ),
+        }));
+    }, [artifactsAndAssets, renderEntityCard]);
 
     const [ticketNotes, setTicketNotes] = useState<TicketNote[]>([]);
     const [noteEditorContent, setNoteEditorContent] = useState('');
@@ -1594,50 +1735,14 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                             </Card.Header>
                                             <Card.Body className="p-0">
                                                 <div className="table-responsive">
-                                                    <div className="table text-nowrap mb-0">
-                                                        <div className="d-flex py-2 px-3 border-bottom">
-                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">ID :</div>
-                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.id || 'N/A'}</div>
-                                                        </div>
-                                                        <div className="d-flex py-2 px-3 border-bottom">
-                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Source ID :</div>
-                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.source_id || 'N/A'}</div>
-                                                        </div>
-                                                        <div className="d-flex py-2 px-3 border-bottom">
-                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Occurred At :</div>
-                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">
-                                                                {formatUtcToUserTimezone(ticket.occurred_at, userData?.timezone || 'UTC')}
-                                                            </div>
-                                                        </div>
-                                                        <div className="d-flex py-2 px-3 border-bottom">
-                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Name :</div>
-                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.name || 'N/A'}</div>
-                                                        </div>
-                                                        <div className="d-flex py-2 px-3 border-bottom">
-                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Severity :</div>
-                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.severity || 'N/A'}</div>
-                                                        </div>
-                                                        <div className="d-flex py-2 px-3 border-bottom">
-                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Instance Name :</div>
-                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.instance_name || 'N/A'}</div>
-                                                        </div>
-                                                        <div className="d-flex py-2 px-3 border-bottom">
-                                                            <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">Tenant Name :</div>
-                                                            <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">{ticket.tenant_name || 'N/A'}</div>
-                                                        </div>
-                                                        {/* Dynamic fields from alert_fields JSONB column */}
-                                                        {alertFields && Object.keys(alertFields).length > 0 && Object.entries(alertFields).map(([key, value]) => (
-                                                            <div key={key} className="d-flex py-2 px-3 border-bottom">
-                                                                <div style={{ flex: '0 0 35%' }} className="fw-medium me-2">
-                                                                    {key} :
+                                                    <div className="table mb-0 attributes-striped-list">
+                                                        {overviewAttributeRows.map((row) => (
+                                                            <div key={row.label} className="d-flex py-2 px-3 border-bottom">
+                                                                <div style={{ flex: '0 0 35%', minWidth: 0 }} className="fw-medium me-2 text-break">
+                                                                    {row.label} :
                                                                 </div>
                                                                 <div style={{ flex: '1 1 65%', minWidth: 0 }} className="text-break">
-                                                                    {value === null || value === undefined || value === '' 
-                                                                        ? 'N/A' 
-                                                                        : typeof value === 'string' && (value.includes('T') || value.includes('-')) && !isNaN(Date.parse(value))
-                                                                            ? new Date(value).toLocaleString()
-                                                                            : String(value)
-                                                                    }
+                                                                    {row.value}
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -1651,219 +1756,19 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                                             <Card.Header className="py-2">
                                                 <Card.Title className="mb-0">Entities</Card.Title>
                                             </Card.Header>
-                                            <Card.Body>
-                                                <div className="d-flex flex-column gap-2">
-                                                    {/* IP Addresses */}
-                                            <div>
-                                                        <h6 className="mb-2 fw-semibold fs-13">IP Addresses</h6>
-                                                <div className="d-flex flex-column gap-2">
-                                                    {artifactsAndAssets?.artifacts?.ip_addresses && artifactsAndAssets.artifacts.ip_addresses.length > 0 ? (
-                                                        artifactsAndAssets.artifacts.ip_addresses.map((ip, index) => (
-                                                        <Card key={index} className="border custom-card mb-0">
-                                                            <Card.Body className="py-3 px-3">
-                                                                <div className="d-flex justify-content-between align-items-start">
-                                                                    <div className="flex-fill">
-                                                                        <p className="fs-13 fw-medium mb-1 lh-1">{ip.value}</p>
-                                                                        {ip.detail && <p className="fs-11 text-muted mb-0">{ip.detail}</p>}
-                                                                    </div>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        {ip.score !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className={`fs-14 fw-semibold text-${ip.color || 'primary'}`}>{ip.score}</div>
-                                                                                <div className="fs-10 text-muted">Score</div>
-                                                                            </div>
-                                                                        )}
-                                                                        {ip.alerts !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className="fs-14 fw-semibold text-primary">{ip.alerts}</div>
-                                                                                <div className="fs-10 text-muted">Alerts</div>
-                                                                            </div>
-                                                                        )}
-                                                                        <i className="ri-add-line fs-18 text-muted"></i>
-                                                                    </div>
-                                                                </div>
-                                                            </Card.Body>
-                                                        </Card>
-                                                        ))
-                                                    ) : (
-                                                        <p className="fs-12 text-muted mb-0">No IP addresses</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* URLs */}
-                                            <div>
-                                                <h6 className="mb-2 fw-semibold fs-13">URLs</h6>
-                                                <div className="d-flex flex-column gap-2">
-                                                    {artifactsAndAssets?.artifacts?.urls && artifactsAndAssets.artifacts.urls.length > 0 ? (
-                                                        artifactsAndAssets.artifacts.urls.map((url, index) => (
-                                                        <Card key={index} className="border custom-card mb-0">
-                                                            <Card.Body className="py-3 px-3">
-                                                                <div className="d-flex justify-content-between align-items-start">
-                                                                    <div className="flex-fill">
-                                                                        <p className="fs-13 fw-medium mb-1 lh-1 text-break">{url.value}</p>
-                                                                        {url.detail && <p className="fs-11 text-muted mb-0">{url.detail}</p>}
-                                                                    </div>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        {url.score !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className={`fs-14 fw-semibold text-${url.color || 'primary'}`}>{url.score}</div>
-                                                                                <div className="fs-10 text-muted">Score</div>
-                                                                            </div>
-                                                                        )}
-                                                                        {url.alerts !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className="fs-14 fw-semibold text-primary">{url.alerts}</div>
-                                                                                <div className="fs-10 text-muted">Alerts</div>
-                                                                            </div>
-                                                                        )}
-                                                                        <i className="ri-add-line fs-18 text-muted"></i>
-                                                                    </div>
-                                                                </div>
-                                                            </Card.Body>
-                                                        </Card>
-                                                        ))
-                                                    ) : (
-                                                        <p className="fs-12 text-muted mb-0">No URLs</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* Domains */}
-                                            <div>
-                                                <h6 className="mb-2 fw-semibold fs-13">Domains</h6>
-                                                <div className="d-flex flex-column gap-2">
-                                                    {artifactsAndAssets?.artifacts?.domains && artifactsAndAssets.artifacts.domains.length > 0 ? (
-                                                        artifactsAndAssets.artifacts.domains.map((domain, index) => (
-                                                        <Card key={index} className="border custom-card mb-0">
-                                                            <Card.Body className="py-3 px-3">
-                                                                <div className="d-flex justify-content-between align-items-start">
-                                                                    <div className="flex-fill">
-                                                                        <p className="fs-13 fw-medium mb-1 lh-1">{domain.value}</p>
-                                                                        {domain.detail && <p className="fs-11 text-muted mb-0">{domain.detail}</p>}
-                                                                    </div>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        {domain.score !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className={`fs-14 fw-semibold text-${domain.color || 'primary'}`}>{domain.score}</div>
-                                                                                <div className="fs-10 text-muted">Score</div>
-                                                                            </div>
-                                                                        )}
-                                                                        {domain.alerts !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className="fs-14 fw-semibold text-primary">{domain.alerts}</div>
-                                                                                <div className="fs-10 text-muted">Alerts</div>
-                                                                            </div>
-                                                                        )}
-                                                                        <i className="ri-add-line fs-18 text-muted"></i>
-                                                                    </div>
-                                                                </div>
-                                                            </Card.Body>
-                                                        </Card>
-                                                        ))
-                                                    ) : (
-                                                        <p className="fs-12 text-muted mb-0">No domains</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* Hashes */}
-                                                <div>
-                                                <h6 className="mb-2 fw-semibold fs-13">Hashes</h6>
-                                                <div className="d-flex flex-column gap-2">
-                                                    {artifactsAndAssets?.artifacts?.hashes && artifactsAndAssets.artifacts.hashes.length > 0 ? (
-                                                        artifactsAndAssets.artifacts.hashes.map((hash, index) => (
-                                                        <Card key={index} className="border custom-card mb-0">
-                                                            <Card.Body className="py-3 px-3">
-                                                                <div className="d-flex justify-content-between align-items-start">
-                                                                    <div className="flex-fill">
-                                                                        <p className="fs-13 fw-medium mb-1 lh-1 font-monospace">{hash.value}</p>
-                                                                        {hash.detail && <p className="fs-11 text-muted mb-0">{hash.detail}</p>}
-                                                                    </div>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        {hash.score !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className={`fs-14 fw-semibold text-${hash.color || 'primary'}`}>{hash.score}</div>
-                                                                                <div className="fs-10 text-muted">Score</div>
-                                                                            </div>
-                                                                        )}
-                                                                        {hash.alerts !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className="fs-14 fw-semibold text-primary">{hash.alerts}</div>
-                                                                                <div className="fs-10 text-muted">Alerts</div>
-                                                                            </div>
-                                                                        )}
-                                                                        <i className="ri-add-line fs-18 text-muted"></i>
-                                                                    </div>
-                                                                </div>
-                                                            </Card.Body>
-                                                        </Card>
-                                                        ))
-                                                    ) : (
-                                                        <p className="fs-12 text-muted mb-0">No hashes</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* Assets */}
-                                            <div>
-                                                <h6 className="mb-2 fw-semibold fs-13">Assets</h6>
-                                                <div className="d-flex flex-column gap-2">
-                                                    {artifactsAndAssets?.assets && artifactsAndAssets.assets.length > 0 ? (
-                                                        artifactsAndAssets.assets.map((asset, index) => (
-                                                        <Card key={index} className="border custom-card mb-0">
-                                                            <Card.Body className="py-3 px-3">
-                                                                <div className="d-flex justify-content-between align-items-start">
-                                                                    <div className="flex-fill">
-                                                                        <p className="fs-13 fw-medium mb-1 lh-1">{asset.value}</p>
-                                                                        {asset.detail && <p className="fs-11 text-muted mb-0">{asset.detail}</p>}
-                                                                    </div>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        {asset.alerts !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className="fs-14 fw-semibold text-primary">{asset.alerts}</div>
-                                                                                <div className="fs-10 text-muted">Alerts</div>
-                                                                            </div>
-                                                                        )}
-                                                                        <i className="ri-add-line fs-18 text-muted"></i>
-                                                                    </div>
-                                                                </div>
-                                                            </Card.Body>
-                                                        </Card>
-                                                        ))
-                                                    ) : (
-                                                        <p className="fs-12 text-muted mb-0">No URLs</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* Users */}
-                                            <div>
-                                                <h6 className="mb-2 fw-semibold fs-13">Users</h6>
-                                                <div className="d-flex flex-column gap-2">
-                                                    {artifactsAndAssets?.users && artifactsAndAssets.users.length > 0 ? (
-                                                        artifactsAndAssets.users.map((user, index) => (
-                                                        <Card key={index} className="border custom-card mb-0">
-                                                            <Card.Body className="py-3 px-3">
-                                                                <div className="d-flex justify-content-between align-items-start">
-                                                                    <div className="flex-fill">
-                                                                        <p className="fs-13 fw-medium mb-1 lh-1">{user.value}</p>
-                                                                        {user.detail && <p className="fs-11 text-muted mb-0">{user.detail}</p>}
-                                                                    </div>
-                                                                    <div className="d-flex align-items-center gap-2">
-                                                                        {user.alerts !== undefined && (
-                                                                            <div className="text-center">
-                                                                                <div className="fs-14 fw-semibold text-primary">{user.alerts}</div>
-                                                                                <div className="fs-10 text-muted">Alerts</div>
-                                                                            </div>
-                                                                        )}
-                                                                        <i className="ri-add-line fs-18 text-muted"></i>
-                                                                    </div>
-                                                                </div>
-                                                            </Card.Body>
-                                                        </Card>
-                                                        ))
-                                                    ) : (
-                                                        <p className="fs-12 text-muted mb-0">No users</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                                </div>
+                                            <Card.Body className="px-2 py-3">
+                                                <Accordion
+                                                    alwaysOpen
+                                                    className="customized-accordion accordions-items-seperate"
+                                                    defaultActiveKey={overviewEntityAccordionItems.filter((item) => item.count > 0).map((item) => item.id)}
+                                                >
+                                                    {overviewEntityAccordionItems.map((item) => (
+                                                        <Accordion.Item eventKey={item.id} className={item.itemClass} key={item.id}>
+                                                            <Accordion.Header>{item.title}</Accordion.Header>
+                                                            <Accordion.Body className={item.bodyClass}>{item.content}</Accordion.Body>
+                                                        </Accordion.Item>
+                                                    ))}
+                                                </Accordion>
                                             </Card.Body>
                                         </Card>
                                     </Col>
@@ -1903,121 +1808,161 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
             </Row>
                             </Tab.Pane>
                             <Tab.Pane eventKey='assets' className="pt-3 px-4 pb-4" role="tabpanel">
-                                <div className="d-flex flex-column gap-4">
-                                    {Object.keys(relatedAlertsData).length > 0 ? (
-                                        Object.entries(relatedAlertsData).map(([entityType, entities]) => (
-                                            <div key={entityType} className="d-flex flex-column gap-3">
-                                                {/* Entity Type Header */}
-                                                <div className="d-flex align-items-center mb-2">
-                                                    <p className="mb-0 text-badge">
-                                                        <span className="text fw-semibold related-alerts-text" style={{ fontSize: '0.900rem' }}>
-                                                            {entityType === 'ips' ? 'IPs' : 
-                                                             entityType.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                                                        </span>
-                                                        {Object.keys(entities).length === 0 ? (
-                                                            <span className="ms-2 badge rounded-pill" style={{ backgroundColor: '#6c757d', color: '#fff' }}>
-                                                                {Object.keys(entities).length}
-                                                            </span>
-                                                        ) : (
-                                                            <SpkBadge variant="danger" Pill={true} Customclass="ms-2">
-                                                                {Object.keys(entities).length}
-                                                            </SpkBadge>
-                                                        )}
-                                                    </p>
-                                                </div>
+                                {relatedAlertCategories.length > 0 ? (
+                                    <Tab.Container
+                                        activeKey={activeRelatedAlertCategoryKey}
+                                        onSelect={(k) => setActiveRelatedAlertCategoryKey(String(k || ''))}
+                                    >
+                                        <Row>
+                                            <div className="col-md-2">
+                                                <Nav
+                                                    className="nav-tabs flex-column vertical-tabs-3 me-3 related-alert-category-nav"
+                                                    role="tablist"
+                                                    aria-orientation="vertical"
+                                                    style={{ minHeight: '260px' }}
+                                                >
+                                                    {relatedAlertCategories.map((cat) => {
+                                                        const typeLabel = formatRelatedAlertTypeLabel(cat.entityType);
+                                                        const subEntityCount = Object.keys(cat.entities || {}).length;
+                                                        const iconClass = getRelatedAlertTypeIcon(cat.entityType);
 
-                                                {/* Entities and their alerts */}
-                                                {Object.entries(entities).map(([entityName, alerts]) => (
-                                                    <div key={entityName} className="d-flex flex-column gap-2">
-                                                        {/* Entity Name Header */}
-                                                        <div className="d-flex align-items-center mb-2">
-                                                            <p className="mb-0 text-badge">
-                                                                <span className="text fw-medium related-alerts-text-secondary">
-                                                                    <i className="ri-user-line me-2"></i>
-                                                                    {entityName}
-                                                                </span>
-                                                                {alerts.length === 0 ? (
-                                                                    <span className="ms-2 badge rounded-pill" style={{ backgroundColor: '#6c757d', color: '#fff' }}>
-                                                                        {alerts.length}
-                                                                    </span>
-                                                                ) : (
-                                                                    <SpkBadge variant="danger" Pill={true} Customclass="ms-2">
-                                                                        {alerts.length}
-                                                                    </SpkBadge>
-                                                                )}
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Alerts Cards for this entity - Two Column Split View */}
-                                                        {alerts.length > 0 ? (
-                                                            <Row className="ms-4">
-                                                                {alerts.map((alert) => (
-                                                                    <Col key={alert.id} md={6} className="mb-2">
-                                                                        <Card className="custom-card mb-0" style={{
-                                                                            borderLeft: alert.severity === 'high'
-                                                                                ? '4px solid rgba(220, 53, 69, 0.8)'
-                                                                                : alert.severity === 'medium'
-                                                                                    ? '4px solid rgba(253, 126, 20, 0.8)'
-                                                                                    : '4px solid rgba(52, 58, 64, 0.8)',
-                                                                            borderTop: '1px solid #9ca3af',
-                                                                            borderRight: '1px solid #9ca3af',
-                                                                            borderBottom: '1px solid #9ca3af'
-                                                                        }}>
-                                                                            <Card.Body className="p-3">
-                                                                                <div className="d-flex flex-column gap-2">
-                                                                                    <div className="d-flex align-items-center gap-2 mb-2">
-                                                                                        <SpkButton 
-                                                                                            Buttontype="button"
-                                                                                            Buttonvariant="primary"
-                                                                                            Customclass="btn-sm"
-                                                                                        >
-                                                                                            ID: {alert.id}
-                                                                                        </SpkButton>
-                                                                                        <span className="text-muted fs-12">{alert.time}</span>
-                                                                                        <div className="d-flex align-items-center gap-2 ms-auto">
-                                                                                            {alert.status && (
-                                                                                                <SpkButton 
-                                                                                                    Buttontype="button"
-                                                                                                    Buttonvariant="outline-light"
-                                                                                                    Customclass="rounded-pill btn-sm"
-                                                                                                >
-                                                                                                    {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
-                                                                                                </SpkButton>
-                                                                                            )}
-                                                                                            {alert.closure_category && alert.closure_category !== '' && (
-                                                                                                <SpkButton 
-                                                                                                    Buttontype="button"
-                                                                                                    Buttonvariant="outline-light"
-                                                                                                    Customclass="rounded-pill btn-sm"
-                                                                                                >
-                                                                                                    {alert.closure_category}
-                                                                                                </SpkButton>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <h6 className="fw-semibold mb-0 related-alerts-text" style={{ fontSize: '0.95rem', lineHeight: '1.4' }}>{alert.name}</h6>
-                                                                                </div>
-                                                                            </Card.Body>
-                                                                        </Card>
-                                                                    </Col>
-                                                                ))}
-                                                            </Row>
-                                                        ) : (
-                                                            <div className="ms-4 text-muted fs-13 py-2">
-                                                                No alerts found for this entity
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                        return (
+                                                            <Nav.Item key={cat.key}>
+                                                                <Nav.Link
+                                                                    eventKey={cat.key}
+                                                                    className="text-start"
+                                                                    style={{ padding: '0.75rem 1rem', minWidth: '11.5rem' }}
+                                                                >
+                                                                    <div className="d-flex align-items-center justify-content-between gap-2">
+                                                                        <span
+                                                                            className="d-inline-flex align-items-center gap-2 text-truncate"
+                                                                            style={{ fontSize: '0.9rem' }}
+                                                                        >
+                                                                            <i className={`${iconClass} align-middle d-inline-block`}></i>
+                                                                            <span className="fw-semibold related-alerts-text-secondary text-truncate">
+                                                                                {typeLabel}
+                                                                            </span>
+                                                                        </span>
+                                                                        <span style={{ minWidth: '2.1rem', textAlign: 'center' }}>
+                                                                            {subEntityCount === 0 ? (
+                                                                                <span
+                                                                                    className="badge rounded-pill"
+                                                                                    style={{ backgroundColor: '#6c757d', color: '#fff' }}
+                                                                                >
+                                                                                    {subEntityCount}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <SpkBadge variant="danger" Pill={true}>
+                                                                                    {subEntityCount}
+                                                                                </SpkBadge>
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                </Nav.Link>
+                                                            </Nav.Item>
+                                                        );
+                                                    })}
+                                                </Nav>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-5">
-                                            <i className="ri-inbox-line fs-48 text-muted mb-3 d-block"></i>
-                                            <p className="text-muted mb-0">No related alerts data available</p>
-                                        </div>
-                                    )}
-                                </div>
+                                            <Col md={10}>
+                                                <Tab.Content>
+                                                    {relatedAlertCategories.map((cat) => (
+                                                        <Tab.Pane key={cat.key} eventKey={cat.key}>
+                                                            {Object.keys(cat.entities || {}).length > 0 ? (
+                                                                <div className="d-flex flex-column gap-4">
+                                                                    {Object.entries(cat.entities).map(([entityName, alerts]) => (
+                                                                        <div key={entityName} className="d-flex flex-column gap-2">
+                                                                            <div className="d-flex align-items-center">
+                                                                                <span className="fw-semibold related-alerts-text" style={{ fontSize: '0.95rem' }}>
+                                                                                    {entityName}
+                                                                                </span>
+                                                                                <div className="ms-2">
+                                                                                    {alerts.length === 0 ? (
+                                                                                        <span
+                                                                                            className="badge rounded-pill"
+                                                                                            style={{ backgroundColor: '#6c757d', color: '#fff' }}
+                                                                                        >
+                                                                                            {alerts.length}
+                                                                                        </span>
+                                                                                    ) : (
+                                                                                        <SpkBadge variant="danger" Pill={true}>
+                                                                                            {alerts.length}
+                                                                                        </SpkBadge>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {alerts.length > 0 ? (
+                                                                                <div className="d-flex flex-column gap-2">
+                                                                                    {alerts.map((alert) => (
+                                                                                        <Card
+                                                                                            key={alert.id}
+                                                                                            className="custom-card mb-0 related-alert-card"
+                                                                                            style={{
+                                                                                                borderLeft: getRelatedAlertSeverityBorder(alert.severity),
+                                                                                                borderTop: '1px solid #e5e7eb',
+                                                                                                borderRight: '1px solid #e5e7eb',
+                                                                                                borderBottom: '1px solid #e5e7eb',
+                                                                                            }}
+                                                                                        >
+                                                                                            <Card.Body className="p-3">
+                                                                                                <div className="d-flex flex-column gap-2">
+                                                                                                    <div className="d-flex align-items-center gap-2 mb-2">
+                                                                                                        <SpkButton
+                                                                                                            Buttontype="button"
+                                                                                                            Buttonvariant="primary"
+                                                                                                            Customclass="btn-sm"
+                                                                                                        >
+                                                                                                            ID: {alert.id}
+                                                                                                        </SpkButton>
+                                                                                                        <span className="text-muted fs-12">{alert.time}</span>
+                                                                                                        <div className="d-flex align-items-center gap-2 ms-auto">
+                                                                                                            {[alert.status ? `${alert.status.charAt(0).toUpperCase()}${alert.status.slice(1)}` : '', alert.closure_category || '']
+                                                                                                                .filter(Boolean)
+                                                                                                                .map((pillText) => (
+                                                                                                                    <SpkButton
+                                                                                                                        key={`${alert.id}-${pillText}`}
+                                                                                                                        Buttontype="button"
+                                                                                                                        Buttonvariant="outline-light"
+                                                                                                                        Customclass="rounded-pill btn-sm related-alert-meta-pill"
+                                                                                                                    >
+                                                                                                                        {pillText}
+                                                                                                                    </SpkButton>
+                                                                                                                ))}
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                    <h6
+                                                                                                        className="fw-semibold mb-0 related-alerts-text"
+                                                                                                        style={{ fontSize: '0.95rem', lineHeight: '1.4' }}
+                                                                                                    >
+                                                                                                        {alert.name}
+                                                                                                    </h6>
+                                                                                                </div>
+                                                                                            </Card.Body>
+                                                                                        </Card>
+                                                                                    ))}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="text-muted fs-13 py-2">No alerts found for this entity</div>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-muted fs-13 py-2">No Alerts found for this Entity</div>
+                                                            )}
+                                                        </Tab.Pane>
+                                                    ))}
+                                                </Tab.Content>
+                                            </Col>
+                                        </Row>
+                                    </Tab.Container>
+                                ) : (
+                                    <div className="text-center py-5">
+                                        <i className="ri-inbox-line fs-48 text-muted mb-3 d-block"></i>
+                                        <p className="text-muted mb-0">No related alerts data available</p>
+                                    </div>
+                                )}
                             </Tab.Pane>
                             <Tab.Pane eventKey='logs' className="pt-3 px-4 pb-4" role="tabpanel">
                                 <div className="d-flex flex-column gap-3">
@@ -2579,6 +2524,19 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                 .ticket-note-image-btn:hover {
                     background-color: #e1e1e1 !important;
                 }
+                /* Overview > Attributes alternating row shades (Nesting-like striped feel) */
+                .attributes-striped-list > .d-flex:nth-child(odd) {
+                    background-color: rgba(var(--bs-emphasis-color-rgb), 0.025);
+                }
+                .attributes-striped-list > .d-flex:nth-child(even) {
+                    background-color: transparent;
+                }
+                [data-theme-mode="dark"] .attributes-striped-list > .d-flex:nth-child(odd) {
+                    background-color:rgb(10, 10, 10);
+                }
+                [data-theme-mode="dark"] .attributes-striped-list > .d-flex:nth-child(even) {
+                    background-color:rgb(24, 24, 24);
+                }
                 /* Related Alerts Text Colors - Light Mode (default) */
                 .related-alerts-text {
                     color: #000 !important;
@@ -2586,12 +2544,27 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                 .related-alerts-text-secondary {
                     color: #333 !important;
                 }
+                .related-alert-category-nav .nav-link.active .related-alerts-text-secondary {
+                    color: #fff !important;
+                }
+                .related-alert-meta-pill {
+                    border-color: #e5e7eb !important; /* same as related alert card border (light mode) */
+                }
                 /* Related Alerts Text Colors - Dark Mode */
                 [data-theme-mode="dark"] .related-alerts-text {
                     color: #fff !important;
                 }
                 [data-theme-mode="dark"] .related-alerts-text-secondary {
                     color: rgba(255, 255, 255, 0.7) !important;
+                }
+                /* Related Alerts Card Borders - Dark Mode */
+                [data-theme-mode="dark"] .related-alert-card {
+                    border-top-color: #4b5563 !important;   /* muted grey */
+                    border-right-color: #4b5563 !important; /* muted grey */
+                    border-bottom-color: #4b5563 !important;/* muted grey */
+                }
+                [data-theme-mode="dark"] .related-alert-meta-pill {
+                    border-color: #4b5563 !important; /* same as related alert card border (dark mode) */
                 }
                 /* Assigned To Dropdown Dark Mode Styles */
                 [data-theme-mode="dark"] .react-select-container .react-select__control {
