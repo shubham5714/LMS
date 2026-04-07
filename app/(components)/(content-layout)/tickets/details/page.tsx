@@ -312,13 +312,14 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
         return [...baseRows, ...dynamicRows];
     }, [ticket, userData?.timezone, alertFields]);
 
-    const renderEntityCard = useCallback((item: ArtifactItem | AssetItem, key: string, monospaceValue = false) => (
-        <Card key={key} className="border custom-card mb-0">
-            <Card.Body className="py-3 px-3">
+    const renderEntityCard = useCallback((item: ArtifactItem | AssetItem, key: string, monospaceValue = false, bodyClassName = '') => (
+        <Card key={key} className="border custom-card mb-0 rounded-3 overview-entity-card">
+            <Card.Body className={`py-3 px-3 ${bodyClassName}`.trim()}>
                 <div className="d-flex flex-column gap-2">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div className="flex-fill">
+                    <div className="d-flex justify-content-between align-items-start gap-2">
+                        <div className="flex-fill" style={{ minWidth: 0 }}>
                             <p className={`fs-14 fw-medium mb-0 ${monospaceValue ? 'font-monospace' : ''} text-break`}>{item.value}</p>
+                            {item.detail && <p className="fs-11 text-muted mb-0 mt-1 text-break" style={{ overflowWrap: 'anywhere' }}>{item.detail}</p>}
                         </div>
                         <div className="d-flex align-items-center gap-2">
                             {'score' in item && item.score !== undefined && (
@@ -335,7 +336,6 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                             )}
                         </div>
                     </div>
-                    {item.detail && <p className="fs-11 text-muted mb-0 text-break">{item.detail}</p>}
                 </div>
             </Card.Body>
         </Card>
@@ -364,7 +364,16 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
             bodyClass: '',
             content: cat.values.length > 0 ? (
                 <div className="d-flex flex-column gap-2">
-                    {cat.values.map((item, index) => renderEntityCard(item, `${cat.id}-${index}`, Boolean(cat.monospace)))}
+                    {cat.values.map((item, index) =>
+                        renderEntityCard(
+                            item,
+                            `${cat.id}-${index}`,
+                            Boolean(cat.monospace),
+                            ['ip_addresses', 'urls', 'domains', 'hashes'].includes(cat.id)
+                                ? 'overview-entity-card-body-primary'
+                                : 'overview-entity-card-body-danger'
+                        )
+                    )}
                 </div>
             ) : (
                 <p className="fs-12 text-muted mb-0">{cat.emptyLabel}</p>
@@ -2536,6 +2545,21 @@ const TicketDetails: React.FC<TicketDetailsProps> = () => {
                 }
                 [data-theme-mode="dark"] .attributes-striped-list > .d-flex:nth-child(even) {
                     background-color:rgb(24, 24, 24);
+                }
+                .overview-entity-card-body-primary {
+                    background-color: var(--primary01);
+                }
+                .overview-entity-card-body-danger {
+                    background-color: rgba(var(--danger-rgb), 0.1);
+                }
+                .overview-entity-card {
+                    border: 1px solid #e5e7eb !important;
+                }
+                [data-theme-mode="light"] .overview-entity-card {
+                    border: 1px solid #e5e7eb !important;
+                }
+                [data-theme-mode="dark"] .overview-entity-card {
+                    border: 1px solid rgba(75, 85, 99, 0.6) !important;
                 }
                 /* Related Alerts Text Colors - Light Mode (default) */
                 .related-alerts-text {
