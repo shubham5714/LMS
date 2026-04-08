@@ -40,6 +40,7 @@ interface IntegrationType {
     parameters: IntegrationParameter[];
     tools?: MarketplaceTool[];
     modal_info?: string;
+    is_mssp?: boolean;
 }
 
 interface IntegrationParameter {
@@ -65,6 +66,7 @@ interface IntegrationInstance {
     logo?: string;
     configuration: { [key: string]: any };
     status: 'active' | 'inactive' | 'inprogress';
+    is_mssp?: boolean;
     last_tested_at?: string;
     created_at?: string;
     updated_at?: string;
@@ -78,6 +80,17 @@ interface InstanceToolRow {
     approver_emails?: string | null;
     severity?: string | null;
     type?: string | null;
+    scope?: string | null;
+    shared_tenants?: string[] | null;
+}
+
+type ToolScope = 'owned' | 'shared';
+
+function isTrueLike(value: unknown): boolean {
+    if (value === true) return true;
+    if (typeof value === 'string') return value.toLowerCase() === 'true' || value === '1';
+    if (typeof value === 'number') return value === 1;
+    return false;
 }
 
 function getToolFieldList(tool: MarketplaceTool): ToolFieldRequirement[] {
@@ -119,11 +132,20 @@ function isToolFieldRequiredNow(field: ToolFieldRequirement, values: Record<stri
 function validateToolPolicies(
     tools: MarketplaceTool[],
     toolToggles: Record<string, boolean>,
-    toolConfigs: Record<string, Record<string, unknown>>
+    toolConfigs: Record<string, Record<string, unknown>>,
+    toolScopes: Record<string, ToolScope>,
+    toolSharedTenants: Record<string, string[]>,
+    showMsspControls: boolean
 ): { [key: string]: string } {
     const errors: { [key: string]: string } = {};
     for (const tool of tools) {
         if (!toolToggles[tool.name]) continue;
+        if (showMsspControls && (toolScopes[tool.name] || 'owned') === 'shared') {
+            const tenants = toolSharedTenants[tool.name] || [];
+            if (tenants.length === 0) {
+                errors[`tool_share_tenants_${tool.name}`] = 'Select at least one tenant for shared scope';
+            }
+        }
         const values = toolConfigs[tool.name] ?? {};
         for (const field of getToolFieldList(tool)) {
             if (!shouldShowToolField(field, values)) continue;
@@ -176,12 +198,25 @@ function formatApproverEmailsForDb(val: unknown): string | null {
     return parts.length ? parts.join(', ') : null;
 }
 
+function normalizeTenantIdArray(values: unknown): string[] {
+    if (!Array.isArray(values)) return [];
+    return Array.from(
+        new Set(
+            values
+                .map((v) => String(v).trim())
+                .filter(Boolean)
+        )
+    );
+}
+
 function buildInstanceToolInsertRow(
     tool: MarketplaceTool,
     config: Record<string, unknown>,
     instanceName: string,
     instanceId: number,
-    tenantId: string | null
+    tenantId: string | null,
+    scope: ToolScope,
+    sharedTenants: string[]
 ): Record<string, unknown> {
     return {
         tool_name: tool.name,
@@ -194,6 +229,8 @@ function buildInstanceToolInsertRow(
         severity: (config.severity != null ? String(config.severity).trim() : '') || null,
         type: tool.type ?? null,
         tenant_id: tenantId,
+        scope,
+        shared_tenants: scope === 'shared' ? normalizeTenantIdArray(sharedTenants) : [],
     };
 }
 
@@ -237,6 +274,8 @@ const IntegrationsList = () => {
     const [toolToggles, setToolToggles] = useState<Record<string, boolean>>({});
     /** Per-tool config: field id → value (from marketplace when_enabled.fields) */
     const [toolConfigs, setToolConfigs] = useState<Record<string, Record<string, unknown>>>({});
+    const [toolScopes, setToolScopes] = useState<Record<string, ToolScope>>({});
+    const [toolSharedTenants, setToolSharedTenants] = useState<Record<string, string[]>>({});
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -303,7 +342,8 @@ const IntegrationsList = () => {
                     statusColor: item.status_color,
                     parameters: item.parameters || [],
                     tools: item.tools || [],
-                    modal_info: item.modal_info || ''
+                    modal_info: item.modal_info || '',
+                    is_mssp: isTrueLike(item.is_mssp)
                 })) || [];
                 setIntegrations(transformedData);
                 
@@ -418,6 +458,7 @@ const IntegrationsList = () => {
         setFormData({
             ...instance.configuration,
             instance_name: instance.instance_name,
+            is_mssp: isTrueLike(instance.is_mssp),
             incident_type: instance.incident_type || '',
             classifier: instance.classifier || '',
             mapper: instance.mapper || ''
@@ -428,12 +469,18 @@ const IntegrationsList = () => {
         const tools = integration.tools || [];
         const nextToolToggles: Record<string, boolean> = {};
         const nextToolConfigs: Record<string, Record<string, unknown>> = {};
+        const nextToolScopes: Record<string, ToolScope> = {};
+        const nextToolSharedTenants: Record<string, string[]> = {};
         tools.forEach((tool) => {
             nextToolToggles[tool.name] = false;
             nextToolConfigs[tool.name] = initEmptyToolConfig(tool);
+            nextToolScopes[tool.name] = 'owned';
+            nextToolSharedTenants[tool.name] = [];
         });
         setToolToggles(nextToolToggles);
         setToolConfigs(nextToolConfigs);
+        setToolScopes(nextToolScopes);
+        setToolSharedTenants(nextToolSharedTenants);
 
         // Prefill tool toggles from instance_tools for the specific configured instance
         const enabledTools = await fetchEnabledToolsForInstance(instance.id);
@@ -443,10 +490,14 @@ const IntegrationsList = () => {
             nextToolToggles[tool.name] = enabledToolNames.has(tool.name);
             const row = enabledTools.find((t) => t.tool_name === tool.name);
             nextToolConfigs[tool.name] = applyInstanceRowToToolConfig(tool, row);
+            nextToolScopes[tool.name] = (row?.scope === 'shared' ? 'shared' : 'owned');
+            nextToolSharedTenants[tool.name] = Array.isArray(row?.shared_tenants) ? row!.shared_tenants! : [];
         });
 
         setToolToggles({ ...nextToolToggles });
         setToolConfigs({ ...nextToolConfigs });
+        setToolScopes({ ...nextToolScopes });
+        setToolSharedTenants({ ...nextToolSharedTenants });
         setShowEditInstanceModal(true);
     };
 
@@ -465,21 +516,29 @@ const IntegrationsList = () => {
 
     // Handle add instance button click
     const handleAddInstance = (integration: IntegrationType) => {
+        setSelectedInstance(null);
         setSelectedIntegration(integration);
 
         const tools = integration.tools || [];
         const nextToolToggles: Record<string, boolean> = {};
         const nextToolConfigs: Record<string, Record<string, unknown>> = {};
+        const nextToolScopes: Record<string, ToolScope> = {};
+        const nextToolSharedTenants: Record<string, string[]> = {};
         tools.forEach((tool) => {
             nextToolToggles[tool.name] = false;
             nextToolConfigs[tool.name] = initEmptyToolConfig(tool);
+            nextToolScopes[tool.name] = 'owned';
+            nextToolSharedTenants[tool.name] = [];
         });
         setToolToggles(nextToolToggles);
         setToolConfigs(nextToolConfigs);
+        setToolScopes(nextToolScopes);
+        setToolSharedTenants(nextToolSharedTenants);
 
         setFormData({
             // Start empty so the user explicitly enters the instance name.
             instance_name: '',
+            is_mssp: false,
             incident_type: '',
             classifier: '',
             mapper: ''
@@ -523,7 +582,14 @@ const IntegrationsList = () => {
         });
 
         const tools = selectedIntegration.tools || [];
-        const toolPolicyErrors = validateToolPolicies(tools, toolToggles, toolConfigs);
+        const toolPolicyErrors = validateToolPolicies(
+            tools,
+            toolToggles,
+            toolConfigs,
+            toolScopes,
+            toolSharedTenants,
+            isTrueLike(formData.is_mssp)
+        );
         const merged = { ...errors, ...toolPolicyErrors };
         setFormErrors(merged);
         return Object.keys(merged).length === 0;
@@ -604,7 +670,7 @@ const IntegrationsList = () => {
         setIsSaving(true);
         try {
             // Extract instance_name, incident_type, classifier, mapper from formData and create configuration without them
-            const { instance_name, incident_type, classifier, mapper, ...configuration } = formData;
+            const { instance_name, is_mssp, incident_type, classifier, mapper, ...configuration } = formData;
             const instanceNameToSave = instance_name?.toString().trim() || `${selectedIntegration.name} Instance`;
             
             // Save instance to Supabase
@@ -617,6 +683,7 @@ const IntegrationsList = () => {
                     name: selectedIntegration.name,
                     logo: selectedIntegration.logo,
                     instance_name: instanceNameToSave,
+                    is_mssp: isTrueLike(is_mssp),
                     incident_type: incident_type?.toString().trim() || null,
                     classifier: classifier?.toString().trim() || null,
                     mapper: mapper?.toString().trim() || null,
@@ -649,7 +716,9 @@ const IntegrationsList = () => {
                                 toolConfigs[tool.name] ?? {},
                                 instanceNameToSave,
                                 insertedInstanceId,
-                                tenantId
+                                tenantId,
+                                toolScopes[tool.name] || 'owned',
+                                toolSharedTenants[tool.name] || []
                             )
                         )
                     );
@@ -684,6 +753,8 @@ const IntegrationsList = () => {
             setFormErrors({});
             setToolToggles({});
             setToolConfigs({});
+            setToolScopes({});
+            setToolSharedTenants({});
             setModalMessage('Integration instance saved successfully!');
             setShowSuccessModal(true);
             setShowErrorModal(false);
@@ -703,8 +774,8 @@ const IntegrationsList = () => {
 
         setIsUpdating(true);
         try {
-            // Extract instance_name, incident_type, classifier, mapper from formData and create configuration without them
-            const { instance_name, incident_type, classifier, mapper, ...configuration } = formData;
+            // Extract instance_name, is_mssp, incident_type, classifier, mapper from formData and create configuration without them
+            const { instance_name, is_mssp, incident_type, classifier, mapper, ...configuration } = formData;
             const instanceNameToSave = instance_name?.toString().trim() || selectedInstance.instance_name;
             
             // Update instance in Supabase
@@ -712,6 +783,7 @@ const IntegrationsList = () => {
                 .from('integration_instances')
                 .update({
                     instance_name: instanceNameToSave,
+                    is_mssp: isTrueLike(is_mssp),
                     incident_type: incident_type?.toString().trim() || null,
                     classifier: classifier?.toString().trim() || null,
                     mapper: mapper?.toString().trim() || null,
@@ -754,7 +826,9 @@ const IntegrationsList = () => {
                                 toolConfigs[tool.name] ?? {},
                                 instanceNameToSave,
                                 selectedInstance.id,
-                                selectedInstance.tenant_id ?? null
+                                selectedInstance.tenant_id ?? null,
+                                toolScopes[tool.name] || 'owned',
+                                toolSharedTenants[tool.name] || []
                             )
                         )
                     );
@@ -776,6 +850,8 @@ const IntegrationsList = () => {
             setFormErrors({});
             setToolToggles({});
             setToolConfigs({});
+            setToolScopes({});
+            setToolSharedTenants({});
             setModalMessage('Integration instance updated successfully!');
             setShowSuccessModal(true);
             setShowErrorModal(false);
@@ -889,6 +965,31 @@ const IntegrationsList = () => {
         }));
         const errKey = `tool_${toolName}_${fieldId}`;
         setFormErrors((prev) => {
+            if (!prev[errKey]) return prev;
+            const next = { ...prev };
+            delete next[errKey];
+            return next;
+        });
+    };
+
+    const setToolScopeValue = (toolName: string, scope: ToolScope) => {
+        setToolScopes((prev) => ({ ...prev, [toolName]: scope }));
+        if (scope !== 'shared') {
+            setToolSharedTenants((prev) => ({ ...prev, [toolName]: [] }));
+        }
+        setFormErrors((prev) => {
+            const errKey = `tool_share_tenants_${toolName}`;
+            if (!prev[errKey]) return prev;
+            const next = { ...prev };
+            delete next[errKey];
+            return next;
+        });
+    };
+
+    const setToolSharedTenantsValue = (toolName: string, tenantIds: string[]) => {
+        setToolSharedTenants((prev) => ({ ...prev, [toolName]: normalizeTenantIdArray(tenantIds) }));
+        setFormErrors((prev) => {
+            const errKey = `tool_share_tenants_${toolName}`;
             if (!prev[errKey]) return prev;
             const next = { ...prev };
             delete next[errKey];
@@ -1031,6 +1132,7 @@ const IntegrationsList = () => {
 
     const renderToolsSidebar = (switchIdPrefix: string, marketplaceFieldPrefix: string) => {
         const tools = selectedIntegration?.tools || [];
+        const showMsspControls = isTrueLike(formData.is_mssp);
         return (
             <div className="mt-4">
                 <div className="d-flex justify-content-between align-items-center">
@@ -1083,6 +1185,56 @@ const IntegrationsList = () => {
                                                 </div>
                                                 {fields.map((field) =>
                                                     renderToolMarketplaceField(tool, field, marketplaceFieldPrefix)
+                                                )}
+                                            </Card.Body>
+                                        </Card>
+                                    )}
+                                    {enabled && showMsspControls && (
+                                        <Card className="mt-2 bg-light border-0">
+                                            <Card.Body className="py-2 px-2">
+                                                <div className="small fw-semibold text-muted mb-2">Sharing</div>
+                                                <Form.Group className="mb-2">
+                                                    <Form.Label className="small mb-1">Scope</Form.Label>
+                                                    <Form.Select
+                                                        size="sm"
+                                                        value={toolScopes[tool.name] || 'owned'}
+                                                        onChange={(e) => setToolScopeValue(tool.name, e.target.value as ToolScope)}
+                                                    >
+                                                        <option value="owned">Owned</option>
+                                                        <option value="shared">Shared</option>
+                                                    </Form.Select>
+                                                </Form.Group>
+                                                {(toolScopes[tool.name] || 'owned') === 'shared' && (
+                                                    <Form.Group className="mb-1">
+                                                        <Form.Label className="small mb-1">Shared Tenants</Form.Label>
+                                                        <div className="border rounded p-2 shared-tenant-list" style={{ maxHeight: '160px', overflowY: 'auto' }}>
+                                                            {(assignedTenants || []).map((t) => {
+                                                                const selected = (toolSharedTenants[tool.name] || []).includes(t.id);
+                                                                return (
+                                                                    <Form.Check
+                                                                        key={t.id}
+                                                                        type="checkbox"
+                                                                        id={`${marketplaceFieldPrefix}-shared-tenant-${tool.name}-${t.id}`}
+                                                                        className="mb-1"
+                                                                        label={<span className="shared-tenant-label">{t.name}</span>}
+                                                                        checked={selected}
+                                                                        onChange={(e) => {
+                                                                            const current = toolSharedTenants[tool.name] || [];
+                                                                            const next = e.target.checked
+                                                                                ? [...current, t.id]
+                                                                                : current.filter((id) => id !== t.id);
+                                                                            setToolSharedTenantsValue(tool.name, next);
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        {formErrors[`tool_share_tenants_${tool.name}`] && (
+                                                            <div className="invalid-feedback d-block">
+                                                                {formErrors[`tool_share_tenants_${tool.name}`]}
+                                                            </div>
+                                                        )}
+                                                    </Form.Group>
                                                 )}
                                             </Card.Body>
                                         </Card>
@@ -1322,7 +1474,7 @@ const IntegrationsList = () => {
                             <Col md={7}>
                                 <Form>
                                     <Row>
-                                        <Col md={12} className="mb-3">
+                                        <Col md={8} className="mb-3">
                                             <Form.Group>
                                                 <Form.Label>
                                                     Instance Name
@@ -1343,6 +1495,19 @@ const IntegrationsList = () => {
                                                 <Form.Text className="text-muted">
                                                     Enter a unique name for this integration instance
                                                 </Form.Text>
+                                            </Form.Group>
+                                        </Col>
+                                        <Col md={4} className="mb-3">
+                                            <Form.Group className="w-100">
+                                                <Form.Label className="mb-1 fw-medium">MSSP Instance</Form.Label>
+                                                <Form.Check
+                                                    type="switch"
+                                                    id="add-instance-is-mssp"
+                                                    className="mssp-instance-toggle"
+                                                    label={formData.is_mssp ? "True" : "False"}
+                                                    checked={isTrueLike(formData.is_mssp)}
+                                                    onChange={(e) => handleFormChange('is_mssp', e.target.checked)}
+                                                />
                                             </Form.Group>
                                         </Col>
                                     </Row>
@@ -1461,7 +1626,7 @@ const IntegrationsList = () => {
                             <Col md={7}>
                                 <Form>
                                     <Row>
-                                        <Col md={12} className="mb-3">
+                                        <Col md={8} className="mb-3">
                                             <Form.Group>
                                                 <Form.Label>
                                                     Instance Name
@@ -1482,6 +1647,19 @@ const IntegrationsList = () => {
                                                 <Form.Text className="text-muted">
                                                     Enter a unique name for this integration instance
                                                 </Form.Text>
+                                            </Form.Group>
+                                        </Col>
+                                        <Col md={4} className="mb-3">
+                                            <Form.Group className="w-100">
+                                                <Form.Label className="mb-1 fw-medium">MSSP Instance</Form.Label>
+                                                <Form.Check
+                                                    type="switch"
+                                                    id="edit-instance-is-mssp"
+                                                    className="mssp-instance-toggle"
+                                                    label={formData.is_mssp ? "True" : "False"}
+                                                    checked={isTrueLike(formData.is_mssp)}
+                                                    onChange={(e) => handleFormChange('is_mssp', e.target.checked)}
+                                                />
                                             </Form.Group>
                                         </Col>
                                     </Row>
@@ -1600,7 +1778,7 @@ const IntegrationsList = () => {
                 </Modal.Footer>
             </Modal>
 
-            <style jsx>{`
+            <style jsx global>{`
                 .integration-logo {
                     width: 70px;
                     height: 50px;
@@ -1637,6 +1815,19 @@ const IntegrationsList = () => {
                 
                 .instance-name-text {
                     font-size: 0.9rem;
+                }
+                .mssp-instance-toggle .form-check-input {
+                    width: 2.6rem;
+                    height: 1.35rem;
+                    margin-top: 0.2rem;
+                }
+                .mssp-instance-toggle .form-check-label {
+                    font-size: 0.9rem;
+                    margin-left: 0.35rem;
+                }
+                [data-theme-mode="dark"] .shared-tenant-list .form-check-label,
+                [data-theme-mode="dark"] .shared-tenant-list .shared-tenant-label {
+                    color: #fff !important;
                 }
             `}</style>
 

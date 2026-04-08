@@ -108,6 +108,7 @@ export const MENUITEMS: Menuitemtype[] = [
       { path: "/environment-context", type: "link", active: false, selected: false, dirchange: false, title: "Environment Context" },
       { path: "/investigation-context", type: "link", active: false, selected: false, dirchange: false, title: "Investigation Context" },
       { path: "/response-context", type: "link", active: false, selected: false, dirchange: false, title: "Response Context" },
+      { path: "/datasets", type: "link", active: false, selected: false, dirchange: false, title: "Datasets" },
     ]
   },
 
