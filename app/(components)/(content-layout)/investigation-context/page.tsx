@@ -14,7 +14,7 @@ interface InvestigationContextRow {
     [key: string]: unknown;
 }
 
-type ScopeKey = "policy" | "users" | "assets" | "domains" | "urls" | "hashes";
+type ScopeKey = "ips" | "policy" | "users" | "assets" | "domains" | "urls" | "hashes";
 type SuggestionEntry = {
     suggestion_type: string;
     valid_until: string | "permanent";
@@ -36,6 +36,16 @@ const formatToIsoSeconds = (value: unknown): string => {
     return date.toISOString().slice(0, 19);
 };
 
+/** Table / card: "Permanent" or calendar date YYYY-MM-DD (UTC date from ISO timestamps). */
+const formatValidUntilDateOnly = (value: unknown): string => {
+    if (value === null || value === undefined || value === "") return "-";
+    const raw = String(value).trim();
+    if (raw.toLowerCase() === "permanent") return "Permanent";
+    const date = new Date(raw);
+    if (isNaN(date.getTime())) return raw;
+    return date.toISOString().slice(0, 10);
+};
+
 const formatDetailValue = (value: unknown): string => {
     if (value === null || value === undefined || value === "") return "-";
     if (typeof value === "object") {
@@ -52,7 +62,8 @@ const isSuggestionMap = (value: unknown): value is SuggestionMap => {
     return !!value && typeof value === "object" && !Array.isArray(value);
 };
 
-const SCOPE_KEYS: ScopeKey[] = ["policy", "users", "assets", "domains", "urls", "hashes"];
+/** Same bucket order as ticket AI tuning (`ips`, …) so nested `suggestion` rows resolve correctly. */
+const SCOPE_KEYS: ScopeKey[] = ["ips", "urls", "users", "assets", "hashes", "policy", "domains"];
 
 const normalizeSuggestionTypeForUi = (s: string | null | undefined): string => {
     if (!s) return "Genuine activity";
@@ -282,8 +293,34 @@ const InvestigationContext: React.FC<InvestigationContextProps> = () => {
         String(row.suppression_count_per_day ?? row.suppression_count ?? row.count ?? "-");
     const getCreatedBy = (row: InvestigationContextRow) =>
         String(row.created_by ?? row.author ?? row.user_name ?? "-");
-    const getValidUntil = (row: InvestigationContextRow) =>
-        String(row.valid_until ?? row.valid_until_date ?? "-");
+
+    /** `valid_until` lives under `suggestion` scopes; optional root fields still supported if present. */
+    const getValidUntil = (row: InvestigationContextRow) => {
+        const r = row as Record<string, unknown>;
+        const rootRaw =
+            r.valid_until ??
+            r.valid_until_date ??
+            r.validUntil ??
+            r.validUntilDate;
+        if (rootRaw !== null && rootRaw !== undefined && String(rootRaw).trim() !== "") {
+            return formatValidUntilDateOnly(rootRaw);
+        }
+        const suggestion = row.suggestion;
+        if (suggestion && typeof suggestion === "object" && !Array.isArray(suggestion)) {
+            for (const k of SCOPE_KEYS) {
+                const bucket = (suggestion as Record<string, Record<string, SuggestionEntry>>)[k];
+                if (!bucket || typeof bucket !== "object") continue;
+                for (const entry of Object.values(bucket)) {
+                    if (!entry || typeof entry !== "object") continue;
+                    if (entry.permanent === true) return "Permanent";
+                    if (entry.valid_until && entry.valid_until !== "permanent") {
+                        return formatValidUntilDateOnly(entry.valid_until);
+                    }
+                }
+            }
+        }
+        return "-";
+    };
     const getStatus = (row: InvestigationContextRow) =>
         String(row.status ?? "-");
 
@@ -465,7 +502,7 @@ const InvestigationContext: React.FC<InvestigationContextProps> = () => {
                                                             <div className="fs-12 text-muted mb-1">
                                                                 {entry.permanent
                                                                     ? "Permanent"
-                                                                    : `Valid Until: ${formatToIsoSeconds(entry.valid_until)}`}
+                                                                    : `Valid until: ${formatValidUntilDateOnly(entry.valid_until)}`}
                                                             </div>
                                                             <p className="mb-0 fs-13" style={{ lineHeight: "1.4" }}>
                                                                 {entry.suggestion_text || "—"}
@@ -542,12 +579,13 @@ const InvestigationContext: React.FC<InvestigationContextProps> = () => {
                                         }))
                                     }
                                 >
-                                    <option value="policy">Policy</option>
+                                    <option value="ips">IPs</option>
+                                    <option value="urls">URLs</option>
                                     <option value="users">Users</option>
                                     <option value="assets">Assets</option>
-                                    <option value="domains">Domains</option>
-                                    <option value="urls">URLs</option>
                                     <option value="hashes">Hashes</option>
+                                    <option value="policy">Policy</option>
+                                    <option value="domains">Domains</option>
                                 </Form.Select>
                                 <Form.Control
                                     type="text"
