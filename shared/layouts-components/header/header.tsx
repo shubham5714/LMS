@@ -1,23 +1,18 @@
 "use client"
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useRef, useState } from 'react'
 import Link from 'next/link';
 import Switcher from '../switcher/switcher';
 import { data$, getState, setState } from '../services/switcherServices';
-import { Dropdown, Form } from 'react-bootstrap';
+import { Dropdown } from 'react-bootstrap';
 import SpkDropdown from '@/shared/@spk-reusable-components/reusable-uiElements/spk-dropdown';
-import SpkButton from '@/shared/@spk-reusable-components/reusable-uiElements/spk-buttons';
 import SimpleBar from 'simplebar-react';
 import { Notifications } from '@/shared/data/headerdata';
 import Image from 'next/image';
 import nextConfig from "@/next.config"
 import { ThemeChanger } from '@/shared/redux/actions';
-import DatePicker from "react-datepicker";
 import { supabase } from '@/shared/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { useTenantContext } from '@/shared/contextapi/TenantContext';
-import { useUserContext } from '@/shared/contextapi/UserContext';
-import { useDateRangeContext } from '@/shared/contextapi/DateRangeContext';
-import { convertUserTimezoneToUTC } from '@/shared/lib/timezone';
+import { useMembershipContext } from '@/shared/contextapi/MembershipContext';
 
 interface HeaderProps { }
 
@@ -26,14 +21,9 @@ const Header: React.FC<HeaderProps> = () => {
     const { basePath } = nextConfig
     const router = useRouter();
 
-    // Use tenant context
-    const { assignedTenants, selectedTenantIds, setSelectedTenantIds, isLoading: tenantLoading } = useTenantContext();
-
-    // Use user context
-    const { userData, isLoading: isLoadingUser } = useUserContext();
-
-    // Use date range context
-    const { dateRange, setDateRange } = useDateRangeContext();
+    const { membership, isLoading: membershipLoading } = useMembershipContext();
+    const showGetPremium =
+        !membershipLoading && membership?.toUpperCase() === 'FREE';
 
     //Menu-Close
     let [variable, setVariable] = useState(getState());
@@ -52,10 +42,10 @@ const Header: React.FC<HeaderProps> = () => {
         try {
             // Clear session storage
             sessionStorage.removeItem('userRole');
-            sessionStorage.removeItem('assignedTenants');
-            sessionStorage.removeItem('selectedTenantIds');
+            sessionStorage.removeItem('userMembership');
             localStorage.removeItem('mfaVerified');
             sessionStorage.removeItem('mfaTicket');
+            window.dispatchEvent(new CustomEvent('membershipUpdated', { detail: null }));
             
             // Sign out from Supabase
             const { error } = await supabase.auth.signOut();
@@ -291,38 +281,6 @@ const Header: React.FC<HeaderProps> = () => {
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
 
-    // Tenant Switcher (global) - now using context
-    const tenantOptions = useMemo(() => {
-        if (tenantLoading) {
-            return [{ id: 'all', name: 'Loading tenants...' }];
-        }
-        return [{ id: 'all', name: 'All tenants' }, ...assignedTenants];
-    }, [assignedTenants, tenantLoading]);
-    
-    const onTenantChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
-        const next = value === 'all' ? 'all' : value;
-        setSelectedTenantIds(next);
-    };
-
-
-    const onDateRangeChange = (dates: [Date | null, Date | null] | null) => {
-        console.log('onDateRangeChange called with:', dates);
-        if (dates && Array.isArray(dates) && dates.length === 2) {
-            const [start, end] = dates;
-            if (start && end) {
-                console.log('Both dates selected:', start, end);
-                setDateRange([start, end]);
-            } else if (start && !end) {
-                // First date selected, keep current end date
-                console.log('First date selected:', start);
-                setDateRange([start, dateRange[1]]);
-            }
-        } else {
-            console.log('Invalid dates received:', dates);
-        }
-    };
-
     // Cart removed
     ////Notifications
 
@@ -372,92 +330,6 @@ const Header: React.FC<HeaderProps> = () => {
                         </div>
                         {/*<!-- End::header-element -->*/}
 
-                        {/* Tenant Switcher (replaces search) */}
-                        <div className="header-element d-md-block d-none my-auto" style={{ minWidth: 220 }}>
-                            <Form.Select size="sm" value={typeof selectedTenantIds === 'string' ? selectedTenantIds : 'all'} onChange={onTenantChange} disabled={tenantLoading}>
-                                {tenantOptions.map((t) => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                ))}
-                            </Form.Select>
-                        </div>
-
-                        {/* Date Range Picker with Time */}
-                        <div className="header-element d-md-block d-none my-auto" style={{ minWidth: 400 }}>
-                            <div className="d-flex gap-2">
-                                <DatePicker 
-                                    className="form-control form-control-sm" 
-                                    selected={dateRange[0]} 
-                                    onChange={(date) => {
-                                        if (date && userData?.timezone) {
-                                            const startDate = new Date(date.getTime());
-                                            console.log('DatePicker Start Date Selected:', {
-                                                'Date Object': startDate.toString(),
-                                                'Local Time': startDate.toLocaleString(),
-                                                'ISO String': startDate.toISOString(),
-                                                'Components': {
-                                                    year: startDate.getFullYear(),
-                                                    month: startDate.getMonth() + 1,
-                                                    day: startDate.getDate(),
-                                                    hours: startDate.getHours(),
-                                                    minutes: startDate.getMinutes()
-                                                },
-                                                'User Timezone': userData.timezone
-                                            });
-                                            const newRange = [startDate, dateRange[1]] as [Date, Date];
-                                            setDateRange(newRange);
-                                            if (typeof window !== 'undefined') {
-                                                // Convert to UTC using user's timezone before storing
-                                                const startUTC = convertUserTimezoneToUTC(startDate, userData.timezone);
-                                                const endUTC = convertUserTimezoneToUTC(dateRange[1], userData.timezone);
-                                                console.log('DatePicker Conversion Result:', {
-                                                    'Start UTC': startUTC,
-                                                    'End UTC': endUTC
-                                                });
-                                                sessionStorage.setItem('dateRange', JSON.stringify([startUTC, endUTC]));
-                                                try {
-                                                    window.dispatchEvent(new CustomEvent('dateRangeChanged', { detail: { start: startDate, end: dateRange[1] } }));
-                                                } catch { }
-                                            }
-                                        }
-                                    }} 
-                                    placeholderText="Start Date & Time"
-                                    dateFormat="MM/dd/yyyy HH:mm"
-                                    showTimeSelect
-                                    timeIntervals={15}
-                                    timeCaption="Time"
-                                    timeFormat="HH:mm"
-                                    maxDate={dateRange[1]}
-                                />
-                                <DatePicker 
-                                    className="form-control form-control-sm" 
-                                    selected={dateRange[1]} 
-                                    onChange={(date) => {
-                                        if (date && userData?.timezone) {
-                                            const endDate = new Date(date.getTime());
-                                            const newRange = [dateRange[0], endDate] as [Date, Date];
-                                            setDateRange(newRange);
-                                            if (typeof window !== 'undefined') {
-                                                // Convert to UTC using user's timezone before storing
-                                                const startUTC = convertUserTimezoneToUTC(dateRange[0], userData.timezone);
-                                                const endUTC = convertUserTimezoneToUTC(endDate, userData.timezone);
-                                                sessionStorage.setItem('dateRange', JSON.stringify([startUTC, endUTC]));
-                                                try {
-                                                    window.dispatchEvent(new CustomEvent('dateRangeChanged', { detail: { start: dateRange[0], end: endDate } }));
-                                                } catch { }
-                                            }
-                                        }
-                                    }} 
-                                    placeholderText="End Date & Time"
-                                    dateFormat="MM/dd/yyyy HH:mm"
-                                    showTimeSelect
-                                    timeIntervals={15}
-                                    timeCaption="Time"
-                                    timeFormat="HH:mm"
-                                    minDate={dateRange[0]}
-                                />
-                            </div>
-                        </div>
-
                     </div>
                     {/*<!-- End::header-content-left -->*/}
 
@@ -490,6 +362,18 @@ const Header: React.FC<HeaderProps> = () => {
                             {/*<!-- End::header-link|layout-setting -->*/}
                         </li>
                         {/*<!-- End::header-element -->*/}
+
+                        {showGetPremium && (
+                            <li className="header-element d-flex align-items-center ms-sm-1">
+                                <Link
+                                    scroll={false}
+                                    href="/pages/pricing/"
+                                    className="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm"
+                                >
+                                    Get Premium
+                                </Link>
+                            </li>
+                        )}
 
                         {/* cart dropdown removed */}
 

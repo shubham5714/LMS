@@ -52,36 +52,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           });
           setIsAuthenticated(true);
         } else {
-          console.log('No user role found in session storage, but user is authenticated');
-          // User is authenticated but no session data, fetch it
-          try {
-            const { data: userRoleData, error: roleError } = await supabase
-              .from('user_roles')
-              .select('username, role, timezone')
-              .eq('user_id', user.id)
-              .single();
-
-            if (roleError) {
-              console.error('Error fetching user role:', roleError);
-              setUserData(null);
-              setIsAuthenticated(false);
-            } else if (userRoleData) {
-              const userData = {
-                username: userRoleData.username,
-                role: userRoleData.role,
-                timezone: userRoleData.timezone || 'UTC'
-              };
-              setUserData(userData);
-              setIsAuthenticated(true);
-              
-              // Store in session storage for future use
-              sessionStorage.setItem('userRole', JSON.stringify(userData));
-            }
-          } catch (fetchError) {
-            console.error('Error fetching user data:', fetchError);
-            setUserData(null);
-            setIsAuthenticated(false);
-          }
+          setUserData(null);
+          setIsAuthenticated(true);
         }
       } catch (error) {
         console.error('Error during authentication check:', error);

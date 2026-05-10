@@ -48,30 +48,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
         if (tenantsRaw) {
           setAssignedTenants(JSON.parse(tenantsRaw));
         } else {
-          console.log('No tenant data found in session storage, but user is authenticated');
-          // User is authenticated but no tenant data, fetch it
-          try {
-            const { data: tenantRows, error: tenantsError } = await supabase
-              .from('user_tenants')
-              .select('tenant_id, tenant_name')
-              .eq('user_id', user.id);
-
-            if (tenantsError) {
-              console.error('Error fetching tenant data:', tenantsError);
-              setAssignedTenants([]);
-            } else {
-              const assignedTenants = (tenantRows || []).map((t: any) => ({ 
-                id: t.tenant_id, 
-                name: t.tenant_name || t.tenant_id
-              }));
-              
-              setAssignedTenants(assignedTenants);
-              sessionStorage.setItem('assignedTenants', JSON.stringify(assignedTenants));
-            }
-          } catch (fetchError) {
-            console.error('Error fetching tenant data:', fetchError);
-            setAssignedTenants([]);
-          }
+          setAssignedTenants([]);
         }
         
         if (selectedRaw) {

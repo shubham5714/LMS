@@ -2,6 +2,7 @@
 import SpkButton from "@/shared/@spk-reusable-components/reusable-uiElements/spk-buttons";
 import SpkAlert from '@/shared/@spk-reusable-components/reusable-uiElements/spk-alerts';
 import { supabase } from '@/shared/lib/supabase';
+import { useUpdateMembership, type UserMembershipRow } from '@/shared/contextapi/MembershipContext';
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,7 @@ import { toast, ToastContainer } from 'react-toastify';
 interface BasicProps { }
 
 const Basic: React.FC<BasicProps> = () => {
+    const applyMembership = useUpdateMembership();
     const [inputValues, setInputValues] = useState({
         one: "",
         two: "",
@@ -124,27 +126,25 @@ const Basic: React.FC<BasicProps> = () => {
             }
             verifiedData = verified;
 
-            // MFA verification successful, fetch user tenants
+            // MFA verification successful, load membership
             if (verifiedData) {
                 const userId = verifiedData.user?.id;
                 if (userId) {
-                    const { data: tenantRows, error: tenantsError } = await supabase
-                        .from('user_tenants')
-                        .select('tenant_id, tenant_name')
-                        .eq('user_id', userId);
+                    const { data: memRow, error: memError } = await supabase
+                        .from('user_memberships')
+                        .select('id, user_id, username, membership, created_at')
+                        .eq('user_id', userId)
+                        .maybeSingle();
 
-                    if (tenantsError) {
-                        throw tenantsError;
+                    if (memError) {
+                        throw memError;
+                    }
+                    if (!memRow) {
+                        throw new Error('No membership record found for this account.');
                     }
 
-                    const assignedTenants = (tenantRows || []).map((t: any) => ({ 
-                        id: t.tenant_id, 
-                        name: t.tenant_name || t.tenant_id
-                    }));
-                    
                     if (mounted) {
-                        localStorage.setItem('assignedTenants', JSON.stringify(assignedTenants));
-                        localStorage.setItem('selectedTenantIds', JSON.stringify('all'));
+                        applyMembership(memRow as UserMembershipRow);
                     }
                 }
 
@@ -169,8 +169,9 @@ const Basic: React.FC<BasicProps> = () => {
                 throw new Error('MFA verification failed');
             }
         } catch (err: any) {
-            setCodeError(err.message || 'Verification failed');
-            toast.error('Invalid verification code', {
+            const msg = err.message || 'Verification failed';
+            setCodeError(msg);
+            toast.error(msg, {
                 position: 'top-right',
                 autoClose: 1500,
                 hideProgressBar: false,

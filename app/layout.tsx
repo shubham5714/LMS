@@ -4,6 +4,7 @@ import "./globals.scss";
 import { Provider } from 'react-redux'
 import { Initialload } from '@/shared/contextapi';
 import { TenantProvider } from '@/shared/contextapi/TenantContext';
+import { MembershipProvider } from '@/shared/contextapi/MembershipContext';
 import { UserProvider } from '@/shared/contextapi/UserContext';
 import { DateRangeProvider } from '@/shared/contextapi/DateRangeContext';
 import store from '@/shared/redux/store';
@@ -88,13 +89,15 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
         <Provider store={store}>
           <Initialload.Provider value={{ pageloading, setpageloading }}>
             <UserProvider>
-              <TenantProvider>
-                <DateRangeProvider>
-                  <LayoutContent>
-                    {children}
-                  </LayoutContent>
-                </DateRangeProvider>
-              </TenantProvider>
+              <MembershipProvider>
+                <TenantProvider>
+                  <DateRangeProvider>
+                    <LayoutContent>
+                      {children}
+                    </LayoutContent>
+                  </DateRangeProvider>
+                </TenantProvider>
+              </MembershipProvider>
             </UserProvider>
           </Initialload.Provider>
         </Provider>

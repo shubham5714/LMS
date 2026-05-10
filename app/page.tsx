@@ -5,14 +5,13 @@ import { supabase } from '@/shared/lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { Fragment, useContext, useEffect, useRef, useState } from 'react'
+import React, { Fragment, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { Card, Col, Form, Row } from 'react-bootstrap';
 import SpkToast from '@/shared/@spk-reusable-components/reusable-uiElements/spk-toast';
 import { ToastContainer } from 'react-bootstrap';
 import { LocalStorageBackup } from '@/shared/data/switcherdata/switcherdata';
 import { Initialload } from "@/shared/contextapi";
-import { useUpdateTenants } from '@/shared/contextapi/TenantContext';
-import { useUpdateUserData } from '@/shared/contextapi/UserContext';
+import { useUpdateMembership, type UserMembershipRow } from '@/shared/contextapi/MembershipContext';
 
 const Page = () => {
     const { basePath = '' } = nextConfig;
@@ -23,8 +22,7 @@ const Page = () => {
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
     const theme = useContext(Initialload);
-    const updateTenants = useUpdateTenants();
-    const updateUserData = useUpdateUserData();
+    const applyMembership = useUpdateMembership();
     
     useEffect(() => {
         setMounted(true);
@@ -175,6 +173,20 @@ const Page = () => {
         }));
     };
 
+    const fetchMembershipRow = useCallback(async (userId: string): Promise<UserMembershipRow> => {
+        const { data: row, error } = await supabase
+            .from('user_memberships')
+            .select('id, user_id, username, membership, created_at')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+        if (!row) {
+            throw new Error('No membership record found for this account.');
+        }
+        return row as UserMembershipRow;
+    }, []);
+
     // If user is already authenticated, redirect away from login page
     useEffect(() => {
         const checkExistingSession = async () => {
@@ -207,7 +219,26 @@ const Page = () => {
                         return;
                     }
                     
-                    // MFA is either not required or verified - proceed to dashboard
+                    try {
+                        const membershipRow = await fetchMembershipRow(user.id);
+                        applyMembership(membershipRow);
+                    } catch (memErr: unknown) {
+                        console.error(memErr);
+                        const msg = memErr instanceof Error ? memErr.message : 'Membership check failed';
+                        setToastState({
+                            show: true,
+                            type: 'error',
+                            message: msg,
+                            title: 'DRX'
+                        });
+                        await supabase.auth.signOut();
+                        localStorage.removeItem('mfaVerified');
+                        sessionStorage.removeItem('mfaTicket');
+                        sessionStorage.removeItem('userMembership');
+                        setIsCheckingAuth(false);
+                        return;
+                    }
+
                     router.replace("/dashboards/overview");
                     return;
                 }
@@ -219,7 +250,7 @@ const Page = () => {
         };
 
         checkExistingSession();
-    }, [router]);
+    }, [router, applyMembership, fetchMembershipRow]);
 
     const Login = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -256,42 +287,9 @@ const Page = () => {
                     // MFA verification successful, proceed with user data
                     const userId = verifiedData.user?.id;
                     if (userId) {
-                        const { data: tenantRows, error: tenantsError } = await supabase
-                            .from('user_tenants')
-                            .select('tenant_id, tenant_name')
-                            .eq('user_id', userId);
-
-                        if (tenantsError) {
-                            throw tenantsError;
-                        }
-
-                        const assignedTenants: Array<{ id: string; name: string }> = (tenantRows || []).map((t: any) => ({ 
-                            id: t.tenant_id, 
-                            name: t.tenant_name || t.tenant_id
-                        }));
-                        
-                        // Fetch user role and timezone
-                        const { data: userRoleData, error: roleError } = await supabase
-                            .from('user_roles')
-                            .select('username, role, timezone')
-                            .eq('user_id', userId)
-                            .single();
-
-                        if (roleError) {
-                            console.error('Error fetching user role:', roleError);
-                        }
-                        
+                        const membershipRow = await fetchMembershipRow(userId);
                         if (mounted) {
-                            updateTenants(assignedTenants);
-                            
-                            // Store user role and timezone in context
-                            if (userRoleData) {
-                                updateUserData({
-                                    username: userRoleData.username,
-                                    role: userRoleData.role,
-                                    timezone: userRoleData.timezone || 'UTC'
-                                });
-                            }
+                            applyMembership(membershipRow);
                         }
                     }
                 } catch (mfaError) {
@@ -379,43 +377,9 @@ const Page = () => {
             
             const userId = signInData.user?.id;
             if (userId) {
-                // Fetch assigned tenants
-                const { data: tenantRows, error: tenantsError } = await supabase
-                    .from('user_tenants')
-                    .select('tenant_id, tenants(name)')
-                    .eq('user_id', userId);
-
-                if (tenantsError) {
-                    throw tenantsError;
-                }
-
-                const assignedTenants = (tenantRows || []).map((t: any) => ({ 
-                    id: t.tenant_id, 
-                    name: t.tenants?.name 
-                }));
-                
-                // Fetch user role
-                const { data: userRoleData, error: roleError } = await supabase
-                    .from('user_roles')
-                    .select('username, role')
-                    .eq('user_id', userId)
-                    .single();
-
-                if (roleError) {
-                    console.error('Error fetching user role:', roleError);
-                }
-                
+                const membershipRow = await fetchMembershipRow(userId);
                 if (mounted) {
-                    sessionStorage.setItem('assignedTenants', JSON.stringify(assignedTenants));
-                    sessionStorage.setItem('selectedTenantIds', JSON.stringify('all'));
-                    
-                    // Store user role in session storage
-                    if (userRoleData) {
-                        sessionStorage.setItem('userRole', JSON.stringify({
-                            username: userRoleData.username,
-                            role: userRoleData.role
-                        }));
-                    }
+                    applyMembership(membershipRow);
                 }
             }
 
@@ -433,7 +397,8 @@ const Page = () => {
                 }, 1500);
         } catch (err: any) {
             setError(err.message || 'Login failed');
-            showToast('error', 'Invalid details');
+            const msg = err?.message || 'Invalid details';
+            showToast('error', msg);
         }
     };
 
@@ -531,43 +496,9 @@ const Page = () => {
             // MFA enrollment successful, proceed with user data
             const userId = data.user?.id;
             if (userId) {
-                // Fetch assigned tenants
-                const { data: tenantRows, error: tenantsError } = await supabase
-                    .from('user_tenants')
-                    .select('tenant_id, tenants(name)')
-                    .eq('user_id', userId);
-
-                if (tenantsError) {
-                    throw tenantsError;
-                }
-
-                const assignedTenants = (tenantRows || []).map((t: any) => ({ 
-                    id: t.tenant_id, 
-                    name: t.tenants?.name 
-                }));
-                
-                // Fetch user role
-                const { data: userRoleData, error: roleError } = await supabase
-                    .from('user_roles')
-                    .select('username, role')
-                    .eq('user_id', userId)
-                    .single();
-
-                if (roleError) {
-                    console.error('Error fetching user role:', roleError);
-                }
-                
+                const membershipRow = await fetchMembershipRow(userId);
                 if (mounted) {
-                    sessionStorage.setItem('assignedTenants', JSON.stringify(assignedTenants));
-                    sessionStorage.setItem('selectedTenantIds', JSON.stringify('all'));
-                    
-                    // Store user role in session storage
-                    if (userRoleData) {
-                        sessionStorage.setItem('userRole', JSON.stringify({
-                            username: userRoleData.username,
-                            role: userRoleData.role
-                        }));
-                    }
+                    applyMembership(membershipRow);
                 }
             }
             

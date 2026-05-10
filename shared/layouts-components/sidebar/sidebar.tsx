@@ -12,6 +12,7 @@ import Image from 'next/image';
 import SpkTooltips from '@/shared/@spk-reusable-components/reusable-uiElements/spk-tooltips';
 import SpkButton from '@/shared/@spk-reusable-components/reusable-uiElements/spk-buttons';
 import { useUserContext } from '@/shared/contextapi/UserContext';
+import { useMembershipContext } from '@/shared/contextapi/MembershipContext';
 import { useTenantNavigation } from '@/shared/hooks/useTenantNavigation';
 import { supabase } from '@/shared/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -19,7 +20,7 @@ import { useRouter } from 'next/navigation';
 const Sidebar = () => {
 
 	const { basePath } = nextConfig
-	const { userData, isLoading: isLoadingUser } = useUserContext();
+	const { membershipRecord, isLoading: membershipLoading } = useMembershipContext();
 	const router = useRouter();
 
 	// Logout function
@@ -27,10 +28,12 @@ const Sidebar = () => {
 		try {
 			// Clear session storage
 			sessionStorage.removeItem('userRole');
+			sessionStorage.removeItem('userMembership');
 			sessionStorage.removeItem('assignedTenants');
 			sessionStorage.removeItem('selectedTenantIds');
 			localStorage.removeItem('mfaVerified');
 			sessionStorage.removeItem('mfaTicket');
+			window.dispatchEvent(new CustomEvent('membershipUpdated', { detail: null }));
 			
 			// Sign out from Supabase
 			const { error } = await supabase.auth.signOut();
@@ -59,7 +62,7 @@ const Sidebar = () => {
 
 	const [menuitems, setMenuitems] = useState<Menuitemtype[]>([]);
 
-	// Use tenant-based navigation instead of role-based filtering
+	// Full menu from nav.tsx (no per-tenant filtering)
 	const { menuItems, isLoading } = useTenantNavigation();
 
 	// Update menu items when tenant navigation changes
@@ -879,22 +882,26 @@ const Sidebar = () => {
 
 				{/* <!-- Start::User Info Section - Fixed at Bottom --> */}
 				<div className="sidebar-user-info border-top p-3">
-					{isLoadingUser ? (
+					{membershipLoading ? (
 						<div className="d-flex align-items-center justify-content-center">
 							<div className="spinner-border spinner-border-sm me-2" role="status">
 								<span className="visually-hidden">Loading...</span>
 							</div>
 							<span className="text-muted">Loading...</span>
 						</div>
-					) : userData ? (
+					) : (
 						<div className="d-flex flex-column">
 							<div className="d-flex align-items-center mb-2">
 								<div className="avatar avatar-md bg-primary-transparent avatar-rounded me-2">
 									<i className="ri-user-line fs-16"></i>
 								</div>
-								<div className="flex-fill">
-									<div className="fw-medium text-dark fs-14">{userData.username}</div>
-									<div className="text-muted fs-12">{userData.role}</div>
+								<div className="flex-fill min-w-0">
+									<div className="fw-medium text-dark fs-14 text-truncate" title={membershipRecord?.username ?? ''}>
+										{membershipRecord?.username ?? '—'}
+									</div>
+									<div className="text-muted fs-12 text-truncate" title={membershipRecord?.membership ?? ''}>
+										{membershipRecord?.membership ?? '—'}
+									</div>
 								</div>
 							</div>
 							<SpkButton 
@@ -906,10 +913,6 @@ const Sidebar = () => {
 								<i className="ri-logout-box-line me-1"></i>
 								Logout
 							</SpkButton>
-						</div>
-					) : (
-						<div className="text-center">
-							<span className="text-muted fs-12">Not logged in</span>
 						</div>
 					)}
 				</div>
