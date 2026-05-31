@@ -239,7 +239,7 @@ const Page = () => {
                         return;
                     }
 
-                    router.replace("/dashboards/overview");
+                    router.replace("/dashboard");
                     return;
                 }
             } catch (error) {
@@ -302,7 +302,7 @@ const Page = () => {
                 showToast('success', 'Login successful');
                 
                 setTimeout(() => {
-                    router.push("/dashboards/overview");
+                    router.push("/dashboard");
                 }, 1500);
                 return;
             }
@@ -392,7 +392,7 @@ const Page = () => {
                 setTimeout(() => {
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectedFrom = urlParams.get('redirectedFrom');
-                    const targetUrl = redirectedFrom || "/dashboards/overview";
+                    const targetUrl = redirectedFrom || "/dashboard";
                     router.push(targetUrl);
                 }, 1500);
         } catch (err: any) {
@@ -516,7 +516,7 @@ const Page = () => {
             showToast('success', 'MFA successfully enabled! Login successful.');
             
             setTimeout(() => {
-                router.push("/dashboards/overview");
+                router.push("/dashboard");
             }, 3000);
         } catch (error: any) {
             console.error('Error verifying MFA enrollment:', error);
@@ -573,7 +573,7 @@ const Page = () => {
                                 <Card className="custom-card my-4">
                                                 <Card.Body className="p-5">
                                                     <div className="mb-4 d-flex justify-content-center">
-                                                        <Link scroll={false} href="/dashboards/sales/">
+                                                    <Link scroll={false} href="/dashboard/">
                                                 <Image 
                                                     fill 
                                                     src={`${logoPath}/assets/images/brand-logos/desktop-logo.png`} 

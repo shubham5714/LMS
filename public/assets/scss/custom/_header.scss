@@ -20,7 +20,7 @@
 
 @media (min-width: 992px) {
   .app-header {
-    padding-inline-start: 15rem;
+    padding-inline-start: variables.$default-sidebar-width;
   }
 }
 
@@ -482,5 +482,76 @@
   height: 24px !important;
 }
 /* End:: header avatar */
+
+/* Course / topic label (header chrome — do not use .text-body; it follows body, not header bar) */
+.app-header .header-course-breadcrumb {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.app-header .header-course-breadcrumb__icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.app-header .header-course-breadcrumb__link {
+  font-weight: 600;
+  text-decoration: none;
+  color: variables.$default-text-color;
+}
+
+.app-header .header-course-breadcrumb__sep {
+  margin-inline: 0.35rem;
+  color: variables.$header-prime-color;
+  opacity: 0.9;
+}
+
+.app-header .header-course-breadcrumb__topic {
+  color: variables.$header-prime-color;
+}
+
+[data-header-styles="dark"] .app-header .header-course-breadcrumb__link,
+[data-header-styles="color"] .app-header .header-course-breadcrumb__link,
+[data-header-styles="gradient"] .app-header .header-course-breadcrumb__link,
+[data-header-styles="transparent"][data-theme-mode="dark"] .app-header .header-course-breadcrumb__link {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+[data-header-styles="dark"] .app-header .header-course-breadcrumb__topic,
+[data-header-styles="color"] .app-header .header-course-breadcrumb__topic,
+[data-header-styles="gradient"] .app-header .header-course-breadcrumb__topic,
+[data-header-styles="transparent"][data-theme-mode="dark"] .app-header .header-course-breadcrumb__topic {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+[data-header-styles="dark"] .app-header .header-course-breadcrumb__sep,
+[data-header-styles="color"] .app-header .header-course-breadcrumb__sep,
+[data-header-styles="gradient"] .app-header .header-course-breadcrumb__sep,
+[data-header-styles="transparent"][data-theme-mode="dark"] .app-header .header-course-breadcrumb__sep {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme-mode="dark"][data-header-styles="light"] .app-header .header-course-breadcrumb__link {
+  color: #1a1c21;
+}
+
+[data-theme-mode="dark"][data-header-styles="light"] .app-header .header-course-breadcrumb__topic {
+  color: #5c6573;
+}
+
+[data-theme-mode="dark"][data-header-styles="light"] .app-header .header-course-breadcrumb__sep {
+  color: #8c939e;
+}
+
+/* Match Get Premium (.btn-primary) — icon sits inside the link but keeps theme primary */
+.app-header .header-course-breadcrumb__link .header-course-breadcrumb__icon {
+  color: variables.$primary !important;
+}
+
+.app-header .header-course-breadcrumb__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
 
 /* End:: header */

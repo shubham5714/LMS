@@ -18,7 +18,7 @@ const Error401: React.FC<Error401Props> = () => {
                                     <div className="error-text mb-4 text-fixed-white">401</div>
                                     <p className="fs-4 fw-normal mb-2 text-fixed-white">Unauthorized Access</p>
                                     <p className="fs-16 mb-5 text-fixed-white">You don't have permission to view this page. Please log in or contact support.</p>
-                                    <Link scroll={false} href="/dashboards/executive/" className="btn btn-primary"><i className="ri-arrow-left-line align-middle me-1 d-inline-block"></i> BACK TO HOME PAGE</Link>
+                                    <Link scroll={false} href="/dashboard/" className="btn btn-primary"><i className="ri-arrow-left-line align-middle me-1 d-inline-block"></i> BACK TO HOME PAGE</Link>
                                 </Col>
                             </Row>
                         </div>

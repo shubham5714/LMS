@@ -112,6 +112,10 @@ typography
   --input-border: #dee7f1;
   --form-control-bg: #ffffff;
   --bs-link-color-rgb: var(--default-text-color);
+  /* Vertical app sidebar + matching header/content offset (was 15rem) */
+  --default-sidebar-width: 18rem;
+  /* SOC Fundamentals lesson: right-hand “On this page” rail */
+  --soc-topic-toc-width: 25.5rem;
   /* Gray set */
   --gray-1: #f9fafb;
   --gray-2: #f2f4f5;
@@ -339,7 +343,7 @@ typography
 @media (max-width: 991.98px) {
   [data-toggled=close] .app-sidebar {
     transition: all 300ms ease;
-    transform: translateX(-15rem);
+    transform: translateX(calc(-1 * var(--default-sidebar-width)));
   }
   [data-toggled=close] .app-header {
     padding-inline-start: 0rem;
@@ -349,7 +353,7 @@ typography
   }
   [data-toggled=close][dir=rtl] .app-sidebar {
     transition: all 300ms ease;
-    transform: translateX(15rem);
+    transform: translateX(var(--default-sidebar-width));
   }
 }
 
@@ -512,7 +516,7 @@ typography
     width: 99%;
   }
   [data-width=boxed][data-vertical-style=detached] .app-content {
-    margin-inline-start: 15rem;
+    margin-inline-start: var(--default-sidebar-width);
   }
   [data-width=boxed][data-vertical-style=doublemenu] .app-sidebar .main-sidebar {
     height: 100%;
@@ -22927,7 +22931,7 @@ button {
     min-height: calc(100vh - 8rem);
     margin-block-end: 0;
     margin-block-start: 4.25rem;
-    margin-inline-start: 15rem;
+    margin-inline-start: var(--default-sidebar-width);
     transition: all 0.05s ease;
   }
 }
@@ -22942,6 +22946,146 @@ button {
   }
 }
 /* End::basic */
+/* SOC Fundamentals routes: full-width column (flush container); bg matches theme */
+.main-content.app-content.soc-fundamentals-main {
+  background-color: var(--default-body-bg-color);
+}
+
+[data-theme-mode=dark] .main-content.app-content.soc-fundamentals-main {
+  background-color: #000;
+}
+
+@media (min-width: 1600px) {
+  .main-content.app-content.soc-fundamentals-main {
+    padding-inline: 0;
+  }
+}
+.main-content.app-content .container-fluid.soc-fundamentals-container {
+  padding-inline: 0;
+}
+
+/* Lesson shell: generous horizontal inset for middle content in both themes */
+.soc-fundamentals-topic {
+  background-color: var(--default-body-bg-color);
+  padding-inline: clamp(1.75rem, 5vw, 3.25rem);
+}
+
+[data-theme-mode=dark] .soc-fundamentals-topic {
+  background-color: #000;
+}
+
+.soc-fundamentals-topic-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.soc-fundamentals-topic-main {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: min(100%, 52rem);
+  margin-inline-end: auto;
+  background-color: var(--default-body-bg-color);
+}
+
+[data-theme-mode=dark] .soc-fundamentals-topic-main {
+  background-color: #000;
+}
+
+.soc-fundamentals-topic-toc {
+  flex-shrink: 0;
+  background-color: var(--default-body-bg-color);
+}
+
+[data-theme-mode=dark] .soc-fundamentals-topic-toc {
+  background-color: #000;
+}
+
+.soc-fundamentals-topic-toc-inner {
+  min-height: 0;
+}
+
+@media (min-width: 992px) {
+  .soc-fundamentals-topic-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0;
+    padding-inline-end: var(--soc-topic-toc-width);
+  }
+  .soc-fundamentals-topic-toc {
+    position: fixed;
+    inset-block-start: 5.5rem;
+    inset-inline-end: 0;
+    z-index: 99;
+    width: var(--soc-topic-toc-width);
+    max-width: var(--soc-topic-toc-width);
+    height: calc(100vh - 5.5rem);
+    max-height: calc(100vh - 5.5rem);
+    margin-inline-start: 0;
+    padding-inline-start: 0;
+    border-inline-start: 1px solid var(--default-border, rgba(255, 255, 255, 0.08));
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+  .soc-fundamentals-topic-toc-inner {
+    min-height: min-content;
+  }
+}
+@media (max-width: 991.98px) {
+  .soc-fundamentals-topic-toc {
+    padding-block-start: 0;
+    border-block-start: 1px solid var(--default-border, rgba(255, 255, 255, 0.08));
+  }
+}
+/* TOC rail: use app text tokens (Bootstrap .text-body uses --bs-body-color and stays dark in dark mode) */
+.topic-on-page-nav {
+  padding: 1rem 0.875rem 1.25rem;
+  color: var(--default-text-color);
+}
+
+.topic-on-page-nav__title {
+  margin-block-end: 0;
+  color: var(--default-text-color);
+}
+
+/* Premium gate: overlay matches the exact box of protected children (reuse for any block size / media) */
+.premium-section-wrap {
+  display: grid;
+  min-width: 0;
+  align-items: stretch;
+  justify-items: stretch;
+}
+.premium-section-wrap .premium-section-wrap__content {
+  grid-area: 1/1;
+  min-width: 0;
+}
+.premium-section-wrap .premium-section-wrap__overlay {
+  grid-area: 1/1;
+  z-index: 1;
+  min-width: 0;
+  width: 100%;
+  align-self: stretch;
+  justify-self: stretch;
+}
+
+/* Sidebar: larger dark-mode wordmark (desktop-dark) than default 2rem lock from _vertical.scss */
+[data-theme-mode=dark] .app-sidebar .main-sidebar-header .header-logo img.desktop-dark {
+  height: 2.25rem;
+  width: auto;
+  max-width: 12.5rem;
+  object-fit: contain;
+  line-height: 2.25rem;
+}
+
+/* Blurred body under overlay (FREE users) */
+.premium-section-gated {
+  filter: blur(7px);
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Start::App Content */
 .bd-example > .dropdown-menu {
   position: static;
@@ -23154,7 +23298,7 @@ button {
 /*  Start::Footer*/
 @media (min-width: 992px) {
   [data-nav-layout=vertical] .footer {
-    padding-inline-start: 15rem;
+    padding-inline-start: var(--default-sidebar-width);
   }
 }
 .footer {
@@ -28531,7 +28675,7 @@ ul.followers-segmentation-list li:last-child {
 
 @media (min-width: 992px) {
   .app-header {
-    padding-inline-start: 15rem;
+    padding-inline-start: var(--default-sidebar-width);
   }
 }
 .header-icon-badge {
@@ -28935,6 +29079,77 @@ ul.followers-segmentation-list li:last-child {
 }
 
 /* End:: header avatar */
+/* Course / topic label (header chrome — do not use .text-body; it follows body, not header bar) */
+.app-header .header-course-breadcrumb {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.app-header .header-course-breadcrumb__icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.app-header .header-course-breadcrumb__link {
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--default-text-color);
+}
+
+.app-header .header-course-breadcrumb__sep {
+  margin-inline: 0.35rem;
+  color: var(--header-prime-color);
+  opacity: 0.9;
+}
+
+.app-header .header-course-breadcrumb__topic {
+  color: var(--header-prime-color);
+}
+
+[data-header-styles=dark] .app-header .header-course-breadcrumb__link,
+[data-header-styles=color] .app-header .header-course-breadcrumb__link,
+[data-header-styles=gradient] .app-header .header-course-breadcrumb__link,
+[data-header-styles=transparent][data-theme-mode=dark] .app-header .header-course-breadcrumb__link {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+[data-header-styles=dark] .app-header .header-course-breadcrumb__topic,
+[data-header-styles=color] .app-header .header-course-breadcrumb__topic,
+[data-header-styles=gradient] .app-header .header-course-breadcrumb__topic,
+[data-header-styles=transparent][data-theme-mode=dark] .app-header .header-course-breadcrumb__topic {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+[data-header-styles=dark] .app-header .header-course-breadcrumb__sep,
+[data-header-styles=color] .app-header .header-course-breadcrumb__sep,
+[data-header-styles=gradient] .app-header .header-course-breadcrumb__sep,
+[data-header-styles=transparent][data-theme-mode=dark] .app-header .header-course-breadcrumb__sep {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme-mode=dark][data-header-styles=light] .app-header .header-course-breadcrumb__link {
+  color: #1a1c21;
+}
+
+[data-theme-mode=dark][data-header-styles=light] .app-header .header-course-breadcrumb__topic {
+  color: #5c6573;
+}
+
+[data-theme-mode=dark][data-header-styles=light] .app-header .header-course-breadcrumb__sep {
+  color: #8c939e;
+}
+
+/* Match Get Premium (.btn-primary) — icon sits inside the link but keeps theme primary */
+.app-header .header-course-breadcrumb__link .header-course-breadcrumb__icon {
+  color: var(--primary-color) !important;
+}
+
+.app-header .header-course-breadcrumb__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
 /* End:: header */
 /* Start:: plugins */
 /* Start:Choices JS */
@@ -32882,10 +33097,10 @@ ul.top-customers li:last-child {
 }
 @media (min-width: 992px) {
   [data-vertical-style=closed][data-toggled=close-menu-open] .app-content {
-    margin-inline-start: 15rem;
+    margin-inline-start: var(--default-sidebar-width);
   }
   [data-vertical-style=closed][data-toggled=close-menu-open] .app-header {
-    padding-inline-start: 15rem;
+    padding-inline-start: var(--default-sidebar-width);
   }
 }
 
@@ -32933,7 +33148,7 @@ ul.top-customers li:last-child {
     box-shadow: none !important;
   }
   [data-vertical-style=detached] .app-content {
-    margin-inline-start: 15rem;
+    margin-inline-start: var(--default-sidebar-width);
     position: relative;
   }
   [data-vertical-style=detached][data-page-style=classic] .app-sidebar {
@@ -33020,10 +33235,10 @@ ul.top-customers li:last-child {
     position: relative;
   }
   [data-vertical-style=detached][data-toggled=detached-close][data-icon-overlay=open] .app-sidebar {
-    width: 15rem;
+    width: var(--default-sidebar-width);
   }
   [data-vertical-style=detached][data-toggled=detached-close][data-icon-overlay=open] .app-sidebar .main-sidebar-header {
-    width: 15rem;
+    width: var(--default-sidebar-width);
   }
   [data-vertical-style=detached][data-toggled=detached-close][data-icon-overlay=open] .app-sidebar .main-sidebar-header .header-logo .desktop-logo {
     display: block !important;
@@ -33974,10 +34189,10 @@ ul.top-customers li:last-child {
     margin-inline-start: 5rem;
   }
   [data-vertical-style=overlay][data-toggled=icon-overlay-close][data-icon-overlay=open] .app-sidebar {
-    width: 15rem;
+    width: var(--default-sidebar-width);
   }
   [data-vertical-style=overlay][data-toggled=icon-overlay-close][data-icon-overlay=open] .app-sidebar .main-sidebar-header {
-    width: 15rem;
+    width: var(--default-sidebar-width);
   }
   [data-vertical-style=overlay][data-toggled=icon-overlay-close][data-icon-overlay=open] .app-sidebar .main-sidebar-header .header-logo .desktop-logo {
     display: block;
@@ -34071,10 +34286,10 @@ ul.top-customers li:last-child {
     margin-inline-start: 9rem;
   }
   [data-vertical-style=icontext][data-toggled=icon-text-close][data-icon-text=open] .app-sidebar {
-    width: 15rem;
+    width: var(--default-sidebar-width);
   }
   [data-vertical-style=icontext][data-toggled=icon-text-close][data-icon-text=open] .app-sidebar .main-sidebar-header {
-    width: 15rem;
+    width: var(--default-sidebar-width);
   }
   [data-vertical-style=icontext][data-toggled=icon-text-close][data-icon-text=open] .app-sidebar .side-menu__icon {
     margin-block-end: 0;
@@ -34234,7 +34449,7 @@ ul.top-customers li:last-child {
 }
 @media (max-width: 991.98px) {
   .menu-click .app-sidebar, [data-nav-style=menu-click][data-nav-layout=horizontal] .app-sidebar, [data-nav-style=menu-click][data-toggled=menu-click-closed] .app-sidebar {
-    width: 15rem;
+    width: var(--default-sidebar-width);
   }
 }
 
@@ -34421,7 +34636,7 @@ ul.top-customers li:last-child {
 }
 
 .app-sidebar {
-  width: 15rem;
+  width: var(--default-sidebar-width);
   background: var(--menu-bg);
   border-inline-end: 1px solid var(--menu-border-color);
   position: fixed;
@@ -34432,7 +34647,7 @@ ul.top-customers li:last-child {
 }
 .app-sidebar .main-sidebar-header {
   height: 4.25rem;
-  width: 15rem;
+  width: var(--default-sidebar-width);
   position: fixed;
   display: flex;
   background: var(--menu-bg);

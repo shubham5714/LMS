@@ -42,7 +42,7 @@ const Basic: React.FC<BasicProps> = () => {
         const checkAuth = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                router.push('/dashboards/sales');
+                router.push('/dashboard');
             }
         };
         checkAuth();
@@ -163,7 +163,7 @@ const Basic: React.FC<BasicProps> = () => {
                 });
 
                 setTimeout(() => {
-                    router.push('/dashboards/sales');
+                    router.push('/dashboard');
                 }, 1200);
             } else {
                 throw new Error('MFA verification failed');
@@ -193,7 +193,7 @@ const Basic: React.FC<BasicProps> = () => {
                         <Card className=" custom-card my-4">
                             <Card.Body className=" p-5">
                                 <div className="mb-4 d-flex justify-content-center">
-                                    <Link scroll={false} href="/dashboards/sales/">
+                                    <Link scroll={false} href="/dashboard/">
                                         <Image fill src="../../../assets/images/brand-logos/desktop-logo.png" alt="logo" className="desktop-logo" />
                                         <Image fill src="../../../assets/images/brand-logos/desktop-white.png" alt="logo" className="desktop-white" />
                                     </Link>

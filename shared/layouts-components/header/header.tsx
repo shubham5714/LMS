@@ -1,5 +1,5 @@
 "use client"
-import React, { Fragment, useEffect, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import Switcher from '../switcher/switcher';
 import { data$, getState, setState } from '../services/switcherServices';
@@ -11,8 +11,13 @@ import Image from 'next/image';
 import nextConfig from "@/next.config"
 import { ThemeChanger } from '@/shared/redux/actions';
 import { supabase } from '@/shared/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useMembershipContext } from '@/shared/contextapi/MembershipContext';
+import {
+    SOC_FUNDAMENTALS_DISPLAY_NAME,
+    SOC_FUNDAMENTALS_ROUTE_PREFIX,
+    getSocFundamentalsTopicForPathname,
+} from '@/shared/courses/soc-fundamentals-config';
 
 interface HeaderProps { }
 
@@ -20,10 +25,20 @@ const Header: React.FC<HeaderProps> = () => {
 
     const { basePath } = nextConfig
     const router = useRouter();
+    const pathname = usePathname();
 
     const { membership, isLoading: membershipLoading } = useMembershipContext();
     const showGetPremium =
         !membershipLoading && membership?.toUpperCase() === 'FREE';
+
+    const socFundamentalsHeader = useMemo(() => {
+        if (!pathname.startsWith(SOC_FUNDAMENTALS_ROUTE_PREFIX)) return null
+        const topic = getSocFundamentalsTopicForPathname(pathname)
+        return {
+            courseTitle: SOC_FUNDAMENTALS_DISPLAY_NAME,
+            topicTitle: topic?.title ?? null,
+        }
+    }, [pathname]);
 
     //Menu-Close
     let [variable, setVariable] = useState(getState());
@@ -312,7 +327,7 @@ const Header: React.FC<HeaderProps> = () => {
                         {/*<!-- Start::header-element -->*/}
                         <div className="header-element">
                             <div className="horizontal-logo">
-                                <Link scroll={false} href="/dashboards/sales/" className="header-logo">
+                                <Link scroll={false} href="/dashboard/" className="header-logo">
                                     <Image fill src={`${process.env.NODE_ENV === 'production' ? basePath : ''}/assets/images/brand-logos/desktop-logo.png`} alt="logo" className='desktop-logo' />
                                     <Image fill src={`${process.env.NODE_ENV === 'production' ? basePath : ''}/assets/images/brand-logos/toggle-dark.png`} alt="logo" className="toggle-dark" />
                                     <Image fill src={`${process.env.NODE_ENV === 'production' ? basePath : ''}/assets/images/brand-logos/desktop-dark.png`} alt="logo" className="desktop-dark" />
@@ -329,6 +344,31 @@ const Header: React.FC<HeaderProps> = () => {
                             <Link onClick={toggleSidebar} scroll={false} aria-label="Hide Sidebar" className="sidemenu-toggle header-link animated-arrow hor-toggle horizontal-navtoggle" data-bs-toggle="sidebar" href="#!"><span></span></Link>
                         </div>
                         {/*<!-- End::header-element -->*/}
+
+                        {socFundamentalsHeader && (
+                            <div className="header-element d-none d-sm-flex align-items-center min-w-0 ms-1 ms-lg-2 ps-2 ps-lg-3 border-start border-primary border-opacity-25">
+                                <nav
+                                    className="header-course-breadcrumb mb-0 text-truncate"
+                                    style={{ maxWidth: 'min(46vw, 24rem)' }}
+                                    aria-label="Current course"
+                                >
+                                    <Link
+                                        scroll={false}
+                                        href={SOC_FUNDAMENTALS_ROUTE_PREFIX}
+                                        className="header-course-breadcrumb__link d-inline-flex align-items-center gap-2"
+                                    >
+                                        <i className="ri-book-open-line header-course-breadcrumb__icon" aria-hidden />
+                                        <span>{socFundamentalsHeader.courseTitle}</span>
+                                    </Link>
+                                    {socFundamentalsHeader.topicTitle ? (
+                                        <>
+                                            <span className="header-course-breadcrumb__sep" aria-hidden>/</span>
+                                            <span className="header-course-breadcrumb__topic">{socFundamentalsHeader.topicTitle}</span>
+                                        </>
+                                    ) : null}
+                                </nav>
+                            </div>
+                        )}
 
                     </div>
                     {/*<!-- End::header-content-left -->*/}
@@ -368,7 +408,7 @@ const Header: React.FC<HeaderProps> = () => {
                                 <Link
                                     scroll={false}
                                     href="/pages/pricing/"
-                                    className="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm"
+                                    className="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm"
                                 >
                                     Get Premium
                                 </Link>

@@ -32,7 +32,7 @@
 }
 
 .app-sidebar {
-  width: 15rem;
+  width: variables.$default-sidebar-width;
   background: variables.$menu-bg;
   border-inline-end: 1px solid variables.$menu-border-color;
   position: fixed;
@@ -43,7 +43,7 @@
 
   .main-sidebar-header {
     height: 4.25rem;
-    width: 15rem;
+    width: variables.$default-sidebar-width;
     position: fixed;
     display: flex;
     background: variables.$menu-bg;

@@ -2,11 +2,16 @@
 
 import Link from 'next/link';
 import React, { Fragment, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { data$, getState } from '../services/switcherServices';
 import SpkTooltips from '@/shared/@spk-reusable-components/reusable-uiElements/spk-tooltips';
 import { Menuitemtype } from './nav';
+import { handleSocFundamentalsMenuLinkClick, useCourseSidebarPreference } from '@/shared/contextapi/CourseSidebarPreferenceContext';
 
 const Menuloop = ({ MenuItems, level, handleToMenu, HoverToggleInnerMenuFn }: any) => {
+  const pathname = usePathname();
+  const courseSidebarPreference = useCourseSidebarPreference();
+
   const handleClick = (event: MouseEvent) => {
     event.preventDefault(); // Prevents the default anchor behavior navigation;
   };
@@ -51,7 +56,11 @@ const Menuloop = ({ MenuItems, level, handleToMenu, HoverToggleInnerMenuFn }: an
             key={index}
           >
             {firstlevel?.type === "link" ?
-              <Link href={firstlevel.path} className={`side-menu__item ${firstlevel?.selected ? 'active' : ''}`}>{firstlevel.icon}
+              <Link href={firstlevel.path} className={`side-menu__item ${firstlevel?.selected ? 'active' : ''}`}
+                onClick={(e) =>
+                  handleSocFundamentalsMenuLinkClick(e, pathname, firstlevel.path, courseSidebarPreference?.preferCourseSidebarNav)
+                }
+              >{firstlevel.icon}
                 <span className=""> {firstlevel.title} {firstlevel.badgetxt ? (<span className={firstlevel.class}> {firstlevel.badgetxt}</span>
                 ) : (
                   ""

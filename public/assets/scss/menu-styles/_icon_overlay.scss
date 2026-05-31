@@ -68,9 +68,9 @@
 
         &[data-icon-overlay="open"] {
             .app-sidebar {
-                width: 15rem;
+                width: variables.$default-sidebar-width;
                 .main-sidebar-header {
-                    width: 15rem;
+                    width: variables.$default-sidebar-width;
                     .header-logo {
                         .desktop-logo {
                             display: block;

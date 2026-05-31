@@ -49,7 +49,7 @@ button {
     min-height: calc(100vh - 8rem);
     margin-block-end: 0;
     margin-block-start: 4.25rem;
-    margin-inline-start: 15rem;
+    margin-inline-start: variables.$default-sidebar-width;
     transition: all 0.05s ease;
   }
 }
@@ -67,6 +67,153 @@ button {
 }
 
 /* End::basic */
+
+/* SOC Fundamentals routes: full-width column (flush container); bg matches theme */
+.main-content.app-content.soc-fundamentals-main {
+  background-color: variables.$default-body-color;
+}
+
+[data-theme-mode="dark"] .main-content.app-content.soc-fundamentals-main {
+  background-color: #000;
+}
+
+@media (min-width: 1600px) {
+  .main-content.app-content.soc-fundamentals-main {
+    padding-inline: 0;
+  }
+}
+
+.main-content.app-content .container-fluid.soc-fundamentals-container {
+  padding-inline: 0;
+}
+
+/* Lesson shell: generous horizontal inset for middle content in both themes */
+.soc-fundamentals-topic {
+  background-color: variables.$default-body-color;
+  padding-inline: clamp(1.75rem, 5vw, 3.25rem);
+}
+
+[data-theme-mode="dark"] .soc-fundamentals-topic {
+  background-color: #000;
+}
+
+.soc-fundamentals-topic-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.soc-fundamentals-topic-main {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: min(100%, 52rem);
+  margin-inline-end: auto;
+  background-color: variables.$default-body-color;
+}
+
+[data-theme-mode="dark"] .soc-fundamentals-topic-main {
+  background-color: #000;
+}
+
+.soc-fundamentals-topic-toc {
+  flex-shrink: 0;
+  background-color: variables.$default-body-color;
+}
+
+[data-theme-mode="dark"] .soc-fundamentals-topic-toc {
+  background-color: #000;
+}
+
+.soc-fundamentals-topic-toc-inner {
+  min-height: 0;
+}
+
+@media (min-width: 992px) {
+  .soc-fundamentals-topic-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0;
+    padding-inline-end: variables.$soc-topic-toc-width;
+  }
+
+  .soc-fundamentals-topic-toc {
+    position: fixed;
+    inset-block-start: 5.5rem;
+    inset-inline-end: 0;
+    z-index: 99;
+    width: variables.$soc-topic-toc-width;
+    max-width: variables.$soc-topic-toc-width;
+    height: calc(100vh - 5.5rem);
+    max-height: calc(100vh - 5.5rem);
+    margin-inline-start: 0;
+    padding-inline-start: 0;
+    border-inline-start: 1px solid var(--default-border, rgba(255, 255, 255, 0.08));
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .soc-fundamentals-topic-toc-inner {
+    min-height: min-content;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .soc-fundamentals-topic-toc {
+    padding-block-start: 0;
+    border-block-start: 1px solid var(--default-border, rgba(255, 255, 255, 0.08));
+  }
+}
+
+/* TOC rail: use app text tokens (Bootstrap .text-body uses --bs-body-color and stays dark in dark mode) */
+.topic-on-page-nav {
+  padding: 1rem 0.875rem 1.25rem;
+  color: var(--default-text-color);
+}
+
+.topic-on-page-nav__title {
+  margin-block-end: 0;
+  color: var(--default-text-color);
+}
+
+/* Premium gate: overlay matches the exact box of protected children (reuse for any block size / media) */
+.premium-section-wrap {
+  display: grid;
+  min-width: 0;
+  align-items: stretch;
+  justify-items: stretch;
+
+  .premium-section-wrap__content {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+
+  .premium-section-wrap__overlay {
+    grid-area: 1 / 1;
+    z-index: 1;
+    min-width: 0;
+    width: 100%;
+    align-self: stretch;
+    justify-self: stretch;
+  }
+}
+
+/* Sidebar: larger dark-mode wordmark (desktop-dark) than default 2rem lock from _vertical.scss */
+[data-theme-mode="dark"] .app-sidebar .main-sidebar-header .header-logo img.desktop-dark {
+  height: 2.25rem;
+  width: auto;
+  max-width: 12.5rem;
+  object-fit: contain;
+  line-height: 2.25rem;
+}
+
+/* Blurred body under overlay (FREE users) */
+.premium-section-gated {
+  filter: blur(7px);
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
 
 /* Start::App Content */
 
@@ -307,7 +454,7 @@ button {
 @media (min-width: 992px) {
   [data-nav-layout="vertical"] {
     .footer {
-      padding-inline-start: 15rem;
+      padding-inline-start: variables.$default-sidebar-width;
     }
   }
 }

@@ -52,7 +52,7 @@
     }
 
     .app-content {
-      margin-inline-start: 15rem;
+      margin-inline-start: variables.$default-sidebar-width;
       position: relative;
     }
 
@@ -184,10 +184,10 @@
 
       &[data-icon-overlay="open"] {
         .app-sidebar {
-          width: 15rem;
+          width: variables.$default-sidebar-width;
 
           .main-sidebar-header {
-            width: 15rem;
+            width: variables.$default-sidebar-width;
 
             .header-logo {
               .desktop-logo {

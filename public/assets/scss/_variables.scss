@@ -45,6 +45,10 @@
 	--input-border: #dee7f1;
 	--form-control-bg: #ffffff;
 	--bs-link-color-rgb: #{var(--default-text-color)};
+	/* Vertical app sidebar + matching header/content offset (was 15rem) */
+	--default-sidebar-width: 18rem;
+	/* SOC Fundamentals lesson: right-hand “On this page” rail */
+	--soc-topic-toc-width: 25.5rem;
 
 	/* Gray set */
 	--gray-1: #f9fafb;
@@ -114,6 +118,8 @@ $header-border-color: var(--header-border-color);
 $menu-prime-color: var(--menu-prime-color);
 $menu-bg: var(--menu-bg);
 $menu-border-color: var(--menu-border-color);
+$default-sidebar-width: var(--default-sidebar-width);
+$soc-topic-toc-width: var(--soc-topic-toc-width);
 
 /*Color Variables*/
 $primary: var(--primary-color);

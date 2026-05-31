@@ -165,7 +165,7 @@
   @media (max-width: 991.98px) {
     .app-sidebar {
       transition: all 300ms ease;
-      transform: translateX(-15rem);
+      transform: translateX(calc(-1 * var(--default-sidebar-width)));
     }
 
     .app-header {
@@ -179,7 +179,7 @@
     &[dir="rtl"] {
       .app-sidebar {
         transition: all 300ms ease;
-        transform: translateX(15rem);
+        transform: translateX(var(--default-sidebar-width));
       }
     }
   }
@@ -399,7 +399,7 @@
       }
 
       .app-content {
-        margin-inline-start: 15rem;
+        margin-inline-start: var(--default-sidebar-width);
       }
     }
 

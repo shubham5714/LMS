@@ -21,4 +21,41 @@
 @forward "../node_modules/react-range-slider-input/dist/style.css";
 @forward "../node_modules/suneditor/dist/css/suneditor.min.css";
 
+/* Sidebar: brand logo aligned to the start (left in LTR); overrides theme center + icon/double-menu rules */
+.app-sidebar .main-sidebar-header {
+  justify-content: flex-start !important;
+}
+
+/* Sidebar header logos: slightly below theme default (2rem) */
+.app-sidebar .main-sidebar-header .header-logo img {
+  height: 1.875rem !important;
+  line-height: 1.875rem !important;
+}
+
+/* Light mode: match dark sidebar wordmark size (desktop-dark) */
+[data-theme-mode="light"] {
+  .app-sidebar .main-sidebar-header .header-logo img.desktop-logo {
+    height: 2.25rem !important;
+    width: auto !important;
+    line-height: 2.25rem !important;
+    object-fit: contain;
+  }
+}
+
+/* Dark mode: desktop-dark wordmark — sidebar slightly reduced vs prior 2.5rem */
+[data-theme-mode="dark"] {
+  .app-sidebar .main-sidebar-header .header-logo img.desktop-dark {
+    height: 2.25rem !important;
+    width: auto !important;
+    line-height: 2.25rem !important;
+    object-fit: contain;
+  }
+
+  .app-header .horizontal-logo .header-logo img.desktop-dark {
+    height: 2.5rem !important;
+    width: auto !important;
+    line-height: 2.5rem !important;
+    object-fit: contain;
+  }
+}
 

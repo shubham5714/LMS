@@ -20,10 +20,10 @@
         }
         @media (min-width: 992px) {
             .app-content {
-                margin-inline-start: 15rem;
+                margin-inline-start: variables.$default-sidebar-width;
             }
             .app-header {
-                padding-inline-start: 15rem;
+                padding-inline-start: variables.$default-sidebar-width;
             }
         }    
     }    
