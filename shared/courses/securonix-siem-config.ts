@@ -13,6 +13,11 @@ export const SECURONIX_SIEM_TOPICS: readonly SecuronixSiemTopic[] = [
     path: "/courses/securonix-siem",
   },
   {
+    id: "architecture",
+    title: "Securonix Architecture",
+    path: "/courses/securonix-siem/architecture",
+  },
+  {
     id: "tenant-activation",
     title: "Tenant Activation by Securonix",
     path: "/courses/securonix-siem/tenant-activation",
@@ -125,6 +130,28 @@ export const SECURONIX_SIEM_OUTLINE: Record<
       navGroupId: "differs-from-traditional",
     },
   ],
+  architecture: [
+    {
+      id: "architecture-diagram",
+      title: "Architecture Diagram",
+      level: 0,
+      suppressHeading: true,
+      imageSrc: "/assets/images/courses/securonix_siem/securonix_architecture.png",
+      imageAlt: "Securonix SIEM architecture diagram",
+    },
+    { id: "data-sources", title: "1. Data Sources", level: 0 },
+    {
+      id: "securonix-hub",
+      title: "2. Securonix HUB (Collection & Forwarding)",
+      level: 0,
+    },
+    {
+      id: "application-components",
+      title: "3. Securonix Application Components (Processing & Analytics)",
+      level: 0,
+    },
+    { id: "storage-consumption", title: "4. Storage & Consumption", level: 0 },
+  ],
   "tenant-activation": [
     {
       id: "tenant-activation",
@@ -170,6 +197,16 @@ export const SECURONIX_SIEM_SECTION_CONTENT: Record<string, Record<string, strin
   overview: {
     introduction:
       "Securonix Unified Defense SIEM is a cloud-native Security Information and Event Management (SIEM) platform that combines SIEM, User and Entity Behavior Analytics (UEBA), SOAR, Threat Intelligence into a unified security operations platform.",
+  },
+  architecture: {
+    "data-sources":
+      "The platform ingests data from three main streams via Push or Pull mechanisms:\n\nOn-Premises & Enterprise: Enterprise Systems, Applications, Networks, and Endpoints.\n\nCloud: Cloud IAAS, PAAS, and SAAS Logs.\n\nContextual Data: Threat Intelligence and Geolocation Data.",
+    "securonix-hub":
+      "Acts as the initial entry point for data collection:\n\nData is gathered by Data Collectors and Fluentbit Forwarders, then temporarily stored in Local Files.\n\nIt supports forwarding logs to a Third-Party Syslog Server.\n\nAn Ingestor Service then moves the data out of the HUB and into the core application components.",
+    "application-components":
+      "This is the central engine where data is real-time processed and analyzed:\n\nKafka: Serves as the message streaming backbone to ingest data smoothly.\n\nParsing, Normalization, and Enrichment: Raw logs are structured and injected with context (like threat intel).\n\nData Pipeline Manager: Manages basic and analytical data pipelines.\n\nStreaming Analytics & SOAR: Data undergoes real-time behavior analytics. If threats are detected, it hooks directly into a Built-in SOAR (Security Orchestration, Automation, and Response) system for automated remediation.",
+    "storage-consumption":
+      "Snowflake Data Cloud: Processed analytics and logs are stored in Snowflake, which acts as the centralized data lake.\n\nEnd-User Capabilities: Security teams interact with the data stored in Snowflake through four main interfaces: Spotter Search (for threat hunting), Dashboards, Reports, and AI Agents.",
   },
   "tenant-activation": {
     "tenant-activation":

@@ -41,6 +41,22 @@ function SectionComparison({ comparison }: { comparison: SecuronixSectionCompari
   )
 }
 
+function SectionBody({ content }: { content: string }) {
+  const paragraphs = content.split(/\n\n+/).filter(Boolean)
+  return (
+    <>
+      {paragraphs.map((paragraph, index) => (
+        <p
+          key={index}
+          className={`course-topic-section__body mb-0${index > 0 ? " mt-2" : ""}`}
+        >
+          {paragraph}
+        </p>
+      ))}
+    </>
+  )
+}
+
 export function SecuronixSiemTopicLesson({ topicId }: Props) {
   const { membership } = useMembershipContext()
   const paid = hasPaidMembership(membership)
@@ -150,7 +166,7 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
                         </>
                       ) : sectionContent && s.imageSrc ? (
                         <>
-                          <p className="course-topic-section__body mb-0">{sectionContent}</p>
+                          <SectionBody content={sectionContent} />
                           {sectionLocked ? (
                             <img
                               src={s.imageSrc}
@@ -186,7 +202,7 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
                       ) : sectionComparison ? (
                         <SectionComparison comparison={sectionComparison} />
                       ) : sectionContent ? (
-                        <p className="course-topic-section__body mb-0">{sectionContent}</p>
+                        <SectionBody content={sectionContent} />
                       ) : (
                         <p className="course-topic-section__subtext mb-0">
                           Placeholder content for <strong>{s.title}</strong>. Replace with your lesson material.
