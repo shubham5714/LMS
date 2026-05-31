@@ -9,7 +9,9 @@ import {
   SOC_FUNDAMENTALS_TOPICS,
 } from "@/shared/courses/soc-fundamentals-config"
 import { useMembershipContext } from "@/shared/contextapi/MembershipContext"
+import { CourseLessonImage } from "./CourseLessonImage"
 import { PremiumSectionOverlay } from "./PremiumSectionOverlay"
+import { useLessonImageSlides } from "./useLessonImageSlides"
 import { useActiveOutlineSection } from "@/shared/hooks/useActiveOutlineSection"
 import { useReadingProgress } from "@/shared/hooks/useReadingProgress"
 import { useTopicScrollCompletion } from "@/shared/hooks/useTopicScrollCompletion"
@@ -31,6 +33,11 @@ export function SocFundamentalsTopicLesson({ topicId }: Props) {
 
   const sections = useMemo(() => getTopicOutline(topicId), [topicId])
   const sectionIds = useMemo(() => sections.map((s) => s.id), [sections])
+  const accessibleSections = useMemo(
+    () => sections.filter((s) => !s.paidOnly || paid),
+    [sections, paid]
+  )
+  const imageSlides = useLessonImageSlides(accessibleSections)
 
   const readingPercent = useReadingProgress()
   const activeSectionId = useActiveOutlineSection(sectionIds, 110)
@@ -56,7 +63,7 @@ export function SocFundamentalsTopicLesson({ topicId }: Props) {
   return (
     <Fragment>
       <Seo title={`${topic.title} · SOC Fundamentals`} />
-      <div className="soc-fundamentals-topic py-4">
+      <div className="soc-fundamentals-topic">
         <div className="soc-fundamentals-topic-layout">
           <div className="soc-fundamentals-topic-main">
             <h1 className="mb-2">{topic.title}</h1>
@@ -96,12 +103,21 @@ export function SocFundamentalsTopicLesson({ topicId }: Props) {
                     >
                       {s.premiumPreviewSrc ? (
                         <>
-                          <img
-                            src={s.premiumPreviewSrc}
-                            alt={s.title}
-                            className="img-fluid w-100 d-block rounded-3"
-                            decoding="async"
-                          />
+                          {sectionLocked ? (
+                            <img
+                              src={s.premiumPreviewSrc}
+                              alt={s.title}
+                              className="img-fluid w-100 d-block rounded-3"
+                              decoding="async"
+                            />
+                          ) : (
+                            <CourseLessonImage
+                              src={s.premiumPreviewSrc}
+                              alt={s.title}
+                              className="img-fluid w-100 d-block rounded-3"
+                              slides={imageSlides}
+                            />
+                          )}
                           <div className="card custom-card mt-3 mb-0">
                             <div className="card-body">
                               <p className="mb-3">

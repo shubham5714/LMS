@@ -68,6 +68,17 @@ button {
 
 /* End::basic */
 
+/* Sidebar: clip horizontal overflow so label ellipsis can show (SimpleBar) */
+.app-sidebar .main-sidebar .simplebar-content-wrapper {
+  overflow-x: hidden !important;
+}
+
+.app-sidebar .main-menu-container,
+.app-sidebar .main-menu {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* SOC Fundamentals routes: full-width column (flush container); bg matches theme */
 .main-content.app-content.soc-fundamentals-main {
   background-color: variables.$default-body-color;
@@ -87,10 +98,143 @@ button {
   padding-inline: 0;
 }
 
-/* Lesson shell: generous horizontal inset for middle content in both themes */
+/* Course topic pages: shared middle-column inset (SOC Fundamentals + Securonix) */
 .soc-fundamentals-topic {
+  $course-lesson-edge-inset: clamp(2rem, 4vw, 2.5rem);
+  /* Extra gap between left sidebar and lesson text */
+  $course-lesson-sidebar-gap: clamp(2.75rem, 6vw, 4rem);
+
   background-color: variables.$default-body-color;
-  padding-inline: clamp(1.75rem, 5vw, 3.25rem);
+  padding-block-end: 2.5rem;
+  padding-inline: 0;
+
+  .soc-fundamentals-topic-main {
+    padding-block-start: $course-lesson-edge-inset;
+    padding-inline-start: $course-lesson-sidebar-gap;
+
+    @media (max-width: 991.98px) {
+      padding-inline-end: $course-lesson-edge-inset;
+    }
+  }
+}
+
+.course-topic-section {
+  margin-block-end: 1rem;
+
+  &:last-of-type {
+    margin-block-end: 0;
+  }
+
+  &--nested {
+    margin-block-start: 0;
+    padding-inline-start: 0.75rem;
+    margin-block-end: 0.625rem;
+  }
+}
+
+.course-topic-section__heading {
+  margin-block-end: 0.375rem;
+}
+
+.course-topic-section__body {
+  line-height: 1.6;
+}
+
+/* Article-style lesson layout (reference: title → section → body spacing) */
+.soc-fundamentals-topic.course-topic-lesson {
+  .course-topic-lesson__title {
+    font-size: calc(1.35rem + 0.5vw);
+    font-weight: 600;
+    line-height: 1.25;
+    margin-block: 0 3rem;
+
+    @media (min-width: 1200px) {
+      font-size: 1.875rem;
+    }
+  }
+
+  .course-topic-section:not(.course-topic-section--nested) {
+    margin-block-end: 2rem;
+
+    &:last-of-type {
+      margin-block-end: 0;
+    }
+
+    .course-topic-section__heading {
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-block-end: 1.5rem;
+      color: inherit;
+    }
+  }
+
+  .course-topic-section--nested {
+    margin-block-end: 1.5rem;
+    padding-inline-start: 0;
+
+    .course-topic-section__heading {
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-block-end: 1rem;
+      color: inherit;
+    }
+  }
+
+  .course-topic-section__body,
+  .course-topic-section__subtext,
+  .course-topic-comparison .course-topic-section__body {
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: inherit;
+  }
+
+  .course-topic-section__body strong,
+  .course-topic-comparison .course-topic-section__body strong {
+    font-size: inherit;
+    font-weight: 600;
+  }
+
+  .course-topic-section__figure {
+    margin-block: 0;
+  }
+
+  #market-positioning .course-topic-section__figure {
+    max-width: min(88%, 36rem);
+    width: 100%;
+    height: auto;
+  }
+
+  .course-lesson-image-trigger {
+    display: contents;
+  }
+
+  .course-lesson-image-trigger img {
+    cursor: zoom-in;
+  }
+
+  .topic-on-page-nav__outline .list-unstyled {
+    font-size: 0.9375rem;
+  }
+}
+
+[data-theme-mode="dark"] .soc-fundamentals-topic.course-topic-lesson {
+  .soc-fundamentals-topic-main {
+    color: #f5f5f5;
+  }
+
+  .course-topic-lesson__title,
+  .course-topic-section__heading {
+    color: #fff;
+  }
+}
+
+[data-theme-mode="light"] .soc-fundamentals-topic.course-topic-lesson {
+  .soc-fundamentals-topic-main {
+    color: variables.$default-text-color;
+  }
 }
 
 [data-theme-mode="dark"] .soc-fundamentals-topic {

@@ -169,7 +169,9 @@ export default function SecuronixSiemSidebar({ onBackToMainNav }: SecuronixSiemS
                       className={`side-menu__item align-items-center ${active ? "active" : ""}`}
                     >
                       <TopicCircle completed={completed} />
-                      <span className="side-menu__label">{item.title}</span>
+                      <span className="side-menu__label" title={item.title}>
+                        <span className="side-menu__label-text">{item.title}</span>
+                      </span>
                     </Link>
                   </li>
                 )

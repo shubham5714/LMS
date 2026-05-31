@@ -22946,6 +22946,17 @@ button {
   }
 }
 /* End::basic */
+/* Sidebar: clip horizontal overflow so label ellipsis can show (SimpleBar) */
+.app-sidebar .main-sidebar .simplebar-content-wrapper {
+  overflow-x: hidden !important;
+}
+
+.app-sidebar .main-menu-container,
+.app-sidebar .main-menu {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* SOC Fundamentals routes: full-width column (flush container); bg matches theme */
 .main-content.app-content.soc-fundamentals-main {
   background-color: var(--default-body-bg-color);
@@ -22964,10 +22975,120 @@ button {
   padding-inline: 0;
 }
 
-/* Lesson shell: generous horizontal inset for middle content in both themes */
+/* Course topic pages: shared middle-column inset (SOC Fundamentals + Securonix) */
 .soc-fundamentals-topic {
+  /* Extra gap between left sidebar and lesson text */
   background-color: var(--default-body-bg-color);
-  padding-inline: clamp(1.75rem, 5vw, 3.25rem);
+  padding-block-end: 2.5rem;
+  padding-inline: 0;
+}
+.soc-fundamentals-topic .soc-fundamentals-topic-main {
+  padding-block-start: clamp(2rem, 4vw, 2.5rem);
+  padding-inline-start: clamp(2.75rem, 6vw, 4rem);
+}
+@media (max-width: 991.98px) {
+  .soc-fundamentals-topic .soc-fundamentals-topic-main {
+    padding-inline-end: clamp(2rem, 4vw, 2.5rem);
+  }
+}
+
+.course-topic-section {
+  margin-block-end: 1rem;
+}
+.course-topic-section:last-of-type {
+  margin-block-end: 0;
+}
+.course-topic-section--nested {
+  margin-block-start: 0;
+  padding-inline-start: 0.75rem;
+  margin-block-end: 0.625rem;
+}
+
+.course-topic-section__heading {
+  margin-block-end: 0.375rem;
+}
+
+.course-topic-section__body {
+  line-height: 1.6;
+}
+
+/* Article-style lesson layout (reference: title → section → body spacing) */
+.soc-fundamentals-topic.course-topic-lesson .course-topic-lesson__title {
+  font-size: calc(1.35rem + 0.5vw);
+  font-weight: 600;
+  line-height: 1.25;
+  margin-block: 0 3rem;
+}
+@media (min-width: 1200px) {
+  .soc-fundamentals-topic.course-topic-lesson .course-topic-lesson__title {
+    font-size: 1.875rem;
+  }
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section:not(.course-topic-section--nested) {
+  margin-block-end: 2rem;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section:not(.course-topic-section--nested):last-of-type {
+  margin-block-end: 0;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section:not(.course-topic-section--nested) .course-topic-section__heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-block-end: 1.5rem;
+  color: inherit;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section--nested {
+  margin-block-end: 1.5rem;
+  padding-inline-start: 0;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section--nested .course-topic-section__heading {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-block-end: 1rem;
+  color: inherit;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section__body,
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section__subtext,
+.soc-fundamentals-topic.course-topic-lesson .course-topic-comparison .course-topic-section__body {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: inherit;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section__body strong,
+.soc-fundamentals-topic.course-topic-lesson .course-topic-comparison .course-topic-section__body strong {
+  font-size: inherit;
+  font-weight: 600;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-topic-section__figure {
+  margin-block: 0;
+}
+.soc-fundamentals-topic.course-topic-lesson #market-positioning .course-topic-section__figure {
+  max-width: min(88%, 36rem);
+  width: 100%;
+  height: auto;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-lesson-image-trigger {
+  display: contents;
+}
+.soc-fundamentals-topic.course-topic-lesson .course-lesson-image-trigger img {
+  cursor: zoom-in;
+}
+.soc-fundamentals-topic.course-topic-lesson .topic-on-page-nav__outline .list-unstyled {
+  font-size: 0.9375rem;
+}
+
+[data-theme-mode=dark] .soc-fundamentals-topic.course-topic-lesson .soc-fundamentals-topic-main {
+  color: #f5f5f5;
+}
+[data-theme-mode=dark] .soc-fundamentals-topic.course-topic-lesson .course-topic-lesson__title,
+[data-theme-mode=dark] .soc-fundamentals-topic.course-topic-lesson .course-topic-section__heading {
+  color: #fff;
+}
+
+[data-theme-mode=light] .soc-fundamentals-topic.course-topic-lesson .soc-fundamentals-topic-main {
+  color: var(--default-text-color);
 }
 
 [data-theme-mode=dark] .soc-fundamentals-topic {
@@ -34688,12 +34809,17 @@ ul.top-customers li:last-child {
 .app-sidebar .slide {
   margin: 0;
   padding: 0 0.5rem;
+  min-width: 0;
+  max-width: 100%;
 }
 .app-sidebar .side-menu__item {
   padding: 0.85rem 1.25rem;
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   text-decoration: none;
   font-size: 0.9rem;
   color: var(--menu-prime-color);
@@ -34760,16 +34886,26 @@ ul.top-customers li:last-child {
   padding-inline-start: 0.75rem;
 }
 .app-sidebar .side-menu__label {
-  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   color: var(--menu-prime-color);
   position: relative;
   font-size: 0.95rem;
   line-height: 1.3;
   vertical-align: middle;
-  display: flex;
-  align-items: center;
+  display: block;
+}
+.app-sidebar .side-menu__label-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 .app-sidebar .side-menu__icon {
+  flex-shrink: 0;
   margin-inline-end: 0.75rem;
   line-height: 0;
   font-size: 1.2rem;
