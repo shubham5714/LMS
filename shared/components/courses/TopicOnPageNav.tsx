@@ -1,11 +1,18 @@
 "use client"
 
-import type { SocFundamentalsOutlineItem } from "@/shared/courses/soc-fundamentals-config"
 import React from "react"
 import { ProgressBar } from "react-bootstrap"
 
+export type CourseOutlineSection = {
+  id: string
+  title: string
+  level: 0 | 1
+  paidOnly?: boolean
+  premiumPreviewSrc?: string
+}
+
 type Props = {
-  sections: readonly SocFundamentalsOutlineItem[]
+  sections: readonly CourseOutlineSection[]
   activeSectionId: string
   readingPercent: number
   hasPaidAccess?: boolean

@@ -18,6 +18,11 @@ import {
     SOC_FUNDAMENTALS_ROUTE_PREFIX,
     getSocFundamentalsTopicForPathname,
 } from '@/shared/courses/soc-fundamentals-config';
+import {
+    SECURONIX_SIEM_DISPLAY_NAME,
+    SECURONIX_SIEM_ROUTE_PREFIX,
+    getSecuronixSiemTopicForPathname,
+} from '@/shared/courses/securonix-siem-config';
 
 interface HeaderProps { }
 
@@ -31,13 +36,24 @@ const Header: React.FC<HeaderProps> = () => {
     const showGetPremium =
         !membershipLoading && membership?.toUpperCase() === 'FREE';
 
-    const socFundamentalsHeader = useMemo(() => {
-        if (!pathname.startsWith(SOC_FUNDAMENTALS_ROUTE_PREFIX)) return null
-        const topic = getSocFundamentalsTopicForPathname(pathname)
-        return {
-            courseTitle: SOC_FUNDAMENTALS_DISPLAY_NAME,
-            topicTitle: topic?.title ?? null,
+    const courseHeader = useMemo(() => {
+        if (pathname.startsWith(SOC_FUNDAMENTALS_ROUTE_PREFIX)) {
+            const topic = getSocFundamentalsTopicForPathname(pathname)
+            return {
+                routePrefix: SOC_FUNDAMENTALS_ROUTE_PREFIX,
+                courseTitle: SOC_FUNDAMENTALS_DISPLAY_NAME,
+                topicTitle: topic?.title ?? null,
+            }
         }
+        if (pathname.startsWith(SECURONIX_SIEM_ROUTE_PREFIX)) {
+            const topic = getSecuronixSiemTopicForPathname(pathname)
+            return {
+                routePrefix: SECURONIX_SIEM_ROUTE_PREFIX,
+                courseTitle: SECURONIX_SIEM_DISPLAY_NAME,
+                topicTitle: topic?.title ?? null,
+            }
+        }
+        return null
     }, [pathname]);
 
     //Menu-Close
@@ -345,7 +361,7 @@ const Header: React.FC<HeaderProps> = () => {
                         </div>
                         {/*<!-- End::header-element -->*/}
 
-                        {socFundamentalsHeader && (
+                        {courseHeader && (
                             <div className="header-element d-none d-sm-flex align-items-center min-w-0 ms-1 ms-lg-2 ps-2 ps-lg-3 border-start border-primary border-opacity-25">
                                 <nav
                                     className="header-course-breadcrumb mb-0 text-truncate"
@@ -354,16 +370,16 @@ const Header: React.FC<HeaderProps> = () => {
                                 >
                                     <Link
                                         scroll={false}
-                                        href={SOC_FUNDAMENTALS_ROUTE_PREFIX}
+                                        href={courseHeader.routePrefix}
                                         className="header-course-breadcrumb__link d-inline-flex align-items-center gap-2"
                                     >
                                         <i className="ri-book-open-line header-course-breadcrumb__icon" aria-hidden />
-                                        <span>{socFundamentalsHeader.courseTitle}</span>
+                                        <span>{courseHeader.courseTitle}</span>
                                     </Link>
-                                    {socFundamentalsHeader.topicTitle ? (
+                                    {courseHeader.topicTitle ? (
                                         <>
                                             <span className="header-course-breadcrumb__sep" aria-hidden>/</span>
-                                            <span className="header-course-breadcrumb__topic">{socFundamentalsHeader.topicTitle}</span>
+                                            <span className="header-course-breadcrumb__topic">{courseHeader.topicTitle}</span>
                                         </>
                                     ) : null}
                                 </nav>

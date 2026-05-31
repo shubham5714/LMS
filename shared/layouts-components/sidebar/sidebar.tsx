@@ -16,7 +16,7 @@ import { useMembershipContext } from '@/shared/contextapi/MembershipContext';
 import { useTenantNavigation } from '@/shared/hooks/useTenantNavigation';
 import { supabase } from '@/shared/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { handleSocFundamentalsMenuLinkClick, useCourseSidebarPreference } from '@/shared/contextapi/CourseSidebarPreferenceContext';
+import { handleCourseMenuLinkClick, useCourseSidebarPreference } from '@/shared/contextapi/CourseSidebarPreferenceContext';
 
 const Sidebar = () => {
 
@@ -812,7 +812,7 @@ const Sidebar = () => {
 										{list.type === "link" ?
 											<Link href={list.path} className={`side-menu__item  ${list.selected ? 'active' : ''}`}
 												onClick={(e) =>
-													handleSocFundamentalsMenuLinkClick(e, pathname, list.path, courseSidebarPreference?.preferCourseSidebarNav)
+													handleCourseMenuLinkClick(e, pathname, list.path, courseSidebarPreference?.preferCourseSidebarNav)
 												}
 											>
 												<span className={`${local_varaiable?.dataVerticalStyle == 'doublemenu' ? '' : 'd-none'}`}>

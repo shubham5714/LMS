@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { data$, getState } from '../services/switcherServices';
 import SpkTooltips from '@/shared/@spk-reusable-components/reusable-uiElements/spk-tooltips';
 import { Menuitemtype } from './nav';
-import { handleSocFundamentalsMenuLinkClick, useCourseSidebarPreference } from '@/shared/contextapi/CourseSidebarPreferenceContext';
+import { handleCourseMenuLinkClick, useCourseSidebarPreference } from '@/shared/contextapi/CourseSidebarPreferenceContext';
 
 const Menuloop = ({ MenuItems, level, handleToMenu, HoverToggleInnerMenuFn }: any) => {
   const pathname = usePathname();
@@ -58,7 +58,7 @@ const Menuloop = ({ MenuItems, level, handleToMenu, HoverToggleInnerMenuFn }: an
             {firstlevel?.type === "link" ?
               <Link href={firstlevel.path} className={`side-menu__item ${firstlevel?.selected ? 'active' : ''}`}
                 onClick={(e) =>
-                  handleSocFundamentalsMenuLinkClick(e, pathname, firstlevel.path, courseSidebarPreference?.preferCourseSidebarNav)
+                  handleCourseMenuLinkClick(e, pathname, firstlevel.path, courseSidebarPreference?.preferCourseSidebarNav)
                 }
               >{firstlevel.icon}
                 <span className=""> {firstlevel.title} {firstlevel.badgetxt ? (<span className={firstlevel.class}> {firstlevel.badgetxt}</span>

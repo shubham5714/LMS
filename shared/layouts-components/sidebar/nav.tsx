@@ -86,6 +86,7 @@ export const MENUITEMS: Menuitemtype[] = [
     dirchange: false,
     children: [
       { path: "/courses/soc-fundamentals", type: "link", active: false, selected: false, dirchange: false, title: "SOC Fundamentals" },
+      { path: "/courses/securonix-siem", type: "link", active: false, selected: false, dirchange: false, title: "Securonix SIEM" },
     ],
   },
 

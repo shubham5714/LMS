@@ -12,14 +12,10 @@ import {
 } from "react"
 import { usePathname } from "next/navigation"
 
+import { isCourseHref, isCourseRoutePathname } from "@/shared/courses/course-routes"
 import { SOC_FUNDAMENTALS_ROUTE_PREFIX } from "@/shared/courses/soc-fundamentals-config"
 
 export { SOC_FUNDAMENTALS_ROUTE_PREFIX }
-
-function isSocFundamentalsHref(path?: string): boolean {
-  if (!path) return false
-  return path === SOC_FUNDAMENTALS_ROUTE_PREFIX || path.startsWith(`${SOC_FUNDAMENTALS_ROUTE_PREFIX}/`)
-}
 
 function pathsMatch(pathname: string, href: string): boolean {
   const norm = (p: string) => p.replace(/\/$/, "") || "/"
@@ -27,16 +23,19 @@ function pathsMatch(pathname: string, href: string): boolean {
 }
 
 /** Main menu: open course sidebar; on same URL use preventDefault so Next.js still updates UI. */
-export function handleSocFundamentalsMenuLinkClick(
+export function handleCourseMenuLinkClick(
   e: MouseEvent<HTMLAnchorElement>,
   pathname: string,
   href: string | undefined,
   preferCourseSidebarNav: (() => void) | null | undefined
 ) {
-  if (!href || !isSocFundamentalsHref(href) || !preferCourseSidebarNav) return
+  if (!href || !isCourseHref(href) || !preferCourseSidebarNav) return
   preferCourseSidebarNav()
   if (pathsMatch(pathname, href)) e.preventDefault()
 }
+
+/** @deprecated Use handleCourseMenuLinkClick */
+export const handleSocFundamentalsMenuLinkClick = handleCourseMenuLinkClick
 
 type CourseSidebarPreferenceContextValue = {
   preferMainAppNav: boolean
@@ -48,12 +47,12 @@ const CourseSidebarPreferenceContext = createContext<CourseSidebarPreferenceCont
 
 export function CourseSidebarPreferenceProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const isSocRoute = pathname.startsWith(SOC_FUNDAMENTALS_ROUTE_PREFIX)
+  const isCourseRoute = isCourseRoutePathname(pathname)
   const [preferMainAppNav, setPreferMainAppNav] = useState(false)
 
   useEffect(() => {
-    if (!isSocRoute) setPreferMainAppNav(false)
-  }, [isSocRoute])
+    if (!isCourseRoute) setPreferMainAppNav(false)
+  }, [isCourseRoute])
 
   const preferCourseSidebarNav = useCallback(() => setPreferMainAppNav(false), [])
 
