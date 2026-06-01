@@ -17,6 +17,7 @@ import {
 import { useMembershipContext } from "@/shared/contextapi/MembershipContext"
 import { CourseLessonImage } from "./CourseLessonImage"
 import { PremiumSectionOverlay } from "./PremiumSectionOverlay"
+import { StorylaneEmbed } from "./StorylaneEmbed"
 import { useLessonImageSlides } from "./useLessonImageSlides"
 import { useActiveOutlineSection } from "@/shared/hooks/useActiveOutlineSection"
 import { useReadingProgress } from "@/shared/hooks/useReadingProgress"
@@ -199,6 +200,14 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
                             slides={imageSlides}
                           />
                         )
+                      ) : sectionContent && s.storylaneEmbedSrc ? (
+                        <>
+                          <SectionBody content={sectionContent} />
+                          <StorylaneEmbed
+                            src={s.storylaneEmbedSrc}
+                            title={`${topic.title} — interactive demo`}
+                          />
+                        </>
                       ) : sectionComparison ? (
                         <SectionComparison comparison={sectionComparison} />
                       ) : sectionContent ? (

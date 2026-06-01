@@ -22,6 +22,11 @@ export const SECURONIX_SIEM_TOPICS: readonly SecuronixSiemTopic[] = [
     title: "Tenant Activation by Securonix",
     path: "/courses/securonix-siem/tenant-activation",
   },
+  {
+    id: "ui-tour",
+    title: "Securonix UI Tour",
+    path: "/courses/securonix-siem/ui-tour",
+  },
 ] as const
 
 export const SECURONIX_SIEM_ROUTE_PREFIX = "/courses/securonix-siem" as const
@@ -56,6 +61,8 @@ export type SecuronixSiemOutlineItem = {
   navGroupId?: string
   /** Hide in-page h2/h3 when it duplicates the topic title */
   suppressHeading?: boolean
+  /** Storylane inline demo iframe src (loads after section intro text) */
+  storylaneEmbedSrc?: string
 }
 
 export type SecuronixSectionComparison = {
@@ -152,6 +159,15 @@ export const SECURONIX_SIEM_OUTLINE: Record<
     },
     { id: "storage-consumption", title: "4. Storage & Consumption", level: 0 },
   ],
+  "ui-tour": [
+    {
+      id: "ui-tour-demo",
+      title: "Interactive demo",
+      level: 0,
+      suppressHeading: true,
+      storylaneEmbedSrc: "https://app.storylane.io/demo/jxz6ggkckcfx?embed=inline",
+    },
+  ],
   "tenant-activation": [
     {
       id: "tenant-activation",
@@ -207,6 +223,10 @@ export const SECURONIX_SIEM_SECTION_CONTENT: Record<string, Record<string, strin
       "This is the central engine where data is real-time processed and analyzed:\n\nKafka: Serves as the message streaming backbone to ingest data smoothly.\n\nParsing, Normalization, and Enrichment: Raw logs are structured and injected with context (like threat intel).\n\nData Pipeline Manager: Manages basic and analytical data pipelines.\n\nStreaming Analytics & SOAR: Data undergoes real-time behavior analytics. If threats are detected, it hooks directly into a Built-in SOAR (Security Orchestration, Automation, and Response) system for automated remediation.",
     "storage-consumption":
       "Snowflake Data Cloud: Processed analytics and logs are stored in Snowflake, which acts as the centralized data lake.\n\nEnd-User Capabilities: Security teams interact with the data stored in Snowflake through four main interfaces: Spotter Search (for threat hunting), Dashboards, Reports, and AI Agents.",
+  },
+  "ui-tour": {
+    "ui-tour-demo":
+      "Explore the Securonix Unified Defense console through this interactive walkthrough. Use the demo below to navigate key areas of the UI for threat detection, investigation, and response.",
   },
   "tenant-activation": {
     "tenant-activation":

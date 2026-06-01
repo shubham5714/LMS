@@ -98,6 +98,19 @@ button {
   padding-inline: 0;
 }
 
+/* Course topic sidebar (SOC + Securonix): tighter vertical spacing between topics */
+.app-sidebar.app-sidebar--course {
+  .slide__category {
+    padding-block: 0.5rem 0.35rem;
+    padding-inline: 1.25rem;
+  }
+
+  .side-menu__item {
+    padding-block: 0.45rem;
+    padding-inline: 1rem;
+  }
+}
+
 /* Course topic pages: shared middle-column inset (SOC Fundamentals + Securonix) */
 .soc-fundamentals-topic {
   $course-lesson-edge-inset: clamp(2rem, 4vw, 2.5rem);
@@ -215,8 +228,9 @@ button {
     cursor: zoom-in;
   }
 
-  .topic-on-page-nav__outline .list-unstyled {
-    font-size: 0.9375rem;
+  .course-storylane-embed {
+    min-width: 0;
+    max-width: 100%;
   }
 }
 
@@ -313,11 +327,18 @@ button {
 .topic-on-page-nav {
   padding: 1rem 0.875rem 1.25rem;
   color: var(--default-text-color);
-}
+  font-size: 0.9rem;
 
-.topic-on-page-nav__title {
-  margin-block-end: 0;
-  color: var(--default-text-color);
+  &__title {
+    margin-block-end: 0;
+    color: var(--default-text-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  &__outline .btn-link {
+    font-size: inherit;
+  }
 }
 
 /* Premium gate: overlay matches the exact box of protected children (reuse for any block size / media) */

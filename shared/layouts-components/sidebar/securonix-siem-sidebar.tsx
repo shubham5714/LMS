@@ -119,7 +119,7 @@ export default function SecuronixSiemSidebar({ onBackToMainNav }: SecuronixSiemS
   return (
     <Fragment>
       <div id="responsive-overlay" ref={overlayRef} onClick={() => menuClose()} />
-      <aside className="app-sidebar sticky d-flex flex-column" id="sidebar">
+      <aside className="app-sidebar app-sidebar--course sticky d-flex flex-column" id="sidebar">
         <div className="main-sidebar-header">
           <Link scroll={false} href={SECURONIX_SIEM_ROUTE_PREFIX} className="header-logo">
             <Image width={99} height={32} src={`${process.env.NODE_ENV === "production" ? basePath : ""}/assets/images/brand-logos/desktop-logo.png`} alt="logo" className="desktop-logo" />

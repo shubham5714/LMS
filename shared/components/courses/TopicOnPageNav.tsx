@@ -33,17 +33,17 @@ export function TopicOnPageNav({
 
   return (
     <div className="topic-on-page-nav h-100">
-      <h2 id="topic-on-page-nav-heading" className="h6 fw-semibold mb-3 topic-on-page-nav__title">
+      <h2 id="topic-on-page-nav-heading" className="fw-semibold mb-3 topic-on-page-nav__title">
         On this page
       </h2>
 
       <section className="topic-on-page-nav__reading mb-4" aria-label="Reading progress">
         <div className="d-flex align-items-center justify-content-between mb-2">
-          <div className="d-flex align-items-center gap-2 fw-semibold small">
+          <div className="d-flex align-items-center gap-2 fw-semibold">
             <i className="ri-book-open-line text-primary" aria-hidden />
             <span>Reading progress</span>
           </div>
-          <span className="small text-muted">{readingPercent}%</span>
+          <span className="text-muted">{readingPercent}%</span>
         </div>
         <ProgressBar now={readingPercent} style={{ height: 6 }} variant="primary" />
       </section>
@@ -55,7 +55,7 @@ export function TopicOnPageNav({
           aria-hidden
         />
         <nav className="pe-3" aria-labelledby="topic-on-page-nav-heading">
-          <ul className="list-unstyled small mb-0">
+          <ul className="list-unstyled mb-0">
             {sections.map((s) => {
               const active = activeSectionId === s.id
               const indent = s.level > 0 ? "ps-3" : ""
@@ -71,7 +71,7 @@ export function TopicOnPageNav({
                   >
                     <span className="flex-grow-1">{s.title}</span>
                     {lockedNav ? (
-                      <i className="ri-lock-2-fill flex-shrink-0 mt-1 small opacity-75" title="Premium" aria-hidden />
+                      <i className="ri-lock-2-fill flex-shrink-0 mt-1 opacity-75" title="Premium" aria-hidden />
                     ) : null}
                   </button>
                 </li>
