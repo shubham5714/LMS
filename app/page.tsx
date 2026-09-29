@@ -20,12 +20,14 @@ const HOLD_MS = 1600
 const GAP_MS = 280
 
 const FLOATING_TOOLS = [
-  { name: "Splunk", src: "/assets/images/brand-logos/splunk-logo.png", className: "public-landing-hero__float--1" },
-  { name: "QRadar", src: "/assets/images/brand-logos/qradar-logo.png", className: "public-landing-hero__float--2" },
-  { name: "Microsoft Sentinel", src: "/assets/images/brand-logos/azure-sentinel.png", className: "public-landing-hero__float--3" },
-  { name: "Securonix", src: "/assets/images/brand-logos/securonix-logo.png", className: "public-landing-hero__float--4" },
-  { name: "Cyber Docs", src: "/assets/images/brand-logos/logo-dark.png", className: "public-landing-hero__float--5" },
-  { name: "Firebase", src: "/assets/images/brand-logos/firbase.png", className: "public-landing-hero__float--6" },
+  { name: "Microsoft Sentinel", src: "/assets/images/brand-logos/landing-sentinel.png", className: "public-landing-hero__float--1" },
+  { name: "Elastic", src: "/assets/images/brand-logos/landing-elastic.png", className: "public-landing-hero__float--2" },
+  { name: "Palo Alto", src: "/assets/images/brand-logos/landing-paloalto.png", className: "public-landing-hero__float--3" },
+  { name: "CrowdStrike", src: "/assets/images/brand-logos/landing-crowdstrike.png", className: "public-landing-hero__float--4" },
+  { name: "Trend Micro", src: "/assets/images/brand-logos/landing-trendmicro.png", className: "public-landing-hero__float--5" },
+  { name: "QRadar", src: "/assets/images/brand-logos/landing-qradar.png", className: "public-landing-hero__float--6" },
+  { name: "Splunk", src: "/assets/images/brand-logos/landing-splunk.png", className: "public-landing-hero__float--7" },
+  { name: "Zscaler", src: "/assets/images/brand-logos/landing-zscaler.png", className: "public-landing-hero__float--8" },
 ] as const
 
 const CaretIcon = () => (

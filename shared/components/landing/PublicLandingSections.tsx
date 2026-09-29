@@ -114,7 +114,7 @@ export default function PublicLandingSections() {
       <section className="public-landing-tools" aria-labelledby="landing-tools-heading">
         <div className="public-landing-section__inner public-landing-tools__inner">
           <p className="public-landing-section__eyebrow">Tech stacks</p>
-          <h2 id="landing-tools-heading" className="public-landing-section__title">
+          <h2 id="landing-tools-heading" className="public-landing-section__title public-landing-section__title--center">
             Master the tools companies actually use
           </h2>
           <p className="public-landing-section__subtitle public-landing-section__subtitle--center">
@@ -232,7 +232,7 @@ export default function PublicLandingSections() {
       <section className="public-landing-testimonials" aria-labelledby="landing-testimonials-heading">
         <div className="public-landing-section__inner">
           <p className="public-landing-section__eyebrow">Testimonials</p>
-          <h2 id="landing-testimonials-heading" className="public-landing-section__title">
+          <h2 id="landing-testimonials-heading" className="public-landing-section__title public-landing-section__title--center">
             Loved by analysts worldwide
           </h2>
           <p className="public-landing-section__subtitle public-landing-section__subtitle--center">

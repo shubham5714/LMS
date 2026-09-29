@@ -5716,12 +5716,14 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
     user-select: none;
   }
 
-  &__float--1 { top: 18%; left: 6%; animation-delay: 0s; }
-  &__float--2 { top: 55%; left: 3%; animation-delay: 0.4s; }
-  &__float--3 { top: 85%; left: 10%; animation-delay: 0.8s; }
-  &__float--4 { top: 18%; right: 6%; animation-delay: 0.2s; }
-  &__float--5 { top: 55%; right: 3%; animation-delay: 0.6s; }
-  &__float--6 { top: 85%; right: 10%; animation-delay: 1s; }
+  &__float--1 { top: 12%; left: 6%; animation-delay: 0s; }
+  &__float--2 { top: 35%; left: 3%; animation-delay: 0.35s; }
+  &__float--3 { top: 58%; left: 4%; animation-delay: 0.7s; }
+  &__float--4 { top: 82%; left: 10%; animation-delay: 1.05s; }
+  &__float--5 { top: 12%; right: 6%; animation-delay: 0.15s; }
+  &__float--6 { top: 35%; right: 3%; animation-delay: 0.5s; }
+  &__float--7 { top: 58%; right: 4%; animation-delay: 0.85s; }
+  &__float--8 { top: 82%; right: 10%; animation-delay: 1.2s; }
 
   &__container {
     position: relative;

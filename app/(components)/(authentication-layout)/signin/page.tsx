@@ -67,10 +67,10 @@ const Page = () => {
         setLoad(true);
         bodyRef.current = document.body;
 
-        bodyRef.current.classList.add('authentication-background');
+        bodyRef.current.classList.add('bg-white');
 
         return () => {
-            bodyRef.current?.classList.remove('authentication-background');
+            bodyRef.current?.classList.remove('bg-white');
         }
     }, []);
 
@@ -567,202 +567,215 @@ const Page = () => {
                 </div>
             )}
             
-            <div className="container">
-                        <div className="row justify-content-center align-items-center authentication authentication-basic h-100 pt-3">
-                            <Col xxl={4} xl={4} lg={4} md={6} sm={8} className="col-12">
-                                <Card className="custom-card my-4">
-                                                <Card.Body className="p-5">
-                                                    <div className="mb-4 d-flex justify-content-center">
-                                                    <Link scroll={false} href="/">
-                                                <Image 
-                                                    fill 
-                                                    src={`${logoPath}/assets/images/brand-logos/desktop-logo.png`} 
-                                                    alt="logo" 
-                                                    className='desktop-logo' 
+            <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
+                <Link scroll={false} href="/">
+                    <Image
+                        src={`${logoPath}/assets/images/brand-logos/desktop-white.png`}
+                        alt="logo"
+                        width={180}
+                        height={36}
+                        style={{ width: 'auto', height: '36px', objectFit: 'contain' }}
+                        priority
+                    />
+                </Link>
+            </div>
+            <Row className="authentication authentication-cover-main mx-0">
+                <Col xxl={8} xl={7} className="">
+                    <Row className="justify-content-center align-items-center h-100">
+                        <Col xxl={5} xl={9} lg={6} md={6} sm={8} className="col-12">
+                            <Card className="custom-card my-4 border">
+                                <Card.Body className="p-5">
+                                    <p className="h5 mb-2 text-center">Sign In</p>
+                                    <p className="text-muted mb-4 text-center">Let&apos;s get started</p>
+                                    {err && <SpkAlert variant="danger">{err}</SpkAlert>}
+                                    <Form onSubmit={Login}>
+                                        <Row className="gy-3">
+                                            <Col xl={12}>
+                                                <label htmlFor="signin-email" className="form-label text-default">
+                                                    Email
+                                                </label>
+                                                <Form.Control
+                                                    name="email"
+                                                    autoComplete="email"
+                                                    type="email"
+                                                    className="form-control"
+                                                    id="signin-email"
+                                                    placeholder="email"
+                                                    value={email}
+                                                    onChange={changeHandler}
                                                 />
-                                                <Image 
-                                                    fill 
-                                                    src={`${logoPath}/assets/images/brand-logos/desktop-dark.png`} 
-                                                    alt="logo" 
-                                                    className='desktop-white' 
-                                                />
-                                                        </Link>
-                                                    </div>
-                                                    <p className="h5 mb-2 text-center">Sign In</p>
-                                                    <p className="text-muted mb-4 text-center">Let's get started</p>
-                                        {err && <SpkAlert variant="danger">{err}</SpkAlert>}
-                                        <Form onSubmit={Login}>
-                                                        <Row className="gy-3">
-                                                            <Col xl={12}>
-                                                    <label htmlFor="signin-email" className="form-label text-default">
-                                                        Email
-                                                    </label>
-                                                    <Form.Control 
-                                                        name="email" 
-                                                        autoComplete="email" 
-                                                        type="email" 
-                                                        className="form-control" 
-                                                        id="signin-email" 
-                                                        placeholder="email" 
-                                                        value={email} 
-                                                        onChange={changeHandler} 
+                                            </Col>
+                                            <Col xl={12} className="mb-2">
+                                                <label htmlFor="signin-password" className="form-label text-default d-block">
+                                                    Password
+                                                    <Link
+                                                        scroll={false}
+                                                        href="/authentication/reset-password/reset-cover/"
+                                                        className="float-end fw-normal text-primary fw-medium"
+                                                    >
+                                                        Forget password ?
+                                                    </Link>
+                                                </label>
+                                                <div className="position-relative">
+                                                    <Form.Control
+                                                        name="password"
+                                                        className="form-control create-password-input"
+                                                        id="signin-password"
+                                                        placeholder="password"
+                                                        type={passwordshow1 ? 'text' : "password"}
+                                                        value={password}
+                                                        onChange={changeHandler}
                                                     />
-                                                            </Col>
-                                                            <Col xl={12} className="mb-2">
-                                                    <label htmlFor="signin-password" className="form-label text-default d-block">
-                                                        Password
-                                                        <Link 
-                                                            scroll={false}
-                                                                    href="/authentication/reset-password/reset-basic/"
-                                                            className="float-end fw-normal text-danger fw-medium"
-                                                        >
-                                                            Forget password?
-                                                        </Link>
+                                                    <span
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={() => setpasswordshow1(!passwordshow1)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                                setpasswordshow1(!passwordshow1);
+                                                            }
+                                                        }}
+                                                        className="show-password-button text-muted"
+                                                        style={{
+                                                            cursor: "pointer",
+                                                            position: "absolute",
+                                                            right: 10,
+                                                            top: "50%",
+                                                            transform: "translateY(-50%)"
+                                                        }}
+                                                    >
+                                                        <i className={`${passwordshow1 ? 'ri-eye-line' : 'ri-eye-off-line'} align-middle`}></i>
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            {mfaTicket && (
+                                                <Col xl={12}>
+                                                    <label htmlFor="signin-otp" className="form-label text-default">
+                                                        MFA Code
                                                     </label>
-                                                                <div className="position-relative">
-                                                        <Form.Control 
-                                                            name="password" 
-                                                            className="form-control create-password-input" 
-                                                            id="signin-password" 
-                                                            placeholder="password" 
-                                                            type={passwordshow1 ? 'text' : "password"} 
-                                                            value={password} 
-                                                            onChange={changeHandler} 
-                                                        />
-                                                        <span 
-                                                            role="button" 
-                                                            tabIndex={0} 
-                                                            onClick={() => setpasswordshow1(!passwordshow1)} 
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter' || e.key === ' ') {
-                                                                    setpasswordshow1(!passwordshow1);
-                                                                }
-                                                            }}
-                                                            className="show-password-button text-muted" 
-                                                            style={{ 
-                                                                cursor: "pointer", 
-                                                                position: "absolute", 
-                                                                right: 10, 
-                                                                top: "50%", 
-                                                                transform: "translateY(-50%)" 
-                                                            }}
-                                                        >
-                                                                        <i className={`${passwordshow1 ? 'ri-eye-line' : 'ri-eye-off-line'} align-middle`}></i>
-                                                                    </span>
-                                                                </div>
-                                                            </Col>
-                                                {mfaTicket && (
-                                                    <Col xl={12}>
-                                                        <label htmlFor="signin-otp" className="form-label text-default">
-                                                            MFA Code
-                                                        </label>
-                                                        <Form.Control 
-                                                            inputMode="numeric" 
-                                                            pattern="[0-9]*" 
-                                                            maxLength={6} 
-                                                            name="otp" 
-                                                            id="signin-otp" 
-                                                            placeholder="Enter 6-digit code" 
-                                                            value={otp} 
-                                                            onChange={(e) => setOtp(e.target.value)} 
-                                                        />
-                                                    </Col>
-                                                )}
-                                                
-                                                {showMfaEnrollment && !mfaEnrollment.qrCode && (
-                                                    <Col xl={12}>
-                                                        <div className="alert alert-info">
-                                                            <h6 className="alert-heading">MFA Required</h6>
-                                                            <p className="mb-3">For security, you need to set up two-factor authentication to continue.</p>
-                                                            <div className="d-flex justify-content-center">
-                                                                <button 
-                                                                    type="button" 
-                                                                    className="btn btn-primary"
-                                                                    onClick={startMfaEnrollment}
-                                                                    disabled={mfaEnrollment.isEnrolling}
-                                                                >
-                                                                    {mfaEnrollment.isEnrolling ? 'Setting up...' : 'Set Up MFA'}
-                                                                </button>
-                                                            </div>
+                                                    <Form.Control
+                                                        inputMode="numeric"
+                                                        pattern="[0-9]*"
+                                                        maxLength={6}
+                                                        name="otp"
+                                                        id="signin-otp"
+                                                        placeholder="Enter 6-digit code"
+                                                        value={otp}
+                                                        onChange={(e) => setOtp(e.target.value)}
+                                                    />
+                                                </Col>
+                                            )}
+
+                                            {showMfaEnrollment && !mfaEnrollment.qrCode && (
+                                                <Col xl={12}>
+                                                    <div className="alert alert-info">
+                                                        <h6 className="alert-heading">MFA Required</h6>
+                                                        <p className="mb-3">For security, you need to set up two-factor authentication to continue.</p>
+                                                        <div className="d-flex justify-content-center">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-primary"
+                                                                onClick={startMfaEnrollment}
+                                                                disabled={mfaEnrollment.isEnrolling}
+                                                            >
+                                                                {mfaEnrollment.isEnrolling ? 'Setting up...' : 'Set Up MFA'}
+                                                            </button>
                                                         </div>
-                                                    </Col>
-                                                )}
-                                                
-                                                {showMfaEnrollment && mfaEnrollment.qrCode && (
-                                                    <Col xl={12}>
-                                                        <div className="alert alert-success">
-                                                            <h6 className="alert-heading mb-4 text-center">Complete MFA Setup</h6>
-                                                            
-                                                            {/* Step 1: QR Code */}
-                                                            <div className="text-center mb-4">
-                                                                <p className="fs-14 mb-3 fw-medium">1. Scan this QR code with your authenticator app:</p>
-                                                                <div className="d-flex justify-content-center">
-                                                                    <div className="p-3 border rounded bg-white">
-                                                                        <img 
-                                                                            src={mfaEnrollment.qrCode} 
-                                                                            alt="MFA QR Code" 
-                                                                            className="img-fluid"
-                                                                            style={{ maxWidth: '180px', height: 'auto' }}
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            {/* Step 2: Code Input */}
-                                                            <div className="text-center mb-4">
-                                                                <p className="fs-14 mb-3 fw-medium">2. Enter the 6-digit code from your app:</p>
-                                                                <div className="d-flex justify-content-center">
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        placeholder="000000"
-                                                                        value={otp}
-                                                                        onChange={(e) => setOtp(e.target.value)}
-                                                                        maxLength={6}
-                                                                        className="text-center fs-16"
-                                                                        style={{ 
-                                                                            fontSize: '1.2rem', 
-                                                                            letterSpacing: '0.2em',
-                                                                            maxWidth: '200px'
-                                                                        }}
+                                                    </div>
+                                                </Col>
+                                            )}
+
+                                            {showMfaEnrollment && mfaEnrollment.qrCode && (
+                                                <Col xl={12}>
+                                                    <div className="alert alert-success">
+                                                        <h6 className="alert-heading mb-4 text-center">Complete MFA Setup</h6>
+
+                                                        <div className="text-center mb-4">
+                                                            <p className="fs-14 mb-3 fw-medium">1. Scan this QR code with your authenticator app:</p>
+                                                            <div className="d-flex justify-content-center">
+                                                                <div className="p-3 border rounded bg-white">
+                                                                    <img
+                                                                        src={mfaEnrollment.qrCode}
+                                                                        alt="MFA QR Code"
+                                                                        className="img-fluid"
+                                                                        style={{ maxWidth: '180px', height: 'auto' }}
                                                                     />
                                                                 </div>
                                                             </div>
-                                                            
-                                                            {/* Step 3: Verify Button */}
-                                                            <div className="text-center mb-4">
-                                                                <button 
-                                                                    type="button" 
-                                                                    className="btn btn-success"
-                                                                    onClick={verifyMfaEnrollment}
-                                                                    disabled={mfaEnrollment.isVerifying || otp.length !== 6}
-                                                                >
-                                                                    {mfaEnrollment.isVerifying ? 'Verifying...' : '3. Verify & Continue'}
-                                                                </button>
-                                                            </div>
-                                                            
-                                                            {/* Manual Entry Section */}
-                                                            <div className="text-center">
-                                                                <p className="fs-12 text-muted mb-2">Can't scan the QR code?</p>
-                                                                <p className="fs-12 text-muted mb-3">Manually enter this secret key:</p>
-                                                                <div className="bg-light p-3 rounded border d-inline-block">
-                                                                    <code className="fs-12 text-primary fw-medium">{mfaEnrollment.secret}</code>
-                                                                </div>
+                                                        </div>
+
+                                                        <div className="text-center mb-4">
+                                                            <p className="fs-14 mb-3 fw-medium">2. Enter the 6-digit code from your app:</p>
+                                                            <div className="d-flex justify-content-center">
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    placeholder="000000"
+                                                                    value={otp}
+                                                                    onChange={(e) => setOtp(e.target.value)}
+                                                                    maxLength={6}
+                                                                    className="text-center fs-16"
+                                                                    style={{
+                                                                        fontSize: '1.2rem',
+                                                                        letterSpacing: '0.2em',
+                                                                        maxWidth: '200px'
+                                                                    }}
+                                                                />
                                                             </div>
                                                         </div>
-                                                    </Col>
-                                                )}
-                                                    </Row>
-                                                    <div className="d-grid mt-3">
-                                                <button type="submit" className="btn btn-primary">
-                                                    {mfaTicket ? 'Verify & Sign In' : 'Sign In'}
-                                                </button>
+
+                                                        <div className="text-center mb-4">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-success"
+                                                                onClick={verifyMfaEnrollment}
+                                                                disabled={mfaEnrollment.isVerifying || otp.length !== 6}
+                                                            >
+                                                                {mfaEnrollment.isVerifying ? 'Verifying...' : '3. Verify & Continue'}
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="text-center">
+                                                            <p className="fs-12 text-muted mb-2">Can&apos;t scan the QR code?</p>
+                                                            <p className="fs-12 text-muted mb-3">Manually enter this secret key:</p>
+                                                            <div className="bg-light p-3 rounded border d-inline-block">
+                                                                <code className="fs-12 text-primary fw-medium">{mfaEnrollment.secret}</code>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                        </Form>
-                                                </Card.Body>
-                                            </Card>
-                            </Col>
+                                                </Col>
+                                            )}
+                                        </Row>
+                                        <div className="d-grid mt-3">
+                                            <button type="submit" className="btn btn-primary">
+                                                {mfaTicket ? 'Verify & Sign In' : 'Sign In'}
+                                            </button>
+                                            <p className="text-muted mt-3 mb-0 text-center">
+                                                Dont have an account?{' '}
+                                                <Link scroll={false} href="/authentication/sign-up/sign-up-cover/" className="text-primary fw-medium">
+                                                    Sign Up
+                                                </Link>
+                                            </p>
+                                        </div>
+                                    </Form>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Col>
+                <Col xxl={4} xl={5} lg={12} className="d-xl-block d-none px-0">
+                    <div className="authentication-cover overflow-hidden">
+                        <div className="aunthentication-cover-content d-flex align-items-center justify-content-center">
+                            <div>
+                                <Image
+                                    fill
+                                    src={`${logoPath}/assets/images/media/media-76.png`}
+                                    alt=""
+                                />
+                            </div>
                         </div>
                     </div>
+                </Col>
+            </Row>
         </Fragment>
     )
 }

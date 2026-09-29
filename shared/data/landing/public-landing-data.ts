@@ -94,11 +94,14 @@ export const LANDING_SKILL_TRACKS = [
 ] as const
 
 export const LANDING_TOOLS = [
-  { name: "Splunk", src: "/assets/images/brand-logos/splunk-logo.png" },
-  { name: "Securonix", src: "/assets/images/brand-logos/securonix-logo.png" },
-  { name: "QRadar", src: "/assets/images/brand-logos/qradar-logo.png" },
-  { name: "Microsoft Sentinel", src: "/assets/images/brand-logos/azure-sentinel.png" },
-  { name: "Cyber Docs", src: "/assets/images/brand-logos/logo-dark.png" },
+  { name: "Microsoft Sentinel", src: "/assets/images/brand-logos/landing-sentinel.png" },
+  { name: "Elastic", src: "/assets/images/brand-logos/landing-elastic.png" },
+  { name: "Palo Alto", src: "/assets/images/brand-logos/landing-paloalto.png" },
+  { name: "CrowdStrike", src: "/assets/images/brand-logos/landing-crowdstrike.png" },
+  { name: "Trend Micro", src: "/assets/images/brand-logos/landing-trendmicro.png" },
+  { name: "QRadar", src: "/assets/images/brand-logos/landing-qradar.png" },
+  { name: "Splunk", src: "/assets/images/brand-logos/landing-splunk.png" },
+  { name: "Zscaler", src: "/assets/images/brand-logos/landing-zscaler.png" },
 ] as const
 
 export const LANDING_HOW_STEPS = [

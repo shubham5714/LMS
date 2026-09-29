@@ -22,7 +22,7 @@ const layout: React.FC<layoutProps> = ({ children }) => {
       bodyRef.current.classList.remove('authentication-background', 'authenticationcover-background', 'position-relative');
     }
 
-    if (pathName.includes('-cover')) {
+    if (pathName.includes('-cover') || pathName === '/signin' || pathName.startsWith('/signin/')) {
       bodyRef.current.classList.add("bg-white")
     } else {
       bodyRef.current.classList.remove("bg-white")
