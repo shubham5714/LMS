@@ -8,7 +8,7 @@ interface Seoprops {
 const Seo: React.FC<Seoprops> = ({ title }) => {
 
   useEffect(() => {
-    document.title = `DRX - ${title}`
+    document.title = `Cyber Docs - ${title}`
   }, [])
 
   return (

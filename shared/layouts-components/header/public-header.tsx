@@ -41,7 +41,13 @@ const PublicHeader = () => {
   const pathname = usePathname()
   const { isAuthenticated, isLoading } = useUserContext()
 
-  const navItems = useMemo(() => toPublicNavItems(MENUITEMS), [])
+  const navItems = useMemo(() => {
+    const items = toPublicNavItems(MENUITEMS).filter(
+      (item) => item.title !== "Dashboard" && item.path !== "/dashboard"
+    )
+    items.push({ title: "Pricing", path: "/pages/pricing" })
+    return items
+  }, [])
 
   const isActive = (path?: string) => {
     if (!path) return false

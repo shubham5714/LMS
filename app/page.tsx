@@ -1,6 +1,7 @@
 "use client"
 
 import nextConfig from "@/next.config"
+import PublicLandingSections from "@/shared/components/landing/PublicLandingSections"
 import PublicHeader from "@/shared/layouts-components/header/public-header"
 import Seo from "@/shared/layouts-components/seo/seo"
 import Image from "next/image"
@@ -23,7 +24,7 @@ const FLOATING_TOOLS = [
   { name: "QRadar", src: "/assets/images/brand-logos/qradar-logo.png", className: "public-landing-hero__float--2" },
   { name: "Microsoft Sentinel", src: "/assets/images/brand-logos/azure-sentinel.png", className: "public-landing-hero__float--3" },
   { name: "Securonix", src: "/assets/images/brand-logos/securonix-logo.png", className: "public-landing-hero__float--4" },
-  { name: "DRX", src: "/assets/images/brand-logos/drx-logo.png", className: "public-landing-hero__float--5" },
+  { name: "Cyber Docs", src: "/assets/images/brand-logos/logo-dark.png", className: "public-landing-hero__float--5" },
   { name: "Firebase", src: "/assets/images/brand-logos/firbase.png", className: "public-landing-hero__float--6" },
 ] as const
 
@@ -40,12 +41,22 @@ const CaretIcon = () => (
 )
 
 const LandingPage = () => {
+  const bodyRef = useRef<HTMLElement | null>(null)
   const { basePath = "" } = nextConfig
   const assetBase = process.env.NODE_ENV === "production" ? basePath : ""
   const [typedRole, setTypedRole] = useState("")
   const roleIndexRef = useRef(0)
   const charIndexRef = useRef(0)
   const deletingRef = useRef(false)
+
+  useEffect(() => {
+    bodyRef.current = document.body
+    bodyRef.current.classList.add("landing-body", "public-landing-body")
+
+    return () => {
+      bodyRef.current?.classList.remove("landing-body", "public-landing-body")
+    }
+  }, [])
 
   useEffect(() => {
     let timeoutId = 0
@@ -94,7 +105,6 @@ const LandingPage = () => {
       <PublicHeader />
 
       <main className="public-landing-main">
-        {/* Mirrors reference: relative overflow-hidden bg-background pt-32 pb-24 */}
         <section className="public-landing-hero" aria-labelledby="landing-hero-heading">
           {FLOATING_TOOLS.map((tool) => (
             <div
@@ -175,7 +185,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Mirrors reference: overlapping browser frame (-mt) */}
         <section className="public-landing-preview" aria-label="Platform preview">
           <div className="public-landing-preview__frame">
             <div className="public-landing-preview__chrome">
@@ -265,6 +274,8 @@ const LandingPage = () => {
             </div>
           </div>
         </section>
+
+        <PublicLandingSections />
       </main>
     </Fragment>
   )

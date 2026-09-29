@@ -14,7 +14,23 @@ export interface UserMembershipRow {
   user_id: string
   username?: string
   membership: string
+  plan?: string | null
+  expires_at?: string | null
+  subscription_started_at?: string | null
   created_at?: string
+}
+
+function isMembershipExpired(expiresAt?: string | null): boolean {
+  if (!expiresAt) return false
+  const exp = new Date(expiresAt)
+  if (Number.isNaN(exp.getTime())) return false
+  return exp.getTime() < Date.now()
+}
+
+function effectiveMembership(row: UserMembershipRow | null): string | null {
+  if (!row) return null
+  if (isMembershipExpired(row.expires_at)) return "FREE"
+  return row.membership
 }
 
 interface MembershipContextType {
@@ -73,7 +89,9 @@ export const MembershipProvider: React.FC<{ children: ReactNode }> = ({
 
         const { data: row, error: fetchError } = await supabase
           .from('user_memberships')
-          .select('id, user_id, username, membership, created_at')
+          .select(
+            'id, user_id, username, membership, plan, expires_at, subscription_started_at, created_at'
+          )
           .eq('user_id', user.id)
           .maybeSingle()
 
@@ -157,7 +175,7 @@ export const MembershipProvider: React.FC<{ children: ReactNode }> = ({
   }, [])
 
   const value: MembershipContextType = {
-    membership: membershipRecord?.membership ?? null,
+    membership: effectiveMembership(membershipRecord),
     membershipRecord,
     isLoading,
   }

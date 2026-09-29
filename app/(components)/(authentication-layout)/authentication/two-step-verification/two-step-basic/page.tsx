@@ -132,7 +132,7 @@ const Basic: React.FC<BasicProps> = () => {
                 if (userId) {
                     const { data: memRow, error: memError } = await supabase
                         .from('user_memberships')
-                        .select('id, user_id, username, membership, created_at')
+                        .select('id, user_id, username, membership, plan, expires_at, subscription_started_at, created_at')
                         .eq('user_id', userId)
                         .maybeSingle();
 
