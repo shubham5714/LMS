@@ -10,13 +10,13 @@ import { usePathname } from 'next/navigation';
 import nextConfig from "@/next.config"
 import Image from 'next/image';
 import SpkTooltips from '@/shared/@spk-reusable-components/reusable-uiElements/spk-tooltips';
-import SpkButton from '@/shared/@spk-reusable-components/reusable-uiElements/spk-buttons';
 import { useUserContext } from '@/shared/contextapi/UserContext';
 import { useMembershipContext } from '@/shared/contextapi/MembershipContext';
 import { useTenantNavigation } from '@/shared/hooks/useTenantNavigation';
 import { supabase } from '@/shared/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { handleCourseMenuLinkClick, useCourseSidebarPreference } from '@/shared/contextapi/CourseSidebarPreferenceContext';
+import { SidebarUserMenu } from './SidebarUserMenu';
 
 const Sidebar = () => {
 
@@ -45,7 +45,7 @@ const Sidebar = () => {
 			}
 			
 			// Route to login page
-			router.push('/');
+			router.push('/signin');
 		} catch (error) {
 			console.error('Error during logout:', error);
 		}
@@ -896,30 +896,11 @@ const Sidebar = () => {
 							<span className="text-muted">Loading...</span>
 						</div>
 					) : (
-						<div className="d-flex flex-column">
-							<div className="d-flex align-items-center mb-2">
-								<div className="avatar avatar-md bg-primary-transparent avatar-rounded me-2">
-									<i className="ri-user-line fs-16"></i>
-								</div>
-								<div className="flex-fill min-w-0">
-									<div className="fw-medium text-dark fs-14 text-truncate" title={membershipRecord?.username ?? ''}>
-										{membershipRecord?.username ?? '—'}
-									</div>
-									<div className="text-muted fs-12 text-truncate" title={membershipRecord?.membership ?? ''}>
-										{membershipRecord?.membership ?? '—'}
-									</div>
-								</div>
-							</div>
-							<SpkButton 
-								Buttonvariant="outline-danger" 
-								Size="sm" 
-								onClickfunc={handleLogout}
-								Customclass="w-100"
-							>
-								<i className="ri-logout-box-line me-1"></i>
-								Logout
-							</SpkButton>
-						</div>
+						<SidebarUserMenu
+							username={membershipRecord?.username}
+							membership={membershipRecord?.membership}
+							onLogout={handleLogout}
+						/>
 					)}
 				</div>
 				{/* <!-- End::User Info Section --> */}

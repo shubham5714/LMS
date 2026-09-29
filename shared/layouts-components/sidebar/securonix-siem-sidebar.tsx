@@ -6,11 +6,12 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import SimpleBar from "simplebar-react"
 import nextConfig from "@/next.config"
-import SpkButton from "@/shared/@spk-reusable-components/reusable-uiElements/spk-buttons"
 import { useMembershipContext } from "@/shared/contextapi/MembershipContext"
 import { supabase } from "@/shared/lib/supabase"
 import { setState } from "../services/switcherServices"
+import { SidebarUserMenu } from "./SidebarUserMenu"
 import {
+  hasPaidMembership,
   SECURONIX_COURSE_PROGRESS_UPDATED_EVENT,
   SECURONIX_SIEM_COURSE_ID,
   SECURONIX_SIEM_DISPLAY_NAME,
@@ -56,7 +57,8 @@ export default function SecuronixSiemSidebar({ onBackToMainNav }: SecuronixSiemS
   const { basePath } = nextConfig
   const pathname = usePathname()
   const router = useRouter()
-  const { membershipRecord, isLoading: membershipLoading } = useMembershipContext()
+  const { membershipRecord, membership, isLoading: membershipLoading } = useMembershipContext()
+  const paid = hasPaidMembership(membership)
   const overlayRef = useRef<HTMLDivElement | null>(null)
   const [completedTopicIds, setCompletedTopicIds] = useState<Set<string>>(new Set())
 
@@ -95,7 +97,7 @@ export default function SecuronixSiemSidebar({ onBackToMainNav }: SecuronixSiemS
       window.dispatchEvent(new CustomEvent("membershipUpdated", { detail: null }))
       const { error } = await supabase.auth.signOut()
       if (error) console.error("Error signing out:", error)
-      router.push("/")
+      router.push("/signin")
     } catch (e) {
       console.error("Error during logout:", e)
     }
@@ -160,6 +162,7 @@ export default function SecuronixSiemSidebar({ onBackToMainNav }: SecuronixSiemS
                     ? pathname === item.path
                     : pathname === item.path || pathname.startsWith(`${item.path}/`)
                 const completed = completedTopicIds.has(item.id)
+                const locked = Boolean(item.paidOnly && !paid)
                 return (
                   <li key={item.path} className={`slide ${active ? "active" : ""}`}>
                     <Link
@@ -171,6 +174,13 @@ export default function SecuronixSiemSidebar({ onBackToMainNav }: SecuronixSiemS
                       <TopicCircle completed={completed} />
                       <span className="side-menu__label" title={item.title}>
                         <span className="side-menu__label-text">{item.title}</span>
+                        {locked ? (
+                          <i
+                            className="ri-lock-2-fill ms-1 opacity-75"
+                            title="Premium"
+                            aria-label="Premium topic"
+                          />
+                        ) : null}
                       </span>
                     </Link>
                   </li>
@@ -189,25 +199,11 @@ export default function SecuronixSiemSidebar({ onBackToMainNav }: SecuronixSiemS
               <span className="text-muted">Loading...</span>
             </div>
           ) : (
-            <div className="d-flex flex-column">
-              <div className="d-flex align-items-center mb-2">
-                <div className="avatar avatar-md bg-primary-transparent avatar-rounded me-2">
-                  <i className="ri-user-line fs-16" />
-                </div>
-                <div className="flex-fill min-w-0">
-                  <div className="fw-medium text-dark fs-14 text-truncate" title={membershipRecord?.username ?? ""}>
-                    {membershipRecord?.username ?? "—"}
-                  </div>
-                  <div className="text-muted fs-12 text-truncate" title={membershipRecord?.membership ?? ""}>
-                    {membershipRecord?.membership ?? "—"}
-                  </div>
-                </div>
-              </div>
-              <SpkButton Buttonvariant="outline-danger" Size="sm" onClickfunc={handleLogout} Customclass="w-100">
-                <i className="ri-logout-box-line me-1" />
-                Logout
-              </SpkButton>
-            </div>
+            <SidebarUserMenu
+              username={membershipRecord?.username}
+              membership={membershipRecord?.membership}
+              onLogout={handleLogout}
+            />
           )}
         </div>
       </aside>

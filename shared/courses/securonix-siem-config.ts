@@ -1,9 +1,13 @@
+import { HUB_INSTALLATION_STEPS } from "@/shared/courses/hub-installation-steps"
+
 export const SECURONIX_SIEM_COURSE_ID = "securonix-siem" as const
 
 export type SecuronixSiemTopic = {
   id: string
   title: string
   path: string
+  /** If true, non-paid users see a full-topic access gate instead of lesson body */
+  paidOnly?: boolean
 }
 
 export const SECURONIX_SIEM_TOPICS: readonly SecuronixSiemTopic[] = [
@@ -26,6 +30,16 @@ export const SECURONIX_SIEM_TOPICS: readonly SecuronixSiemTopic[] = [
     id: "ui-tour",
     title: "Securonix UI Tour",
     path: "/courses/securonix-siem/ui-tour",
+  },
+  {
+    id: "ai-agents",
+    title: "Securonix AI Agents",
+    path: "/courses/securonix-siem/ai-agents",
+  },
+  {
+    id: "hub-installation",
+    title: "Securonix Hub Installation",
+    path: "/courses/securonix-siem/hub-installation",
   },
 ] as const
 
@@ -68,6 +82,23 @@ export type SecuronixSiemOutlineItem = {
 export type SecuronixSectionComparison = {
   traditional: string
   securonix: string
+}
+
+export type SecuronixSectionTable = {
+  headers: readonly string[]
+  rows: readonly (readonly string[])[]
+  footerNote?: string
+}
+
+export type InstallationStepBlock =
+  | { type: "text"; content: string }
+  | { type: "list"; items: readonly string[] }
+  | { type: "code"; content: string }
+
+export type InstallationStep = {
+  id: string
+  title: string
+  blocks: readonly InstallationStepBlock[]
 }
 
 export function hasPaidMembership(membership: string | null | undefined): boolean {
@@ -186,6 +217,21 @@ export const SECURONIX_SIEM_OUTLINE: Record<
       imageAlt: "Securonix SaaS endpoints to whitelist",
     },
   ],
+  "ai-agents": [
+    { id: "introduction", title: "Introduction", level: 0 },
+    { id: "response-agent", title: "Response Agent", level: 0 },
+    { id: "insider-intent-agent", title: "Insider Intent Agent", level: 0 },
+    { id: "noise-control-agent", title: "Noise Control Agent", level: 0 },
+    { id: "search-agent", title: "Search Agent", level: 0 },
+    { id: "investigate-agent", title: "Investigate Agent", level: 0 },
+    { id: "data-pipeline-agent", title: "Data Pipeline Agent", level: 0 },
+  ],
+  "hub-installation": [
+    { id: "hub-prerequisites", title: "Securonix Hub Prerequisites", level: 0 },
+    { id: "recommended-server-sizing", title: "Recommended Server Sizing", level: 0 },
+    { id: "supported-operating-systems", title: "Supported Operating Systems", level: 0 },
+    { id: "installation-steps", title: "Securonix Hub Installation Steps", level: 0 },
+  ],
 }
 
 export function getTopicOutline(topicId: string): readonly SecuronixSiemOutlineItem[] {
@@ -216,13 +262,13 @@ export const SECURONIX_SIEM_SECTION_CONTENT: Record<string, Record<string, strin
   },
   architecture: {
     "data-sources":
-      "The platform ingests data from three main streams via Push or Pull mechanisms:\n\nOn-Premises & Enterprise: Enterprise Systems, Applications, Networks, and Endpoints.\n\nCloud: Cloud IAAS, PAAS, and SAAS Logs.\n\nContextual Data: Threat Intelligence and Geolocation Data.",
+      "The platform ingests data from three main streams via Push or Pull mechanisms:\n\n- On-Premises & Enterprise: Enterprise Systems, Applications, Networks, and Endpoints.\n- Cloud: Cloud IAAS, PAAS, and SAAS Logs.\n- Contextual Data: Threat Intelligence and Geolocation Data.",
     "securonix-hub":
-      "Acts as the initial entry point for data collection:\n\nData is gathered by Data Collectors and Fluentbit Forwarders, then temporarily stored in Local Files.\n\nIt supports forwarding logs to a Third-Party Syslog Server.\n\nAn Ingestor Service then moves the data out of the HUB and into the core application components.",
+      "Acts as the initial entry point for data collection:\n\n- Data is gathered by Data Collectors and Fluentbit Forwarders, then temporarily stored in Local Files.\n- It supports forwarding logs to a Third-Party Syslog Server.\n- An Ingestor Service then moves the data out of the HUB and into the core application components.",
     "application-components":
-      "This is the central engine where data is real-time processed and analyzed:\n\nKafka: Serves as the message streaming backbone to ingest data smoothly.\n\nParsing, Normalization, and Enrichment: Raw logs are structured and injected with context (like threat intel).\n\nData Pipeline Manager: Manages basic and analytical data pipelines.\n\nStreaming Analytics & SOAR: Data undergoes real-time behavior analytics. If threats are detected, it hooks directly into a Built-in SOAR (Security Orchestration, Automation, and Response) system for automated remediation.",
+      "This is the central engine where data is real-time processed and analyzed:\n\n- Kafka: Serves as the message streaming backbone to ingest data smoothly.\n- Parsing, Normalization, and Enrichment: Raw logs are structured and injected with context (like threat intel).\n- Data Pipeline Manager: Manages basic and analytical data pipelines.\n- Streaming Analytics & SOAR: Data undergoes real-time behavior analytics. If threats are detected, it hooks directly into a Built-in SOAR (Security Orchestration, Automation, and Response) system for automated remediation.",
     "storage-consumption":
-      "Snowflake Data Cloud: Processed analytics and logs are stored in Snowflake, which acts as the centralized data lake.\n\nEnd-User Capabilities: Security teams interact with the data stored in Snowflake through four main interfaces: Spotter Search (for threat hunting), Dashboards, Reports, and AI Agents.",
+      "Snowflake Data Cloud: Processed analytics and logs are stored in Snowflake, which acts as the centralized data lake.\n\nEnd-User Capabilities: Security teams interact with the data stored in Snowflake through four main interfaces:\n\n- Spotter Search (for threat hunting)\n- Dashboards\n- Reports\n- AI Agents",
   },
   "ui-tour": {
     "ui-tour-demo":
@@ -233,6 +279,28 @@ export const SECURONIX_SIEM_SECTION_CONTENT: Record<string, Record<string, strin
       "After onboarding, the Securonix team provisions the tenant and shares the setup details via email. The email typically contains the Tenant URL, Cloud Hub URL (if Cloud Hub is part of the deployment), Hub installation package download URL, and initial login credentials. The customer can then access the tenant and begin the implementation and log onboarding process.",
     "saas-endpoints-whitelist":
       "The onboarding email also includes the list of Securonix SaaS endpoints that must be whitelisted to allow communication between the customer environment (Cloud Hub/Hub) and the Securonix platform. These endpoints typically include the Securonix Console URL and Kafka broker URLs used for secure log transmission from the Hub to the Securonix SaaS platform.",
+  },
+  "ai-agents": {
+    introduction:
+      "Securonix AI Agents are purpose-built autonomous assistants embedded within the Securonix SIEM platform to help security teams detect, investigate, and respond to threats more efficiently.",
+    "response-agent":
+      "Automatically takes approved response actions through SOAR workflows, such as disabling accounts, blocking IPs, or isolating endpoints. It speeds up incident containment while ensuring actions stay within predefined governance policies.\n\nOutcome: Faster response and reduced MTTR.",
+    "insider-intent-agent":
+      "Detects potential insider threats by analyzing user behavior changes, psycholinguistic patterns, access activity, and risk indicators. It focuses on identifying suspicious intent before actual damage occurs.\n\nOutcome: Early insider threat detection with minimal alert noise.",
+    "noise-control-agent":
+      "Reduces false positives by identifying repetitive, low-value, and non-actionable alerts using AI reasoning, behavioral context, and analyst feedback.\n\nOutcome: Less alert fatigue and more focus on genuine threats.",
+    "search-agent":
+      "Allows analysts to use natural language queries instead of complex SIEM search syntax. The agent translates the request into optimized searches across security data.\n\nOutcome: Faster and easier threat hunting.",
+    "investigate-agent":
+      "Collects and correlates telemetry, alerts, user activity, asset context, and threat intelligence to create a unified investigation narrative.\n\nOutcome: Faster investigations and better incident understanding.",
+    "data-pipeline-agent":
+      "Optimizes how telemetry is ingested, stored, and routed by prioritizing high-value security data and reducing unnecessary data processing.\n\nOutcome: Lower SIEM costs while maintaining security visibility.",
+  },
+  "hub-installation": {
+    "hub-prerequisites":
+      "Before installing Securonix Hub, ensure the following requirements are met:\n\n- Server: Physical or virtual Linux server.\n- SIEM Version: Unified Defense SIEM version 6.4 August 2024 R1 or later.\n- User Permissions: A non-root user with sudo privileges is required for installation.\n- Hostname: Each Hub instance must have a unique hostname to avoid data routing and ingestion issues.\n- SELinux: Must be set to Permissive mode.\n- Network Utility: tcptraceroute must be installed.\n- Storage:\n  - At least 10 GB free space in the temporary directory.\n  - A separate /Securonix mount point with write permissions and sufficient storage.\n- Firewall Ports:\n  - 514/TCP (Inbound) for Syslog sources.\n  - 9092 or 9093 (Outbound) for Kafka communication.\n  - 443 (Outbound) for SNYPR Console access.\n- Data Retention: Minimum 4 days of data retention on the Hub.",
+    "supported-operating-systems":
+      "- Ubuntu 22.04 LTS\n- Rocky Linux 9.x\n- RHEL 8.x and 9.x\n- Oracle Linux 8.x\n- Amazon Linux 2 and 2023\n\nUbuntu 20.04, RHEL 7.x, and CentOS 7/8 are deprecated and not recommended for new deployments.",
   },
 }
 
@@ -277,4 +345,40 @@ export function getSectionComparison(
   sectionId: string
 ): SecuronixSectionComparison | undefined {
   return SECURONIX_SIEM_SECTION_COMPARISONS[topicId]?.[sectionId]
+}
+
+export const SECURONIX_SIEM_SECTION_TABLES: Record<
+  string,
+  Record<string, SecuronixSectionTable>
+> = {
+  "hub-installation": {
+    "recommended-server-sizing": {
+      headers: ["EPS Range", "CPU", "Memory", "Storage"],
+      rows: [
+        ["Up to 8K EPS", "2 Cores", "4 GB", "160 GB"],
+        ["Up to 15K EPS", "4 Cores", "16 GB", "820 GB"],
+        ["Up to 25K EPS", "8 Cores", "32 GB", "1.6 TB"],
+        ["Up to 50K EPS", "16 Cores", "64 GB", "5 TB"],
+      ],
+      footerNote:
+        "For high-volume environments, a 10 Gbps or higher NIC is recommended.",
+    },
+  },
+}
+
+export function getSectionTable(
+  topicId: string,
+  sectionId: string
+): SecuronixSectionTable | undefined {
+  return SECURONIX_SIEM_SECTION_TABLES[topicId]?.[sectionId]
+}
+
+export function getInstallationSteps(
+  topicId: string,
+  sectionId: string
+): readonly InstallationStep[] | undefined {
+  if (topicId === "hub-installation" && sectionId === "installation-steps") {
+    return HUB_INSTALLATION_STEPS
+  }
+  return undefined
 }

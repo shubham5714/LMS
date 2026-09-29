@@ -31,11 +31,12 @@ export function SocFundamentalsTopicLesson({ topicId }: Props) {
     [topicId]
   )
 
+  const topicLocked = Boolean(topic?.paidOnly && !paid)
   const sections = useMemo(() => getTopicOutline(topicId), [topicId])
   const sectionIds = useMemo(() => sections.map((s) => s.id), [sections])
   const accessibleSections = useMemo(
-    () => sections.filter((s) => !s.paidOnly || paid),
-    [sections, paid]
+    () => (topicLocked ? [] : sections.filter((s) => !s.paidOnly || paid)),
+    [sections, paid, topicLocked]
   )
   const imageSlides = useLessonImageSlides(accessibleSections)
 
@@ -66,13 +67,17 @@ export function SocFundamentalsTopicLesson({ topicId }: Props) {
       <div className="soc-fundamentals-topic">
         <div className="soc-fundamentals-topic-layout">
           <div className="soc-fundamentals-topic-main">
-            <h1 className="mb-2">{topic.title}</h1>
-            <p className="text-muted mb-4">
+            <h1 className="course-topic-lesson__title">{topic.title}</h1>
+            <p className="course-topic-lesson__lead text-muted">
               Scroll through each section. Reading progress and the current section update as you move. Mark
               the topic complete by reaching the bottom of the page.
             </p>
 
-            {sections.length === 0 ? (
+            {topicLocked ? (
+              <PremiumSectionOverlay locked variant="topic">
+                {null}
+              </PremiumSectionOverlay>
+            ) : sections.length === 0 ? (
               <div className="card custom-card" style={{ minHeight: "120vh" }}>
                 <div className="card-body">
                   <p className="mb-0">
@@ -88,36 +93,23 @@ export function SocFundamentalsTopicLesson({ topicId }: Props) {
                   <section
                     key={s.id}
                     id={s.id}
-                    className="mb-5 pb-2"
+                    className={`course-topic-section ${s.level === 1 ? "course-topic-section--nested" : ""}`}
                     style={{ scrollMarginTop: "6.5rem" }}
                   >
                     {s.level === 0 ? (
-                      <h2 className="h4 mb-3">{s.title}</h2>
+                      <h2 className="course-topic-section__heading">{s.title}</h2>
                     ) : (
-                      <h3 className="h6 text-secondary mb-3">{s.title}</h3>
+                      <h3 className="course-topic-section__heading">{s.title}</h3>
                     )}
-                    <PremiumSectionOverlay
-                      locked={sectionLocked}
-                      previewSrc={s.premiumPreviewSrc}
-                      overlayTintOnly={Boolean(s.premiumPreviewSrc)}
-                    >
+                    <PremiumSectionOverlay locked={sectionLocked}>
                       {s.premiumPreviewSrc ? (
                         <>
-                          {sectionLocked ? (
-                            <img
-                              src={s.premiumPreviewSrc}
-                              alt={s.title}
-                              className="img-fluid w-100 d-block rounded-3"
-                              decoding="async"
-                            />
-                          ) : (
-                            <CourseLessonImage
-                              src={s.premiumPreviewSrc}
-                              alt={s.title}
-                              className="img-fluid w-100 d-block rounded-3"
-                              slides={imageSlides}
-                            />
-                          )}
+                          <CourseLessonImage
+                            src={s.premiumPreviewSrc}
+                            alt={s.title}
+                            className="img-fluid w-100 d-block rounded-3"
+                            slides={imageSlides}
+                          />
                           <div className="card custom-card mt-3 mb-0">
                             <div className="card-body">
                               <p className="mb-3">
@@ -144,17 +136,19 @@ export function SocFundamentalsTopicLesson({ topicId }: Props) {
                         </div>
                       )}
                     </PremiumSectionOverlay>
-                    {!s.premiumPreviewSrc ? (
+                    {!s.premiumPreviewSrc && !sectionLocked ? (
                       <div style={{ minHeight: "28vh" }} aria-hidden className="d-none d-md-block" />
                     ) : null}
                   </section>
                 )
               })
             )}
-            <p className="mt-4 text-muted small">— End of topic —</p>
+            {!topicLocked ? (
+              <p className="mt-4 text-muted small">— End of topic —</p>
+            ) : null}
           </div>
 
-          {sections.length > 0 ? (
+          {!topicLocked && sections.length > 0 ? (
             <aside className="soc-fundamentals-topic-toc" aria-label="On this page">
               <div className="soc-fundamentals-topic-toc-inner">
                 <TopicOnPageNav

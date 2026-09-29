@@ -4,6 +4,8 @@ import Seo from "@/shared/layouts-components/seo/seo"
 import {
   getSectionComparison,
   getSectionContent,
+  getSectionTable,
+  getInstallationSteps,
   getTopicNavSections,
   getTopicOutline,
   hasPaidMembership,
@@ -16,7 +18,10 @@ import {
 } from "@/shared/courses/securonix-siem-config"
 import { useMembershipContext } from "@/shared/contextapi/MembershipContext"
 import { CourseLessonImage } from "./CourseLessonImage"
+import { InstallationSteps } from "./InstallationSteps"
 import { PremiumSectionOverlay } from "./PremiumSectionOverlay"
+import { SectionBody } from "./SectionBody"
+import { SectionTable } from "./SectionTable"
 import { StorylaneEmbed } from "./StorylaneEmbed"
 import { useLessonImageSlides } from "./useLessonImageSlides"
 import { useActiveOutlineSection } from "@/shared/hooks/useActiveOutlineSection"
@@ -42,22 +47,6 @@ function SectionComparison({ comparison }: { comparison: SecuronixSectionCompari
   )
 }
 
-function SectionBody({ content }: { content: string }) {
-  const paragraphs = content.split(/\n\n+/).filter(Boolean)
-  return (
-    <>
-      {paragraphs.map((paragraph, index) => (
-        <p
-          key={index}
-          className={`course-topic-section__body mb-0${index > 0 ? " mt-2" : ""}`}
-        >
-          {paragraph}
-        </p>
-      ))}
-    </>
-  )
-}
-
 export function SecuronixSiemTopicLesson({ topicId }: Props) {
   const { membership } = useMembershipContext()
   const paid = hasPaidMembership(membership)
@@ -67,12 +56,13 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
     [topicId]
   )
 
+  const topicLocked = Boolean(topic?.paidOnly && !paid)
   const sections = useMemo(() => getTopicOutline(topicId), [topicId])
   const navSections = useMemo(() => getTopicNavSections(topicId), [topicId])
   const sectionIds = useMemo(() => sections.map((s) => s.id), [sections])
   const accessibleSections = useMemo(
-    () => sections.filter((s) => !s.paidOnly || paid),
-    [sections, paid]
+    () => (topicLocked ? [] : sections.filter((s) => !s.paidOnly || paid)),
+    [sections, paid, topicLocked]
   )
   const imageSlides = useLessonImageSlides(accessibleSections)
 
@@ -109,7 +99,11 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
           <div className="soc-fundamentals-topic-main">
             <h1 className="course-topic-lesson__title">{topic.title}</h1>
 
-            {sections.length === 0 ? (
+            {topicLocked ? (
+              <PremiumSectionOverlay locked variant="topic">
+                {null}
+              </PremiumSectionOverlay>
+            ) : sections.length === 0 ? (
               <div className="card custom-card" style={{ minHeight: "120vh" }}>
                 <div className="card-body">
                   <p className="mb-0">
@@ -123,6 +117,8 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
                 const sectionLocked = Boolean(s.paidOnly && !paid)
                 const sectionContent = getSectionContent(topicId, s.id)
                 const sectionComparison = getSectionComparison(topicId, s.id)
+                const sectionTable = getSectionTable(topicId, s.id)
+                const installationSteps = getInstallationSteps(topicId, s.id)
                 const showSectionBody = !s.headingOnly
                 return (
                   <section
@@ -139,85 +135,63 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
                       )
                     ) : null}
                     {showSectionBody ? (
-                    <PremiumSectionOverlay
-                      locked={sectionLocked}
-                      previewSrc={s.premiumPreviewSrc}
-                      overlayTintOnly={Boolean(s.premiumPreviewSrc)}
-                    >
-                      {s.premiumPreviewSrc ? (
-                        <>
-                          {sectionLocked ? (
-                            <img
-                              src={s.premiumPreviewSrc}
-                              alt={s.title}
-                              className="img-fluid w-100 d-block rounded-3"
-                              decoding="async"
-                            />
-                          ) : (
+                      <PremiumSectionOverlay locked={sectionLocked}>
+                        {s.premiumPreviewSrc ? (
+                          <>
                             <CourseLessonImage
                               src={s.premiumPreviewSrc}
                               alt={s.title}
                               className="img-fluid w-100 d-block rounded-3"
                               slides={imageSlides}
                             />
-                          )}
-                          <p className="course-topic-section__subtext mb-0 mt-2">
-                            Placeholder content for <strong>{s.title}</strong>. Replace with your lesson material.
-                          </p>
-                        </>
-                      ) : sectionContent && s.imageSrc ? (
-                        <>
-                          <SectionBody content={sectionContent} />
-                          {sectionLocked ? (
-                            <img
-                              src={s.imageSrc}
-                              alt={s.imageAlt ?? s.title}
-                              className="img-fluid w-100 d-block rounded-3 course-topic-section__figure mt-3"
-                              decoding="async"
-                            />
-                          ) : (
+                            <p className="course-topic-section__subtext mb-0 mt-2">
+                              Placeholder content for <strong>{s.title}</strong>. Replace with your lesson material.
+                            </p>
+                          </>
+                        ) : sectionContent && s.imageSrc ? (
+                          <>
+                            <SectionBody content={sectionContent} />
                             <CourseLessonImage
                               src={s.imageSrc}
                               alt={s.imageAlt ?? s.title}
                               className="img-fluid w-100 d-block rounded-3 course-topic-section__figure mt-3"
                               slides={imageSlides}
                             />
-                          )}
-                        </>
-                      ) : s.imageSrc ? (
-                        sectionLocked ? (
-                          <img
-                            src={s.imageSrc}
-                            alt={s.imageAlt ?? s.title}
-                            className="img-fluid w-100 d-block rounded-3 course-topic-section__figure"
-                            decoding="async"
-                          />
-                        ) : (
+                          </>
+                        ) : s.imageSrc ? (
                           <CourseLessonImage
                             src={s.imageSrc}
                             alt={s.imageAlt ?? s.title}
                             className="img-fluid w-100 d-block rounded-3 course-topic-section__figure"
                             slides={imageSlides}
                           />
-                        )
-                      ) : sectionContent && s.storylaneEmbedSrc ? (
-                        <>
+                        ) : sectionContent && s.storylaneEmbedSrc ? (
+                          <>
+                            <SectionBody content={sectionContent} />
+                            <StorylaneEmbed
+                              src={s.storylaneEmbedSrc}
+                              title={`${topic.title} — interactive demo`}
+                            />
+                          </>
+                        ) : installationSteps ? (
+                          <InstallationSteps steps={installationSteps} />
+                        ) : sectionComparison ? (
+                          <SectionComparison comparison={sectionComparison} />
+                        ) : sectionContent && sectionTable ? (
+                          <>
+                            <SectionBody content={sectionContent} />
+                            <SectionTable table={sectionTable} />
+                          </>
+                        ) : sectionTable ? (
+                          <SectionTable table={sectionTable} />
+                        ) : sectionContent ? (
                           <SectionBody content={sectionContent} />
-                          <StorylaneEmbed
-                            src={s.storylaneEmbedSrc}
-                            title={`${topic.title} — interactive demo`}
-                          />
-                        </>
-                      ) : sectionComparison ? (
-                        <SectionComparison comparison={sectionComparison} />
-                      ) : sectionContent ? (
-                        <SectionBody content={sectionContent} />
-                      ) : (
-                        <p className="course-topic-section__subtext mb-0">
-                          Placeholder content for <strong>{s.title}</strong>. Replace with your lesson material.
-                        </p>
-                      )}
-                    </PremiumSectionOverlay>
+                        ) : (
+                          <p className="course-topic-section__subtext mb-0">
+                            Placeholder content for <strong>{s.title}</strong>. Replace with your lesson material.
+                          </p>
+                        )}
+                      </PremiumSectionOverlay>
                     ) : null}
                   </section>
                 )
@@ -225,7 +199,7 @@ export function SecuronixSiemTopicLesson({ topicId }: Props) {
             )}
           </div>
 
-          {sections.length > 0 ? (
+          {!topicLocked && sections.length > 0 ? (
             <aside className="soc-fundamentals-topic-toc" aria-label="On this page">
               <div className="soc-fundamentals-topic-toc-inner">
                 <TopicOnPageNav

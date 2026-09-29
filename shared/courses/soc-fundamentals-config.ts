@@ -4,6 +4,8 @@ export type SocFundamentalsTopic = {
   id: string
   title: string
   path: string
+  /** If true, non-paid users see a full-topic access gate instead of lesson body */
+  paidOnly?: boolean
 }
 
 export const SOC_FUNDAMENTALS_TOPICS: readonly SocFundamentalsTopic[] = [

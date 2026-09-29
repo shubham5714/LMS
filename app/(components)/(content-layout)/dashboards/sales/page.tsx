@@ -97,12 +97,12 @@ const SalesInner: React.FC = () => {
             try {
                 const { data: { user }, error } = await supabase.auth.getUser();
                 if (error || !user) {
-                    router.push('/');
+                    router.push('/signin');
                     return;
                 }
                 setIsAuthenticated(true);
             } catch (error) {
-                router.push('/');
+                router.push('/signin');
             } finally {
                 setIsLoading(false);
             }

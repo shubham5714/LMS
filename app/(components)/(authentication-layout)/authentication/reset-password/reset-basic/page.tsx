@@ -91,7 +91,7 @@ const Basic: React.FC<BasicProps> = () => {
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         if (validate()) {
-            router.push("/");
+            router.push("/signin");
         }
     };
 
@@ -170,7 +170,7 @@ const Basic: React.FC<BasicProps> = () => {
                                 <div className="text-center">
                                     <p className="text-muted mt-3">
                                         Remembered your password?{" "}
-                                        <Link scroll={false} href="/authentication/sign-in/sign-in-basic/" className="text-primary fw-medium">
+                                        <Link scroll={false} href="/signin" className="text-primary fw-medium">
                                             Sign In
                                         </Link>
                                     </p>

@@ -46,7 +46,7 @@ const Basic: React.FC<BasicProps> = () => {
         // Example validation — you can replace with real signup logic
         if (email === "adminnext@gmail.com" && password === "1234567890") {
             toast.success("Created Successfully!");
-            router.push("/");
+            router.push("/signin");
         } else {
             toast.error("Invalid email or password");
         }
@@ -122,7 +122,7 @@ const Basic: React.FC<BasicProps> = () => {
                                 <div className="text-center">
                                     <p className="text-muted mt-3">
                                         Already have an account?{" "}
-                                        <Link href="/" className="text-primary">
+                                        <Link href="/signin" className="text-primary">
                                             Sign In
                                         </Link>
                                     </p>

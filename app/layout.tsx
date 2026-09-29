@@ -10,9 +10,10 @@ import { DateRangeProvider } from '@/shared/contextapi/DateRangeContext';
 import store from '@/shared/redux/store';
 import { LocalStorageBackup } from '@/shared/data/switcherdata/switcherdata';
 import { data$, getState } from '@/shared/layouts-components/services/switcherServices';
-import { Poppins } from 'next/font/google';
+import { Inter } from 'next/font/google';
+import { usePathname } from 'next/navigation';
 
-const poppins = Poppins({
+const inter = Inter({
     subsets: ['latin'],
     weight: ['400', '500', '600', '700'],
     display: 'swap',
@@ -37,6 +38,8 @@ const LayoutContent: React.FC<{ children: ReactNode }> = ({ children }) => {
 
 const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
 
+  const pathname = usePathname();
+  const isPublicLanding = pathname === '/';
   const [pageloading, setpageloading] = useState(false);
   const [localVariable, setLocalVariable] = useState(getState());
 
@@ -58,9 +61,16 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const bodyClassName = [
+    localVariable.body || '',
+    isPublicLanding ? 'landing-body public-landing-body' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <html 
-      className={poppins.className}
+      className={inter.className}
       suppressHydrationWarning={true}
       lang={localVariable.lang || "en"}
       dir={localVariable.dir || undefined}
@@ -85,7 +95,7 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
         <title>DRX NextJs App-Router Typescript React Bootstrap Admin Dashboard Template</title>
         <meta name="keywords" content="admin dashboard design, dashboard admin template, dashboard nextjs, dashboard template, dashboard ui design, next js admin panel, next js dashboard, next js template, next js ts, next js typescript, next js ui framework, nextjs dashboard template, nextjs styled components, nextjs ui, typescript template" />
       </head>
-      <body className={`${localVariable.body ? localVariable.body : ''}`}>
+      <body className={bodyClassName}>
         <Provider store={store}>
           <Initialload.Provider value={{ pageloading, setpageloading }}>
             <UserProvider>

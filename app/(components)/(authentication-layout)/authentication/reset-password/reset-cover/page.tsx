@@ -89,7 +89,7 @@ const Cover: React.FC = () => {
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         if (validate()) {
-            router.push("/");
+            router.push("/signin");
         }
     };
 
@@ -152,7 +152,7 @@ const Cover: React.FC = () => {
                                         </div>
                                     </Form>
                                     <div className="text-center">
-                                        <p className="text-muted mt-3">Remembered your password? <Link scroll={false} href="/authentication/sign-in/sign-in-basic/" className="text-primary fw-medium">Sign In</Link></p>
+                                        <p className="text-muted mt-3">Remembered your password? <Link scroll={false} href="/signin" className="text-primary fw-medium">Sign In</Link></p>
                                     </div>
                                 </Card.Body>
                             </Card>

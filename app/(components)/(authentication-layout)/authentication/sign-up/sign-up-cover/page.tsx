@@ -47,7 +47,7 @@ const Cover: React.FC<CoverProps> = () => {
         // Example validation — you can replace with real signup logic
         if (email === "adminnext@gmail.com" && password === "1234567890") {
             toast.success("Created Successfully!");
-            router.push("/");
+            router.push("/signin");
         } else {
             toast.error("Invalid email or password");
         }
@@ -117,7 +117,7 @@ const Cover: React.FC<CoverProps> = () => {
                                         </div>
                                     </Form>
                                     <div className="text-center">
-                                        <p className="text-muted mt-3 mb-0">Already have an account? <Link scroll={false} href="/" className="text-primary fw-medium">Sign In</Link></p>
+                                        <p className="text-muted mt-3 mb-0">Already have an account? <Link scroll={false} href="/signin" className="text-primary fw-medium">Sign In</Link></p>
                                     </div>
                                 </Card.Body>
                             </Card>

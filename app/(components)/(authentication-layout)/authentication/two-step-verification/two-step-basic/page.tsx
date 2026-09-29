@@ -255,7 +255,7 @@ const Basic: React.FC<BasicProps> = () => {
                                             </SpkButton>
                                             <div className="text-center">
                                                 <p className="text-muted mt-3 mb-0">
-                                                    <Link scroll={false} href="/" className="text-primary fw-medium">Back to Login</Link>
+                                                    <Link scroll={false} href="/signin" className="text-primary fw-medium">Back to Login</Link>
                                                 </p>
                                             </div>
                                         </Col>

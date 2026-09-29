@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
   // Define public routes that don't require authentication
   const publicRoutes = [
     '/',
+    '/signin',
     '/authentication',
     '/authentication/coming-soon',
     '/authentication/create-password',
@@ -42,9 +43,19 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => 
     pathname === route || pathname.startsWith(route + '/')
   )
+
+  // Courses catalog, course lessons, learning paths + pricing are public
+  const isPublicCourseOrPricing =
+    pathname === '/courses' ||
+    pathname.startsWith('/courses/') ||
+    pathname === '/learning-paths' ||
+    pathname.startsWith('/learning-paths/') ||
+    pathname === '/pages/pricing' ||
+    pathname.startsWith('/pages/pricing/')
   
   // Skip middleware for public routes, static files, and Next.js internals
-  if (isPublicRoute || 
+  if (isPublicRoute ||
+      isPublicCourseOrPricing ||
       pathname.startsWith('/_next/') || 
       pathname.startsWith('/api/') ||
       pathname.includes('.') ||
@@ -110,7 +121,7 @@ export async function middleware(request: NextRequest) {
     
     // If no user found, redirect to login
     if (error || !user) {
-      const loginUrl = new URL('/', request.url)
+      const loginUrl = new URL('/signin', request.url)
       loginUrl.searchParams.set('redirectedFrom', pathname)
       return NextResponse.redirect(loginUrl)
     }
@@ -120,7 +131,7 @@ export async function middleware(request: NextRequest) {
     
   } catch (error) {
     console.error('❌ Middleware authentication error:', error)
-    const loginUrl = new URL('/', request.url)
+    const loginUrl = new URL('/signin', request.url)
     loginUrl.searchParams.set('redirectedFrom', pathname)
     return NextResponse.redirect(loginUrl)
   }

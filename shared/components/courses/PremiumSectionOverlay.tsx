@@ -5,62 +5,50 @@ import React from "react"
 
 type Props = {
   locked: boolean
-  previewSrc?: string
   children: React.ReactNode
-  /** Optional classes on the outer shell (e.g. `ratio ratio-16x9` for video, custom min-heights) */
+  /** Optional classes on the lock panel shell */
   className?: string
-  /**
-   * When true, overlay is only a dark tint (no background image). Use when `children` already
-   * include the same image so the gate sizes to the real media dimensions.
-   */
-  overlayTintOnly?: boolean
+  /** Stretch panel for full-topic gates */
+  variant?: "section" | "topic"
 }
 
 export function PremiumSectionOverlay({
   locked,
-  previewSrc,
   children,
   className,
-  overlayTintOnly = false,
+  variant = "section",
 }: Props) {
   if (!locked) {
     return <>{children}</>
   }
 
-  const bgStyle: React.CSSProperties =
-    overlayTintOnly || !previewSrc
-      ? {
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.72) 100%)",
-        }
-      : {
-          backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.78) 100%), url(${previewSrc})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }
-
-  const shellClass = ["premium-section-wrap", "rounded-3", "overflow-hidden", className]
+  const shellClass = [
+    "premium-access-gate",
+    variant === "topic" ? "premium-access-gate--topic" : "",
+    className,
+  ]
     .filter(Boolean)
     .join(" ")
 
   return (
-    <div className={shellClass}>
-      <div className="premium-section-wrap__content premium-section-gated" aria-hidden="true">
-        {children}
-      </div>
-      <div
-        className="premium-section-wrap__overlay d-flex flex-column align-items-center justify-content-center p-4 text-center"
-        style={bgStyle}
-        role="region"
-        aria-label="Premium content"
-      >
+    <div className={shellClass} role="region" aria-label="Premium content">
+      <div className="premium-access-gate__inner">
+        <div className="premium-access-gate__icon" aria-hidden>
+          <i className="ri-lock-2-fill" />
+        </div>
+        <h3 className="premium-access-gate__title">
+          Keep Going — Unlock the Full Lesson
+        </h3>
+        <p className="premium-access-gate__copy">
+          You&apos;ve seen a preview. Join 25,000+ engineers with full access to
+          every lesson, hands-on project, and video walkthrough
+        </p>
         <Link
           scroll={false}
           href="/pages/pricing/"
-          className="btn btn-primary btn-sm rounded-pill px-4 fw-semibold shadow-sm"
-          aria-label="Upgrade to Premium"
+          className="premium-access-gate__cta"
         >
-          Upgrade to Premium
+          Get Full Access
         </Link>
       </div>
     </div>

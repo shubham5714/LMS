@@ -14,6 +14,7 @@ import { supabase } from '@/shared/lib/supabase';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMembershipContext } from '@/shared/contextapi/MembershipContext';
 import {
+    hasPaidMembership,
     SOC_FUNDAMENTALS_DISPLAY_NAME,
     SOC_FUNDAMENTALS_ROUTE_PREFIX,
     getSocFundamentalsTopicForPathname,
@@ -34,7 +35,7 @@ const Header: React.FC<HeaderProps> = () => {
 
     const { membership, isLoading: membershipLoading } = useMembershipContext();
     const showGetPremium =
-        !membershipLoading && membership?.toUpperCase() === 'FREE';
+        !membershipLoading && !hasPaidMembership(membership);
 
     const courseHeader = useMemo(() => {
         if (pathname.startsWith(SOC_FUNDAMENTALS_ROUTE_PREFIX)) {
@@ -86,7 +87,7 @@ const Header: React.FC<HeaderProps> = () => {
             }
             
             // Route to login page
-            router.push('/');
+            router.push('/signin');
         } catch (error) {
             console.error('Error during logout:', error);
         }
