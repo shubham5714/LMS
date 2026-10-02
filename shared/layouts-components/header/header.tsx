@@ -1,5 +1,5 @@
 "use client"
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useRef, useState } from 'react'
 import Link from 'next/link';
 import Switcher from '../switcher/switcher';
 import { data$, getState, setState } from '../services/switcherServices';
@@ -13,17 +13,15 @@ import { ThemeChanger } from '@/shared/redux/actions';
 import { supabase } from '@/shared/lib/supabase';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMembershipContext } from '@/shared/contextapi/MembershipContext';
+import { hasPaidMembership } from '@/shared/courses/membership-roles';
 import {
-    hasPaidMembership,
-    SOC_FUNDAMENTALS_DISPLAY_NAME,
-    SOC_FUNDAMENTALS_ROUTE_PREFIX,
-    getSocFundamentalsTopicForPathname,
-} from '@/shared/courses/soc-fundamentals-config';
+    parseCourseIdFromPathname,
+    parseTopicIdFromPathname,
+} from '@/shared/courses/course-structure';
 import {
-    SECURONIX_SIEM_DISPLAY_NAME,
-    SECURONIX_SIEM_ROUTE_PREFIX,
-    getSecuronixSiemTopicForPathname,
-} from '@/shared/courses/securonix-siem-config';
+    fetchCourseById,
+    fetchCourseTopic,
+} from '@/shared/courses/course-structure-client';
 
 interface HeaderProps { }
 
@@ -37,25 +35,41 @@ const Header: React.FC<HeaderProps> = () => {
     const showGetPremium =
         !membershipLoading && !hasPaidMembership(membership);
 
-    const courseHeader = useMemo(() => {
-        if (pathname.startsWith(SOC_FUNDAMENTALS_ROUTE_PREFIX)) {
-            const topic = getSocFundamentalsTopicForPathname(pathname)
-            return {
-                routePrefix: SOC_FUNDAMENTALS_ROUTE_PREFIX,
-                courseTitle: SOC_FUNDAMENTALS_DISPLAY_NAME,
-                topicTitle: topic?.title ?? null,
+    const courseId = parseCourseIdFromPathname(pathname)
+    const [courseHeader, setCourseHeader] = useState<{
+        routePrefix: string
+        courseTitle: string
+        topicTitle: string | null
+    } | null>(null)
+
+    useEffect(() => {
+        let cancelled = false
+        const load = async () => {
+            if (!courseId) {
+                setCourseHeader(null)
+                return
             }
-        }
-        if (pathname.startsWith(SECURONIX_SIEM_ROUTE_PREFIX)) {
-            const topic = getSecuronixSiemTopicForPathname(pathname)
-            return {
-                routePrefix: SECURONIX_SIEM_ROUTE_PREFIX,
-                courseTitle: SECURONIX_SIEM_DISPLAY_NAME,
-                topicTitle: topic?.title ?? null,
+            const topicId = parseTopicIdFromPathname(pathname, courseId)
+            const [course, topic] = await Promise.all([
+                fetchCourseById(courseId),
+                fetchCourseTopic(courseId, topicId),
+            ])
+            if (cancelled) return
+            if (!course) {
+                setCourseHeader(null)
+                return
             }
+            setCourseHeader({
+                routePrefix: `/courses/${courseId}`,
+                courseTitle: course.title,
+                topicTitle: topic?.title ?? null,
+            })
         }
-        return null
-    }, [pathname]);
+        void load()
+        return () => {
+            cancelled = true
+        }
+    }, [courseId, pathname]);
 
     //Menu-Close
     let [variable, setVariable] = useState(getState());

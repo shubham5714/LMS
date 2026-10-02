@@ -1,3 +1,9 @@
+/**
+ * @deprecated Use shared/courses/tracks.ts
+ * Kept for any leftover imports; maps old learning-path shape to tracks.
+ */
+import { TRACKS, type Track } from "@/shared/courses/tracks"
+
 export type LearningPath = {
   id: string
   title: string
@@ -10,29 +16,18 @@ export type LearningPath = {
   accent: string
 }
 
-export const LEARNING_PATHS: readonly LearningPath[] = [
-  {
-    id: "soc-analyst",
-    title: "SOC Analyst Path",
-    description:
-      "Build a foundation in security operations, then deepen SIEM skills with Securonix for day-to-day analyst work.",
-    focusArea: "Security Operations",
-    skillLevel: "Beginner → Intermediate",
-    courseIds: ["soc-fundamentals", "securonix-siem"],
-    estimatedHours: 12,
-    icon: "ri-route-line",
-    accent: "primary",
-  },
-  {
-    id: "siem-practitioner",
-    title: "SIEM Practitioner Path",
-    description:
-      "Focus on Securonix SIEM end-to-end: architecture, activation, UI, AI agents, and Hub installation.",
-    focusArea: "SIEM",
-    skillLevel: "Intermediate",
-    courseIds: ["securonix-siem"],
-    estimatedHours: 8,
-    icon: "ri-git-branch-line",
-    accent: "info",
-  },
-]
+function toLearningPath(track: Track): LearningPath {
+  return {
+    id: track.id,
+    title: track.title,
+    description: track.description,
+    focusArea: track.focusArea,
+    skillLevel: track.skillLevel,
+    courseIds: track.courseIds,
+    estimatedHours: track.estimatedHours,
+    icon: track.icon,
+    accent: track.accent,
+  }
+}
+
+export const LEARNING_PATHS: readonly LearningPath[] = TRACKS.map(toLearningPath)

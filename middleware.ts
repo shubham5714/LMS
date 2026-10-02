@@ -44,14 +44,26 @@ export async function middleware(request: NextRequest) {
     pathname === route || pathname.startsWith(route + '/')
   )
 
-  // Courses catalog, course lessons, learning paths + pricing are public
+  // Courses catalog, course lessons, tracks + pricing are public
   const isPublicCourseOrPricing =
     pathname === '/courses' ||
     pathname.startsWith('/courses/') ||
+    pathname === '/tracks' ||
+    pathname.startsWith('/tracks/') ||
     pathname === '/learning-paths' ||
     pathname.startsWith('/learning-paths/') ||
     pathname === '/pages/pricing' ||
     pathname.startsWith('/pages/pricing/')
+
+  // Old learning-paths URLs → Tracks
+  if (
+    pathname === '/learning-paths' ||
+    pathname.startsWith('/learning-paths/')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/tracks'
+    return NextResponse.redirect(url)
+  }
   
   // Skip middleware for public routes, static files, and Next.js internals
   if (isPublicRoute ||

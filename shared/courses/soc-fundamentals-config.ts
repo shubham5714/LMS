@@ -65,11 +65,7 @@ export type SocFundamentalsOutlineItem = {
   premiumPreviewSrc?: string
 }
 
-/** True when user should see full course content (anything other than FREE). */
-export function hasPaidMembership(membership: string | null | undefined): boolean {
-  if (membership == null || membership === "") return false
-  return membership.trim().toUpperCase() !== "FREE"
-}
+export { hasPaidMembership, isContentEditor } from "@/shared/courses/membership-roles"
 
 /** In-page sections for the “On this page” rail (per topic). */
 export const SOC_FUNDAMENTALS_OUTLINE: Record<

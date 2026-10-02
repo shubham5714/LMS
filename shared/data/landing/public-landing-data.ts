@@ -10,7 +10,7 @@ export const LANDING_CAREER_TRACKS = [
   {
     title: "SOC Analyst",
     level: "Beginner → Intermediate",
-    href: "/learning-paths",
+    href: "/tracks/soc-analyst",
     description:
       "Zero to job-ready SOC analyst — roles, threat lifecycle, triage, SIEM fundamentals, and log analysis, with hands-on labs after every stage.",
     meta: "4.9 · 12+ hours · 2 courses · guided path",
@@ -19,7 +19,7 @@ export const LANDING_CAREER_TRACKS = [
   {
     title: "SIEM Practitioner",
     level: "Intermediate",
-    href: "/courses/securonix-siem",
+    href: "/tracks/siem-practitioner",
     description:
       "Operate Securonix in production — architecture, tenant activation, UI workflows, AI agents, and Hub installation.",
     meta: "4.8 · 9 hours · 6 modules · labs",
@@ -142,8 +142,8 @@ export const LANDING_FEATURES = [
     icon: "ri-play-circle-line",
   },
   {
-    title: "Learning Paths",
-    description: "Role-based tracks that sequence the right courses from beginner to job-ready.",
+    title: "Tracks",
+    description: "Role-based and skill tracks that sequence the right courses from beginner to job-ready.",
     icon: "ri-route-line",
   },
   {

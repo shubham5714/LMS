@@ -172,10 +172,10 @@ const LandingPage = () => {
                   </Link>
                   <Link
                     scroll={false}
-                    href="/learning-paths"
+                    href="/tracks"
                     className="public-landing-hero__cta public-landing-hero__cta--secondary"
                   >
-                    Explore Learning Paths
+                    Explore Tracks
                     <CaretIcon />
                   </Link>
                 </div>

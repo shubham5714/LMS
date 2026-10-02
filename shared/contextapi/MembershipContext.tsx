@@ -8,6 +8,10 @@ import React, {
   useCallback,
 } from 'react'
 import { supabase } from '@/shared/lib/supabase'
+import {
+  effectiveMembership as resolveEffectiveMembership,
+  isContentEditor,
+} from '@/shared/courses/membership-roles'
 
 export interface UserMembershipRow {
   id: number
@@ -20,23 +24,17 @@ export interface UserMembershipRow {
   created_at?: string
 }
 
-function isMembershipExpired(expiresAt?: string | null): boolean {
-  if (!expiresAt) return false
-  const exp = new Date(expiresAt)
-  if (Number.isNaN(exp.getTime())) return false
-  return exp.getTime() < Date.now()
-}
-
-function effectiveMembership(row: UserMembershipRow | null): string | null {
+function membershipFromRow(row: UserMembershipRow | null): string | null {
   if (!row) return null
-  if (isMembershipExpired(row.expires_at)) return "FREE"
-  return row.membership
+  return resolveEffectiveMembership(row.membership, row.expires_at)
 }
 
 interface MembershipContextType {
   membership: string | null
   membershipRecord: UserMembershipRow | null
   isLoading: boolean
+  /** True when membership is ADMIN (can edit BlockNote lesson bodies). */
+  canEditCourseContent: boolean
 }
 
 const STORAGE_KEY = 'userMembership'
@@ -174,10 +172,12 @@ export const MembershipProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [])
 
+  const membership = membershipFromRow(membershipRecord)
   const value: MembershipContextType = {
-    membership: effectiveMembership(membershipRecord),
+    membership,
     membershipRecord,
     isLoading,
+    canEditCourseContent: isContentEditor(membership),
   }
 
   return (

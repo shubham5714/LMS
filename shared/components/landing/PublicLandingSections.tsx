@@ -103,8 +103,8 @@ export default function PublicLandingSections() {
               ))}
             </div>
             <div className="public-landing-paths__more">
-              <Link href="/learning-paths" scroll={false}>
-                Explore all learning paths <CaretIcon />
+              <Link href="/tracks" scroll={false}>
+                Explore all tracks <CaretIcon />
               </Link>
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function PublicLandingSections() {
               </p>
               <h3>{activeHow.title}</h3>
               <p>{activeHow.detail}</p>
-              <Link href="/learning-paths" scroll={false} className="public-landing-how__cta">
+              <Link href="/tracks" scroll={false} className="public-landing-how__cta">
                 Build my free plan <CaretIcon />
               </Link>
             </div>
@@ -411,8 +411,8 @@ export default function PublicLandingSections() {
             <Link href="/courses" scroll={false}>
               Courses
             </Link>
-            <Link href="/learning-paths" scroll={false}>
-              Learning Paths
+            <Link href="/tracks" scroll={false}>
+              Tracks
             </Link>
             <Link href="/resources" scroll={false}>
               Resources

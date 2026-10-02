@@ -27,8 +27,15 @@ export function TopicOnPageNav({
   if (sections.length === 0) return null
 
   const scrollTo = (id: string) => {
-    const el = document.getElementById(id)
-    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+    const byId = document.getElementById(id)
+    if (byId) {
+      byId.scrollIntoView({ behavior: "smooth", block: "start" })
+      return
+    }
+    const byDataId = document.querySelector(
+      `[data-id="${CSS.escape(id)}"]`
+    ) as HTMLElement | null
+    byDataId?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   return (

@@ -9,15 +9,24 @@ type Options = {
   topicId: string
   /** Fired after successful persist so sidebar can refresh */
   onPersisted?: () => void
+  /** When false, scroll completion is not tracked */
+  enabled?: boolean
 }
 
 /**
  * Marks topic complete when the user scrolls to the bottom of the document (window scroll).
  */
-export function useTopicScrollCompletion({ courseId, topicId, onPersisted }: Options) {
+export function useTopicScrollCompletion({
+  courseId,
+  topicId,
+  onPersisted,
+  enabled = true,
+}: Options) {
   const doneRef = useRef(false)
 
   useEffect(() => {
+    if (!enabled) return
+
     const tryComplete = async () => {
       if (doneRef.current) return
       const doc = document.documentElement
@@ -53,5 +62,5 @@ export function useTopicScrollCompletion({ courseId, topicId, onPersisted }: Opt
       window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", onScroll)
     }
-  }, [courseId, topicId, onPersisted])
+  }, [courseId, topicId, onPersisted, enabled])
 }

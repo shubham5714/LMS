@@ -101,10 +101,7 @@ export type InstallationStep = {
   blocks: readonly InstallationStepBlock[]
 }
 
-export function hasPaidMembership(membership: string | null | undefined): boolean {
-  if (membership == null || membership === "") return false
-  return membership.trim().toUpperCase() !== "FREE"
-}
+export { hasPaidMembership, isContentEditor } from "@/shared/courses/membership-roles"
 
 export const SECURONIX_SIEM_OUTLINE: Record<
   string,

@@ -13,11 +13,16 @@
     "sass-min": "sass ./public/assets/scss/:./public/assets/css/ --style compressed"
   },
   "dependencies": {
+    "@blocknote/core": "^0.55.0",
+    "@blocknote/mantine": "^0.55.0",
+    "@blocknote/react": "^0.55.0",
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/list": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
+    "@mantine/core": "^8.3.11",
+    "@mantine/hooks": "^8.3.11",
     "@material/slider": "^14.0.0",
     "@mui/icons-material": "^7.0.1",
     "@mui/material": "^7.0.1",

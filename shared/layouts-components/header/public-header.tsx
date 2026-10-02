@@ -68,8 +68,8 @@ const PublicHeader = () => {
         <Navbar.Brand as={Link} href="/" scroll={false}>
           <Image
             src={`${logoPath}/assets/images/brand-logos/logo-dark.png`}
-            width={150}
-            height={40}
+            width={173}
+            height={43}
             alt="logo"
             className="d-inline-block align-text-top"
             priority

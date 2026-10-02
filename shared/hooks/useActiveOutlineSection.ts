@@ -14,7 +14,9 @@ export function useActiveOutlineSection(sectionIds: readonly string[], topOffset
     const compute = () => {
       let current = sectionIds[0]
       for (const id of sectionIds) {
-        const el = document.getElementById(id)
+        const el =
+          document.getElementById(id) ||
+          (document.querySelector(`[data-id="${CSS.escape(id)}"]`) as HTMLElement | null)
         if (!el) continue
         const top = el.getBoundingClientRect().top
         if (top <= topOffset) current = id
