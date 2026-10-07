@@ -18,6 +18,7 @@ import {
   PremiumStart,
 } from "./PremiumSectionMarkers"
 import { StorylaneEmbedBlock } from "./StorylaneEmbedBlock"
+import { YouTubeEmbedBlock } from "./YouTubeEmbedBlock"
 
 export const courseBlockNoteSchema = BlockNoteSchema.create({
   blockSpecs: {
@@ -26,6 +27,7 @@ export const courseBlockNoteSchema = BlockNoteSchema.create({
     premiumEnd: PremiumEnd(),
     premiumGate: PremiumGate(),
     storylaneEmbed: StorylaneEmbedBlock(),
+    youtubeEmbed: YouTubeEmbedBlock(),
   },
 })
 
@@ -87,6 +89,29 @@ function getCourseSlashMenuItems(editor: CourseEditor): DefaultReactSuggestionIt
       },
       aliases: ["storylane", "demo", "embed"],
       badge: "S",
+    },
+    {
+      title: "YouTube video",
+      subtext: "Embed a YouTube watch/share URL",
+      group: "Course",
+      onItemClick: () => {
+        const current = editor.getTextCursorPosition().block
+        editor.insertBlocks(
+          [
+            {
+              type: "youtubeEmbed",
+              props: {
+                videoUrl: "",
+                title: "YouTube video",
+              },
+            },
+          ],
+          current,
+          "after"
+        )
+      },
+      aliases: ["youtube", "yt", "youtu"],
+      badge: "Y",
     },
   ]
 }

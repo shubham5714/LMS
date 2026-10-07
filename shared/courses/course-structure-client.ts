@@ -35,7 +35,7 @@ export async function fetchCatalogCoursesFromDb(): Promise<CatalogCourse[]> {
   const { data, error } = await supabase
     .from("courses")
     .select(
-      "id, title, description, focus_area, skill_level, icon, students_label, duration_hours, modules, lessons, instructor_name, sort_order, published"
+      "id, title, description, focus_area, skill_level, icon, logo_url, students_label, duration_hours, modules, lessons, instructor_name, sort_order, published"
     )
     .eq("published", true)
     .order("sort_order", { ascending: true })
@@ -54,7 +54,7 @@ export async function fetchCourseById(
   const { data, error } = await supabase
     .from("courses")
     .select(
-      "id, title, description, focus_area, skill_level, icon, students_label, duration_hours, modules, lessons, instructor_name, sort_order, published"
+      "id, title, description, focus_area, skill_level, icon, logo_url, students_label, duration_hours, modules, lessons, instructor_name, sort_order, published"
     )
     .eq("id", courseId)
     .maybeSingle()
@@ -70,6 +70,7 @@ export async function fetchCourseById(
       focus_area: fallback.focusArea,
       skill_level: fallback.skillLevel,
       icon: fallback.icon,
+      logo_url: fallback.logoUrl ?? null,
       students_label: fallback.studentsLabel,
       duration_hours: fallback.durationHours,
       modules: fallback.modules,

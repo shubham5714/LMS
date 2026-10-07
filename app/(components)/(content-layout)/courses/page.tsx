@@ -54,61 +54,70 @@ export default function CoursesCatalogPage() {
   return (
     <Fragment>
       <Seo title="Courses" />
-      <div className="d-flex align-items-center justify-content-between page-header-breadcrumb flex-wrap gap-2 mb-3">
-        <div>
-          <h1 className="page-title fw-medium fs-18 mb-0">Courses</h1>
-          <p className="text-muted mb-0 mt-1">Browse courses by focus area and skill level.</p>
+      <div className="page-header-breadcrumb mb-3">
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+          <div className="d-flex align-items-baseline flex-wrap gap-2">
+            <h1 className="page-title fw-medium fs-18 mb-0">Courses</h1>
+            <p className="text-muted mb-0 small">
+              Browse by focus area and skill level.
+            </p>
+          </div>
+          {canEditCourseContent ? (
+            <Link href="/courses/manage" className="btn btn-sm btn-primary">
+              Manage courses
+            </Link>
+          ) : null}
         </div>
-        {canEditCourseContent ? (
-          <Link href="/courses/manage" className="btn btn-sm btn-primary">
-            Manage courses
-          </Link>
-        ) : null}
-      </div>
-
-      <Card className="custom-card mb-4">
-        <Card.Body className="py-3">
-          <Row className="g-3 align-items-end">
-            <Col md={4} lg={3}>
-              <Form.Label className="form-label mb-1">Focus area</Form.Label>
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div className="d-flex align-items-center flex-wrap gap-3">
+            <div className="d-flex align-items-center gap-2">
+              <Form.Label className="form-label mb-0 small text-nowrap">
+                Focus area
+              </Form.Label>
               <Form.Select
+                size="sm"
+                className="w-auto"
+                style={{ minWidth: "10.5rem" }}
                 value={focusArea}
                 onChange={(e) => setFocusArea(e.target.value)}
                 aria-label="Filter by focus area"
               >
-                <option value="all">All focus areas</option>
+                <option value="all">All</option>
                 {COURSE_FOCUS_AREAS.map((area) => (
                   <option key={area} value={area}>
                     {area}
                   </option>
                 ))}
               </Form.Select>
-            </Col>
-            <Col md={4} lg={3}>
-              <Form.Label className="form-label mb-1">Skill level</Form.Label>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <Form.Label className="form-label mb-0 small text-nowrap">
+                Skill level
+              </Form.Label>
               <Form.Select
+                size="sm"
+                className="w-auto"
+                style={{ minWidth: "10.5rem" }}
                 value={skillLevel}
                 onChange={(e) => setSkillLevel(e.target.value)}
                 aria-label="Filter by skill level"
               >
-                <option value="all">All skill levels</option>
+                <option value="all">All</option>
                 {COURSE_SKILL_LEVELS.map((level) => (
                   <option key={level} value={level}>
                     {level}
                   </option>
                 ))}
               </Form.Select>
-            </Col>
-            <Col md={4} lg={3} className="ms-lg-auto">
-              <p className="mb-0 text-muted small text-md-end">
-                {loading
-                  ? "Loading…"
-                  : `${filtered.length} course${filtered.length === 1 ? "" : "s"}`}
-              </p>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+            </div>
+          </div>
+          <p className="mb-0 text-muted small">
+            {loading
+              ? "Loading…"
+              : `${filtered.length} course${filtered.length === 1 ? "" : "s"}`}
+          </p>
+        </div>
+      </div>
 
       <Row className="g-4">
         {filtered.length === 0 && !loading ? (

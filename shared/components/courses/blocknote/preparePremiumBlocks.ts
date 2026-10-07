@@ -6,6 +6,7 @@
  */
 
 import { extractStorylaneEmbedFromUnknown } from "@/shared/courses/storylane-embed-url"
+import { extractYoutubeEmbedFromUnknown } from "@/shared/courses/youtube-embed-url"
 
 export type AnyBlock = {
   id?: string
@@ -61,6 +62,7 @@ export function migrateLegacyPaidSections(blocks: AnyBlock[]): AnyBlock[] {
 /**
  * Pasting Storylane HTML into the canvas often becomes a File / code / paragraph
  * block (shows Download). Convert those into storylaneEmbed.
+ * YouTube URLs pasted into the default Video block become youtubeEmbed.
  */
 export function migrateStorylaneLikeBlocks(blocks: AnyBlock[]): AnyBlock[] {
   const out: AnyBlock[] = []
@@ -85,7 +87,69 @@ export function migrateStorylaneLikeBlocks(blocks: AnyBlock[]): AnyBlock[] {
       continue
     }
 
+    if (block.type === "youtubeEmbed") {
+      const rawUrl =
+        (typeof block.props?.videoUrl === "string" && block.props.videoUrl) ||
+        (typeof block.props?.url === "string" && block.props.url) ||
+        ""
+      const normalized = extractYoutubeEmbedFromUnknown(rawUrl)
+      out.push({
+        ...block,
+        props: {
+          ...block.props,
+          videoUrl: normalized || rawUrl,
+          title:
+            (typeof block.props?.title === "string" && block.props.title) ||
+            "YouTube video",
+        },
+      })
+      continue
+    }
+
+    // Default BlockNote video uses <video src> — YouTube watch URLs need iframe.
+    if (block.type === "video") {
+      const fromUrl = extractYoutubeEmbedFromUnknown(block.props?.url)
+      const fromCaption = extractYoutubeEmbedFromUnknown(block.props?.caption)
+      const embed = fromUrl || fromCaption
+      if (embed) {
+        out.push({
+          id: block.id,
+          type: "youtubeEmbed",
+          props: {
+            videoUrl: embed,
+            title:
+              (typeof block.props?.caption === "string" &&
+                block.props.caption.trim()) ||
+              "YouTube video",
+          },
+        })
+        continue
+      }
+    }
+
     if (block.type === "file") {
+      const youtubeFromUrl = extractYoutubeEmbedFromUnknown(block.props?.url)
+      const youtubeFromName = extractYoutubeEmbedFromUnknown(block.props?.name)
+      const youtubeFromCaption = extractYoutubeEmbedFromUnknown(
+        block.props?.caption
+      )
+      const youtubeEmbed =
+        youtubeFromUrl || youtubeFromName || youtubeFromCaption
+      if (youtubeEmbed) {
+        out.push({
+          id: block.id,
+          type: "youtubeEmbed",
+          props: {
+            videoUrl: youtubeEmbed,
+            title:
+              (typeof block.props?.caption === "string" && block.props.caption) ||
+              (typeof block.props?.name === "string" && block.props.name) ||
+              "YouTube video",
+          },
+        })
+        continue
+      }
+
       const fromUrl = extractStorylaneEmbedFromUnknown(block.props?.url)
       const fromName = extractStorylaneEmbedFromUnknown(block.props?.name)
       const fromCaption = extractStorylaneEmbedFromUnknown(block.props?.caption)
@@ -116,6 +180,16 @@ export function migrateStorylaneLikeBlocks(blocks: AnyBlock[]): AnyBlock[] {
     }
 
     if (block.type === "codeBlock" || block.type === "paragraph") {
+      const youtubeEmbed = extractYoutubeEmbedFromUnknown(block.content)
+      if (youtubeEmbed) {
+        out.push({
+          id: block.id,
+          type: "youtubeEmbed",
+          props: { videoUrl: youtubeEmbed, title: "YouTube video" },
+        })
+        continue
+      }
+
       const embed = extractStorylaneEmbedFromUnknown(block.content)
       if (embed) {
         out.push({

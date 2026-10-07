@@ -7,6 +7,7 @@ export type DbCourse = {
   focus_area: string
   skill_level: string
   icon: string
+  logo_url?: string | null
   students_label: string
   duration_hours: number
   modules: number
@@ -90,6 +91,7 @@ export function dbCourseToCatalog(row: DbCourse): CatalogCourse {
     focusArea: row.focus_area as CourseFocusArea,
     skillLevel: row.skill_level as CourseSkillLevel,
     icon: row.icon,
+    logoUrl: row.logo_url || undefined,
     studentsLabel: row.students_label,
     durationHours: row.duration_hours,
     modules: row.modules,

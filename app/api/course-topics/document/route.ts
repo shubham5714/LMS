@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
+import { validateFreeBlockNoteBlocks } from "@/shared/courses/blocknote-blocks-schema"
 import { normalizeStorylaneEmbedUrl } from "@/shared/courses/storylane-embed-url"
-import { assertAdminMembership } from "@/shared/lib/assert-admin"
+import { normalizeYoutubeEmbedUrl } from "@/shared/courses/youtube-embed-url"
+import {
+  assertMcpOrAdmin,
+  assertMcpOrAuthenticated,
+} from "@/shared/lib/assert-mcp-or-admin"
 import { createSupabaseAdminClient } from "@/shared/lib/supabase-admin"
-import { createSupabaseServerClient } from "@/shared/lib/supabase-server"
 
 export const runtime = "nodejs"
 
@@ -20,47 +24,115 @@ type AnyBlock = {
   children?: AnyBlock[]
 }
 
-/** Ensure Storylane blocks persist a proper inline embed URL under demoUrl. */
+/** Ensure embed blocks persist a proper iframe src. */
 function normalizeBlocksForSave(blocks: AnyBlock[]): AnyBlock[] {
   return blocks.map((block) => {
-    if (block.type !== "storylaneEmbed") return block
-    const raw =
-      (typeof block.props?.demoUrl === "string" && block.props.demoUrl) ||
-      (typeof block.props?.url === "string" && block.props.url) ||
-      ""
-    const demoUrl = normalizeStorylaneEmbedUrl(raw) || raw.trim()
-    return {
-      ...block,
-      props: {
-        ...block.props,
-        demoUrl,
-        title:
-          (typeof block.props?.title === "string" && block.props.title) ||
-          "Interactive demo",
-      },
+    if (block.type === "storylaneEmbed") {
+      const raw =
+        (typeof block.props?.demoUrl === "string" && block.props.demoUrl) ||
+        (typeof block.props?.url === "string" && block.props.url) ||
+        ""
+      const demoUrl = normalizeStorylaneEmbedUrl(raw) || raw.trim()
+      return {
+        ...block,
+        props: {
+          ...block.props,
+          demoUrl,
+          title:
+            (typeof block.props?.title === "string" && block.props.title) ||
+            "Interactive demo",
+        },
+      }
     }
+
+    if (block.type === "youtubeEmbed") {
+      const raw =
+        (typeof block.props?.videoUrl === "string" && block.props.videoUrl) ||
+        (typeof block.props?.url === "string" && block.props.url) ||
+        ""
+      const videoUrl = normalizeYoutubeEmbedUrl(raw) || raw.trim()
+      return {
+        ...block,
+        props: {
+          ...block.props,
+          videoUrl,
+          title:
+            (typeof block.props?.title === "string" && block.props.title) ||
+            "YouTube video",
+        },
+      }
+    }
+
+    // Convert YouTube URLs accidentally saved on the default video block.
+    if (block.type === "video") {
+      const raw =
+        (typeof block.props?.url === "string" && block.props.url) || ""
+      const videoUrl = normalizeYoutubeEmbedUrl(raw)
+      if (videoUrl) {
+        return {
+          ...block,
+          type: "youtubeEmbed",
+          props: {
+            videoUrl,
+            title:
+              (typeof block.props?.caption === "string" &&
+                block.props.caption.trim()) ||
+              "YouTube video",
+          },
+        }
+      }
+    }
+
+    return block
   })
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await assertMcpOrAuthenticated(request)
+    if (!auth.ok) return auth.response
+
+    const { searchParams } = new URL(request.url)
+    const courseId = searchParams.get("courseId")?.trim()
+    const topicId = searchParams.get("topicId")?.trim()
+
+    if (!courseId || !topicId) {
+      return NextResponse.json(
+        { error: "courseId and topicId query params are required" },
+        { status: 400 }
+      )
+    }
+
+    const admin = createSupabaseAdminClient()
+    const { data, error } = await admin
+      .from("course_topic_documents")
+      .select("course_id, topic_id, blocks, updated_at, updated_by")
+      .eq("course_id", courseId)
+      .eq("topic_id", topicId)
+      .maybeSingle()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (!data) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({ document: data })
+  } catch (e) {
+    console.error("course-topics/document GET:", e)
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Server error" },
+      { status: 500 }
+    )
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const isAdmin = await assertAdminMembership(user.id)
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Only ADMIN membership can edit course content" },
-        { status: 403 }
-      )
-    }
+    const auth = await assertMcpOrAdmin(request)
+    if (!auth.ok) return auth.response
 
     const body = (await request.json()) as Body
     const courseId = body.courseId?.trim()
@@ -81,6 +153,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // MCP/AI path: free blocks only. Admin UI may still save premium markers.
+    if (auth.viaMcp) {
+      const validation = validateFreeBlockNoteBlocks(blocks)
+      if (!validation.ok) {
+        return NextResponse.json(
+          {
+            error: "Invalid free BlockNote document",
+            issues: validation.issues,
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     const normalizedBlocks = normalizeBlocksForSave(blocks as AnyBlock[])
 
     const admin = createSupabaseAdminClient()
@@ -92,7 +178,7 @@ export async function POST(request: NextRequest) {
           topic_id: topicId,
           blocks: normalizedBlocks,
           updated_at: new Date().toISOString(),
-          updated_by: user.id,
+          updated_by: auth.userId,
         },
         { onConflict: "course_id,topic_id" }
       )

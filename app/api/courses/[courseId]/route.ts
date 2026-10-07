@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { isValidCourseId } from "@/shared/courses/course-structure"
-import { assertAdminMembership } from "@/shared/lib/assert-admin"
+import {
+  assertMcpOrAdmin,
+  assertMcpOrAuthenticated,
+} from "@/shared/lib/assert-mcp-or-admin"
 import { createSupabaseAdminClient } from "@/shared/lib/supabase-admin"
-import { createSupabaseServerClient } from "@/shared/lib/supabase-server"
 
 export const runtime = "nodejs"
 
@@ -12,6 +14,7 @@ type PatchBody = {
   focusArea?: string
   skillLevel?: string
   icon?: string
+  logoUrl?: string | null
   studentsLabel?: string
   durationHours?: number
   modules?: number
@@ -23,20 +26,15 @@ type PatchBody = {
 
 type Ctx = { params: Promise<{ courseId: string }> }
 
-export async function GET(_request: NextRequest, context: Ctx) {
+export async function GET(request: NextRequest, context: Ctx) {
   try {
     const { courseId } = await context.params
     if (!isValidCourseId(courseId)) {
       return NextResponse.json({ error: "Invalid courseId" }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const auth = await assertMcpOrAuthenticated(request)
+    if (!auth.ok) return auth.response
 
     const admin = createSupabaseAdminClient()
     const { data: course, error } = await admin
@@ -52,8 +50,7 @@ export async function GET(_request: NextRequest, context: Ctx) {
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    const isAdmin = await assertAdminMembership(user.id)
-    if (!course.published && !isAdmin) {
+    if (!course.published && !auth.isAdmin) {
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
@@ -76,17 +73,8 @@ export async function GET(_request: NextRequest, context: Ctx) {
 export async function PATCH(request: NextRequest, context: Ctx) {
   try {
     const { courseId } = await context.params
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    if (!(await assertAdminMembership(user.id))) {
-      return NextResponse.json({ error: "ADMIN only" }, { status: 403 })
-    }
+    const auth = await assertMcpOrAdmin(request)
+    if (!auth.ok) return auth.response
 
     const body = (await request.json()) as PatchBody
     const patch: Record<string, unknown> = {
@@ -97,6 +85,9 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     if (body.focusArea !== undefined) patch.focus_area = body.focusArea.trim()
     if (body.skillLevel !== undefined) patch.skill_level = body.skillLevel.trim()
     if (body.icon !== undefined) patch.icon = body.icon.trim()
+    if (body.logoUrl !== undefined) {
+      patch.logo_url = body.logoUrl === null ? null : body.logoUrl.trim() || null
+    }
     if (body.studentsLabel !== undefined)
       patch.students_label = body.studentsLabel.trim()
     if (body.durationHours !== undefined)
@@ -105,7 +96,10 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     if (body.lessons !== undefined) patch.lessons = Number(body.lessons) || 0
     if (body.instructorName !== undefined)
       patch.instructor_name = body.instructorName.trim()
-    if (body.published !== undefined) patch.published = Boolean(body.published)
+    // MCP cannot publish — human review in manage UI.
+    if (body.published !== undefined && !auth.viaMcp) {
+      patch.published = Boolean(body.published)
+    }
     if (body.sortOrder !== undefined) patch.sort_order = Number(body.sortOrder) || 0
 
     const admin = createSupabaseAdminClient()
@@ -133,20 +127,11 @@ export async function PATCH(request: NextRequest, context: Ctx) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: Ctx) {
+export async function DELETE(request: NextRequest, context: Ctx) {
   try {
     const { courseId } = await context.params
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    if (!(await assertAdminMembership(user.id))) {
-      return NextResponse.json({ error: "ADMIN only" }, { status: 403 })
-    }
+    const auth = await assertMcpOrAdmin(request)
+    if (!auth.ok) return auth.response
 
     const admin = createSupabaseAdminClient()
     // Documents cascade is not FK-linked; delete explicitly

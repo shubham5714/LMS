@@ -4,9 +4,11 @@ import {
   isValidTopicId,
   slugifyId,
 } from "@/shared/courses/course-structure"
-import { assertAdminMembership } from "@/shared/lib/assert-admin"
+import {
+  assertMcpOrAdmin,
+  assertMcpOrAuthenticated,
+} from "@/shared/lib/assert-mcp-or-admin"
 import { createSupabaseAdminClient } from "@/shared/lib/supabase-admin"
-import { createSupabaseServerClient } from "@/shared/lib/supabase-server"
 
 export const runtime = "nodejs"
 
@@ -19,20 +21,15 @@ type CreateTopicBody = {
   sortOrder?: number
 }
 
-export async function GET(_request: NextRequest, context: Ctx) {
+export async function GET(request: NextRequest, context: Ctx) {
   try {
     const { courseId } = await context.params
     if (!isValidCourseId(courseId)) {
       return NextResponse.json({ error: "Invalid courseId" }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const auth = await assertMcpOrAuthenticated(request)
+    if (!auth.ok) return auth.response
 
     const admin = createSupabaseAdminClient()
     const { data, error } = await admin
@@ -62,17 +59,8 @@ export async function POST(request: NextRequest, context: Ctx) {
       return NextResponse.json({ error: "Invalid courseId" }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    if (!(await assertAdminMembership(user.id))) {
-      return NextResponse.json({ error: "ADMIN only" }, { status: 403 })
-    }
+    const auth = await assertMcpOrAdmin(request)
+    if (!auth.ok) return auth.response
 
     const body = (await request.json()) as CreateTopicBody
     const title = body.title?.trim()
@@ -152,7 +140,7 @@ export async function POST(request: NextRequest, context: Ctx) {
             ],
           },
         ],
-        updated_by: user.id,
+        updated_by: auth.userId,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "course_id,topic_id" }

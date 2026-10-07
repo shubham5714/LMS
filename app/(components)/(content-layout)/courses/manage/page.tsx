@@ -8,7 +8,7 @@ import { slugifyId, topicHref } from "@/shared/courses/course-structure"
 import { useMembershipContext } from "@/shared/contextapi/MembershipContext"
 import Seo from "@/shared/layouts-components/seo/seo"
 import Link from "next/link"
-import React, { Fragment, useCallback, useEffect, useState } from "react"
+import React, { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { Button, Card, Col, Form, Row, Table } from "react-bootstrap"
 
 type CourseRow = {
@@ -18,6 +18,7 @@ type CourseRow = {
   focus_area: string
   skill_level: string
   icon: string
+  logo_url?: string | null
   published: boolean
   sort_order: number
 }
@@ -40,14 +41,55 @@ export default function ManageCoursesPage() {
   const [busy, setBusy] = useState(false)
 
   const [newCourseTitle, setNewCourseTitle] = useState("")
-  const [newCourseId, setNewCourseId] = useState("")
   const [newCourseDesc, setNewCourseDesc] = useState("")
   const [newFocus, setNewFocus] = useState(COURSE_FOCUS_AREAS[0])
   const [newSkill, setNewSkill] = useState(COURSE_SKILL_LEVELS[0])
+  const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
+  const [newLogoPreview, setNewLogoPreview] = useState<string | null>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const [newTopicTitle, setNewTopicTitle] = useState("")
-  const [newTopicId, setNewTopicId] = useState("")
   const [newTopicPaid, setNewTopicPaid] = useState(false)
+
+  const newCourseSlug = slugifyId(newCourseTitle)
+  const newTopicSlug = slugifyId(newTopicTitle)
+
+  const clearLogoSelection = useCallback(() => {
+    setNewLogoFile(null)
+    setNewLogoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+    if (logoInputRef.current) logoInputRef.current.value = ""
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (newLogoPreview) URL.revokeObjectURL(newLogoPreview)
+    }
+  }, [newLogoPreview])
+
+  const onLogoFileChange = (file: File | null) => {
+    if (!file) {
+      clearLogoSelection()
+      return
+    }
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if (!allowed.includes(file.type)) {
+      setError("Logo must be JPEG, PNG, WebP, or GIF")
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Logo must be 2MB or smaller")
+      return
+    }
+    setError(null)
+    setNewLogoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+    setNewLogoFile(file)
+  }
 
   const loadCourses = useCallback(async () => {
     setError(null)
@@ -94,22 +136,40 @@ export default function ManageCoursesPage() {
     setBusy(true)
     setError(null)
     try {
+      let logoUrl: string | undefined
+      if (newLogoFile) {
+        const form = new FormData()
+        form.append("file", newLogoFile)
+        const uploadRes = await fetch("/api/courses/logo", {
+          method: "POST",
+          body: form,
+        })
+        const uploadJson = (await uploadRes.json().catch(() => ({}))) as {
+          error?: string
+          url?: string
+        }
+        if (!uploadRes.ok || !uploadJson.url) {
+          throw new Error(uploadJson.error || "Logo upload failed")
+        }
+        logoUrl = uploadJson.url
+      }
+
       const res = await fetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: newCourseTitle,
-          id: newCourseId.trim() || undefined,
           description: newCourseDesc,
           focusArea: newFocus,
           skillLevel: newSkill,
+          logoUrl,
         }),
       })
       const json = (await res.json().catch(() => ({}))) as { error?: string; course?: CourseRow }
       if (!res.ok) throw new Error(json.error || "Create failed")
       setNewCourseTitle("")
-      setNewCourseId("")
       setNewCourseDesc("")
+      clearLogoSelection()
       await loadCourses()
       if (json.course?.id) setSelectedId(json.course.id)
     } catch (e) {
@@ -129,14 +189,12 @@ export default function ManageCoursesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: newTopicTitle,
-          topicId: newTopicId.trim() || undefined,
           paidOnly: newTopicPaid,
         }),
       })
       const json = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) throw new Error(json.error || "Create topic failed")
       setNewTopicTitle("")
-      setNewTopicId("")
       setNewTopicPaid(false)
       await loadTopics(selectedId)
     } catch (e) {
@@ -262,23 +320,59 @@ export default function ManageCoursesPage() {
                 <Form.Label>Title</Form.Label>
                 <Form.Control
                   value={newCourseTitle}
-                  onChange={(e) => {
-                    setNewCourseTitle(e.target.value)
-                    if (!newCourseId) setNewCourseId(slugifyId(e.target.value))
-                  }}
+                  onChange={(e) => setNewCourseTitle(e.target.value)}
                   placeholder="Cloud Detection Basics"
                 />
+                <Form.Text muted>
+                  URL: /courses/{newCourseSlug || "your-slug"}
+                </Form.Text>
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>URL id (slug)</Form.Label>
-                <Form.Control
-                  value={newCourseId}
-                  onChange={(e) => setNewCourseId(slugifyId(e.target.value))}
-                  placeholder="cloud-detection-basics"
-                />
-                <Form.Text muted>
-                  Path will be /courses/{newCourseId || "your-slug"}
-                </Form.Text>
+                <Form.Label>Logo</Form.Label>
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="course-catalog-card__icon flex-shrink-0"
+                    aria-hidden
+                  >
+                    {newLogoPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={newLogoPreview}
+                        alt=""
+                        className="course-catalog-card__logo"
+                      />
+                    ) : (
+                      <i className="ri-image-add-line" />
+                    )}
+                  </div>
+                  <div className="flex-grow-1">
+                    <Form.Control
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(e) =>
+                        onLogoFileChange(e.target.files?.[0] ?? null)
+                      }
+                    />
+                    <Form.Text muted>
+                      JPEG, PNG, WebP, or GIF · max 2MB. Optional — falls back
+                      to icon if empty.
+                    </Form.Text>
+                    {newLogoFile ? (
+                      <div className="mt-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="link"
+                          className="p-0"
+                          onClick={clearLogoSelection}
+                        >
+                          Remove logo
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Description</Form.Label>
@@ -348,8 +442,28 @@ export default function ManageCoursesPage() {
                       onClick={() => setSelectedId(c.id)}
                     >
                       <td>
-                        <div className="fw-semibold">{c.title}</div>
-                        <div className="small text-muted">{c.id}</div>
+                        <div className="d-flex align-items-center gap-2">
+                          <span
+                            className="course-catalog-card__icon"
+                            style={{ width: "2rem", height: "2rem" }}
+                            aria-hidden
+                          >
+                            {c.logo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={c.logo_url}
+                                alt=""
+                                className="course-catalog-card__logo"
+                              />
+                            ) : (
+                              <i className={c.icon || "ri-book-open-line"} />
+                            )}
+                          </span>
+                          <div>
+                            <div className="fw-semibold">{c.title}</div>
+                            <div className="small text-muted">{c.id}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="text-end">
                         <Button
@@ -401,31 +515,19 @@ export default function ManageCoursesPage() {
                   <Form className="border rounded p-3 mb-4">
                     <div className="fw-semibold mb-2">Add topic</div>
                     <Row className="g-2 align-items-end">
-                      <Col md={5}>
+                      <Col md={7}>
                         <Form.Label className="small mb-1">Title</Form.Label>
                         <Form.Control
                           size="sm"
                           value={newTopicTitle}
-                          onChange={(e) => {
-                            setNewTopicTitle(e.target.value)
-                            if (!newTopicId)
-                              setNewTopicId(slugifyId(e.target.value))
-                          }}
+                          onChange={(e) => setNewTopicTitle(e.target.value)}
                           placeholder="Incident Response"
                         />
+                        <Form.Text muted>
+                          Slug: {newTopicSlug || "your-slug"}
+                        </Form.Text>
                       </Col>
-                      <Col md={4}>
-                        <Form.Label className="small mb-1">Slug</Form.Label>
-                        <Form.Control
-                          size="sm"
-                          value={newTopicId}
-                          onChange={(e) =>
-                            setNewTopicId(slugifyId(e.target.value))
-                          }
-                          placeholder="incident-response"
-                        />
-                      </Col>
-                      <Col md={3}>
+                      <Col md={5}>
                         <Form.Check
                           type="checkbox"
                           id="new-topic-paid"

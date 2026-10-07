@@ -36,7 +36,16 @@ export function CourseCatalogCard({
       <article className="course-catalog-card h-100">
         <div className="course-catalog-card__top">
           <span className="course-catalog-card__icon" aria-hidden>
-            <i className={course.icon} />
+            {course.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={course.logoUrl}
+                alt=""
+                className="course-catalog-card__logo"
+              />
+            ) : (
+              <i className={course.icon} />
+            )}
           </span>
           <span
             className={`course-catalog-card__level ${skillBadgeClass(course.skillLevel)}`}

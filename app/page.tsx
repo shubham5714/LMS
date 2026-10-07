@@ -13,6 +13,7 @@ const ROLES = [
   "Detection Engineer",
   "Incident Responder",
   "DFIR Analyst",
+  "Automation Engineer",
 ] as const
 const TYPE_MS = 70
 const DELETE_MS = 40
@@ -148,7 +149,7 @@ const LandingPage = () => {
                       <span aria-hidden="true">{typedRole}</span>
                       <span className="public-landing-hero__cursor" aria-hidden="true" />
                       <span className="visually-hidden">
-                        SOC Analyst, Detection Engineer, Incident Responder, or DFIR Analyst
+                        SOC Analyst, Detection Engineer, Incident Responder, DFIR Analyst, or Automation Engineer
                       </span>
                     </span>
                   </span>

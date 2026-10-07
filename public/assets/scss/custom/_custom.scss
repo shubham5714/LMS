@@ -470,6 +470,149 @@ button {
     }
   }
 
+  .bn-youtube-embed--editing {
+    margin-block: 0.75rem 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .bn-youtube-embed__header {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+
+    i {
+      color: #f87171;
+      font-size: 1.15rem;
+    }
+  }
+
+  .bn-youtube-embed__hint {
+    margin: 0 0 0.85rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: rgba(226, 232, 240, 0.78);
+
+    code {
+      color: #93c5fd;
+      font-size: 0.75rem;
+    }
+  }
+
+  .bn-youtube-embed__label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 0.75rem;
+  }
+
+  .bn-youtube-embed__input {
+    margin-top: 0.35rem;
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #f8fafc !important;
+  }
+
+  .bn-youtube-embed__input::placeholder {
+    color: rgba(248, 250, 252, 0.35) !important;
+  }
+
+  .bn-youtube-embed__resolved {
+    color: rgba(226, 232, 240, 0.7);
+
+    code {
+      color: #93c5fd;
+      word-break: break-all;
+    }
+  }
+
+  .bn-youtube-embed__empty-preview,
+  .bn-youtube-embed__preview-placeholder {
+    margin: 0.25rem 0 0;
+    padding: 1.25rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 0.875rem;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.35);
+  }
+
+  .bn-youtube-embed__preview {
+    margin-top: 0.5rem;
+  }
+
+  .bn-youtube-embed--reader,
+  .course-youtube-embed {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .bn-youtube-embed--missing,
+  .course-youtube-embed--missing,
+  .course-youtube-embed__fallback {
+    margin: 0.75rem 0;
+    padding: 1rem 1.1rem;
+    border-radius: 0.5rem;
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+    color: rgba(226, 232, 240, 0.75);
+    font-size: 0.9rem;
+  }
+
+  .course-youtube-embed__fallback a {
+    color: #93c5fd;
+  }
+
+  .bn-block-outer:has(.bn-youtube-embed),
+  .bn-block:has(.bn-youtube-embed),
+  .bn-block-content:has(.bn-youtube-embed),
+  .bn-block-content[data-content-type="youtubeEmbed"] {
+    width: 100%;
+    max-width: none;
+  }
+
+  .bn-block-content:has(.bn-youtube-embed) > *,
+  .bn-block-content[data-content-type="youtubeEmbed"] > * {
+    width: 100%;
+    max-width: none;
+  }
+
+  [data-theme-mode="light"] & {
+    .bn-youtube-embed--editing {
+      border-color: rgba(0, 0, 0, 0.14);
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .bn-youtube-embed__header {
+      color: #0f172a;
+    }
+
+    .bn-youtube-embed__hint {
+      color: rgba(15, 23, 42, 0.7);
+    }
+
+    .bn-youtube-embed__input {
+      background: #fff !important;
+      border-color: rgba(0, 0, 0, 0.18) !important;
+      color: #0f172a !important;
+    }
+
+    .bn-youtube-embed__empty-preview,
+    .bn-youtube-embed__preview-placeholder {
+      border-color: rgba(0, 0, 0, 0.18);
+      color: rgba(15, 23, 42, 0.5);
+      background: rgba(0, 0, 0, 0.02);
+    }
+  }
+
   .course-topic-section:not(.course-topic-section--nested) {
     margin-block-end: 2rem;
 
@@ -5878,6 +6021,7 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
       padding: 0.5rem 0.9rem;
       font-weight: 500;
       font-size: 0.9375rem;
+      white-space: nowrap;
 
       &:hover,
       &:focus {
@@ -5890,19 +6034,42 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
       }
     }
 
-    .nav-item {
+    .nav-item,
+    .dropdown {
+      flex-shrink: 0;
       margin-inline-end: 0;
     }
   }
 
   .dropdown-menu {
     --bs-dropdown-bg: #141414;
+    --bs-dropdown-color: rgba(255, 255, 255, 0.9);
     --bs-dropdown-link-color: rgba(255, 255, 255, 0.9);
     --bs-dropdown-link-hover-bg: rgba(255, 255, 255, 0.08);
     --bs-dropdown-link-hover-color: #ffffff;
-    --bs-dropdown-link-active-bg: rgba(var(--primary-rgb), 0.2);
+    --bs-dropdown-link-active-bg: rgba(var(--primary-rgb), 0.22);
     --bs-dropdown-link-active-color: #ffffff;
-    --bs-dropdown-border-color: var(--landing-grid);
+    --bs-dropdown-border-color: rgba(255, 255, 255, 0.12);
+    background-color: #141414 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.45);
+
+    .dropdown-item {
+      color: rgba(255, 255, 255, 0.9) !important;
+
+      &:hover,
+      &:focus {
+        color: #ffffff !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+
+      &.active,
+      &:active {
+        color: #ffffff !important;
+        background-color: rgba(var(--primary-rgb), 0.22) !important;
+      }
+    }
   }
 
   .public-landing-navbar__actions {
@@ -5939,13 +6106,15 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
       transform: translateX(-50%);
       flex-direction: row;
       flex-wrap: nowrap;
+      flex-shrink: 0;
       margin-bottom: 0 !important;
-      gap: 0.15rem;
+      gap: 0;
 
       .nav-link,
       .dropdown-toggle {
-        font-size: 0.9375rem;
-        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.65rem;
+        white-space: nowrap;
       }
     }
 
@@ -6001,8 +6170,8 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
     z-index: 1;
     align-items: center;
     justify-content: center;
-    padding: 0.85rem;
-    border-radius: 1.15rem;
+    padding: 0.65rem;
+    border-radius: 1rem;
     border: 1px solid var(--landing-grid);
     background: var(--landing-surface);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
@@ -6015,9 +6184,9 @@ div:where(.swal2-container) div:where(.swal2-validation-message) {
   }
 
   &__float-img {
-    width: 3.75rem;
+    width: 2.85rem;
     height: auto;
-    max-height: 3.75rem;
+    max-height: 2.85rem;
     object-fit: contain;
     user-select: none;
   }

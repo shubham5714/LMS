@@ -5,9 +5,11 @@ import {
   slugifyId,
   type DbCourse,
 } from "@/shared/courses/course-structure"
-import { assertAdminMembership } from "@/shared/lib/assert-admin"
+import {
+  assertMcpOrAdmin,
+  assertMcpOrAuthenticated,
+} from "@/shared/lib/assert-mcp-or-admin"
 import { createSupabaseAdminClient } from "@/shared/lib/supabase-admin"
-import { createSupabaseServerClient } from "@/shared/lib/supabase-server"
 
 export const runtime = "nodejs"
 
@@ -18,6 +20,7 @@ type CreateBody = {
   focusArea?: string
   skillLevel?: string
   icon?: string
+  logoUrl?: string
   studentsLabel?: string
   durationHours?: number
   modules?: number
@@ -28,26 +31,20 @@ type CreateBody = {
   overviewTitle?: string
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const auth = await assertMcpOrAuthenticated(request)
+    if (!auth.ok) return auth.response
 
-    const isAdmin = await assertAdminMembership(user.id)
     const admin = createSupabaseAdminClient()
     let query = admin
       .from("courses")
       .select(
-        "id, title, description, focus_area, skill_level, icon, students_label, duration_hours, modules, lessons, instructor_name, sort_order, published"
+        "id, title, description, focus_area, skill_level, icon, logo_url, students_label, duration_hours, modules, lessons, instructor_name, sort_order, published"
       )
       .order("sort_order", { ascending: true })
 
-    if (!isAdmin) {
+    if (!auth.isAdmin) {
       query = query.eq("published", true)
     }
 
@@ -71,19 +68,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    if (!(await assertAdminMembership(user.id))) {
-      return NextResponse.json({ error: "ADMIN only" }, { status: 403 })
-    }
+    const auth = await assertMcpOrAdmin(request)
+    if (!auth.ok) return auth.response
 
     const body = (await request.json()) as CreateBody
     const title = body.title?.trim()
@@ -112,6 +98,9 @@ export async function POST(request: NextRequest) {
 
     const sort_order = (maxSort?.sort_order ?? 0) + 10
 
+    // MCP creates are always unpublished for human review.
+    const published = auth.viaMcp ? false : body.published !== false
+
     const row = {
       id,
       title,
@@ -119,13 +108,14 @@ export async function POST(request: NextRequest) {
       focus_area: body.focusArea?.trim() || "Security Operations",
       skill_level: body.skillLevel?.trim() || "Beginner",
       icon: body.icon?.trim() || "ri-book-open-line",
+      logo_url: body.logoUrl?.trim() || null,
       students_label: body.studentsLabel?.trim() || "0 students",
       duration_hours: Number(body.durationHours) || 0,
       modules: Number(body.modules) || 0,
       lessons: Number(body.lessons) || 0,
       instructor_name: body.instructorName?.trim() || "SOC Academy",
       sort_order,
-      published: body.published !== false,
+      published,
       updated_at: new Date().toISOString(),
     }
 
@@ -175,7 +165,7 @@ export async function POST(request: NextRequest) {
             ],
           },
         ],
-        updated_by: user.id,
+        updated_by: auth.userId,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "course_id,topic_id" }

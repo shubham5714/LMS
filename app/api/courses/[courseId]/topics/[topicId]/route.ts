@@ -3,9 +3,8 @@ import {
   isValidCourseId,
   isValidTopicId,
 } from "@/shared/courses/course-structure"
-import { assertAdminMembership } from "@/shared/lib/assert-admin"
+import { assertMcpOrAdmin } from "@/shared/lib/assert-mcp-or-admin"
 import { createSupabaseAdminClient } from "@/shared/lib/supabase-admin"
-import { createSupabaseServerClient } from "@/shared/lib/supabase-server"
 
 export const runtime = "nodejs"
 
@@ -24,17 +23,8 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       return NextResponse.json({ error: "Invalid ids" }, { status: 400 })
     }
 
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    if (!(await assertAdminMembership(user.id))) {
-      return NextResponse.json({ error: "ADMIN only" }, { status: 403 })
-    }
+    const auth = await assertMcpOrAdmin(request)
+    if (!auth.ok) return auth.response
 
     const body = (await request.json()) as PatchBody
     const patch: Record<string, unknown> = {
@@ -71,7 +61,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: Ctx) {
+export async function DELETE(request: NextRequest, context: Ctx) {
   try {
     const { courseId, topicId } = await context.params
     if (!isValidCourseId(courseId) || !isValidTopicId(topicId)) {
@@ -84,17 +74,8 @@ export async function DELETE(_request: NextRequest, context: Ctx) {
       )
     }
 
-    const supabase = await createSupabaseServerClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    if (!(await assertAdminMembership(user.id))) {
-      return NextResponse.json({ error: "ADMIN only" }, { status: 403 })
-    }
+    const auth = await assertMcpOrAdmin(request)
+    if (!auth.ok) return auth.response
 
     const admin = createSupabaseAdminClient()
     await admin

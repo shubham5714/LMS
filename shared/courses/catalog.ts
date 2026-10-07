@@ -14,6 +14,8 @@ export type CatalogCourse = {
   focusArea: CourseFocusArea
   skillLevel: CourseSkillLevel
   icon: string
+  /** Public image URL for catalog logo; when set, shown instead of icon */
+  logoUrl?: string
   studentsLabel: string
   durationHours: number
   modules: number
