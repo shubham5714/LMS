@@ -18,6 +18,8 @@ MCP client  →  Prefect Horizon (/mcp)  →  this FastMCP server  →  LMS HTTP
 
 | Tool | Purpose |
 |------|---------|
+| `search_web` | Web search (Brave Search API) → title, url, snippet; optional `domains` filter |
+| `fetch_url` | Fetch a public page → main content as compact markdown (size-capped) |
 | `list_courses` | List courses (incl. unpublished) |
 | `get_course` | Course + topics |
 | `create_course` | Create unpublished course + overview |
@@ -47,7 +49,7 @@ LMS_MCP_ACTOR_USER_ID=optional-admin-user-uuid
 2. From this directory:
 
 ```bash
-pip install -r requirements.txt fastmcp
+pip install -r requirements.txt
 set LMS_BASE_URL=http://localhost:3000
 set LMS_MCP_TOKEN=same-as-next
 python main.py
@@ -66,6 +68,7 @@ Point a local MCP client at stdio, or use Horizon for remote Streamable HTTP.
 4. Server environment / secrets:
    - `LMS_BASE_URL` — **public** LMS origin (Horizon cannot reach `localhost`)
    - `LMS_MCP_TOKEN` — same value as the Next.js env
+   - `BRAVE_SEARCH_API_KEY` — key from [Brave Search API](https://brave.com/search/api/) for `search_web`
 5. Keep **Horizon Authentication enabled** (default).
 6. Invite org members who should use the tools; tighten tool permissions under Access if needed.
 7. Open the server → **Connect** and paste the snippet for Cursor / Claude Desktop / ChatGPT / Claude Code.
@@ -77,13 +80,21 @@ Point a local MCP client at stdio, or use Horizon for remote Streamable HTTP.
 
 ## Authoring flow for agents
 
-1. `create_course` (unpublished)
-2. `create_topic` for each lesson (overview already exists)
-3. `validate_blocks` → `write_lesson` per topic
-4. Stop — human reviews in `/courses/manage` and wraps premium sections in the editor
+1. `create_course` (unpublished) → `create_topic` for each lesson (overview already exists)
+2. Per topic: write the lesson → `validate_blocks` → `write_lesson`
+3. Stop — human reviews in `/courses/manage` and adds YouTube, Storylane, and premium sections
+
+Research is opt-in: agents use `search_web` / `fetch_url` only when your prompt asks for research or supplies URLs. Then they fetch at most 3 sources per topic, write from a short brief, and end the lesson with a Sources list.
+
+## Research safeguards
+
+- `fetch_url` only allows public `http(s)` hosts; private/internal IPs are blocked on every redirect hop.
+- Responses are capped at 3 MB downloaded and 30,000 characters returned (default 8,000).
+- HTML is reduced to main content with trafilatura; PDFs and other binary types are rejected.
+- Pages that need JavaScript or login return an error instead of junk.
 
 ## Free BlockNote allowlist
 
-`heading`, `paragraph`, `bulletListItem`, `numberedListItem`, `checkListItem`, `codeBlock`, `image`, `youtubeEmbed`, `storylaneEmbed`, `quote`, `divider`
+`heading`, `paragraph`, `bulletListItem`, `numberedListItem`, `checkListItem`, `codeBlock`, `image`, `quote`, `divider`
 
-Rejected for MCP writes: `premiumStart`, `premiumEnd`, `premiumGate`.
+Rejected for MCP writes (add manually in the editor): `youtubeEmbed`, `storylaneEmbed`, `premiumStart`, `premiumEnd`, `premiumGate`.

@@ -11,11 +11,18 @@ export const FREE_BLOCK_TYPES = [
   "checkListItem",
   "codeBlock",
   "image",
-  "youtubeEmbed",
-  "storylaneEmbed",
   // Common BlockNote defaults agents may emit
   "quote",
   "divider",
+] as const
+
+/** Embeds reserved for human editors — rejected on MCP/AI writes. */
+export const HUMAN_ONLY_BLOCK_TYPES = [
+  "youtubeEmbed",
+  "storylaneEmbed",
+  "premiumStart",
+  "premiumEnd",
+  "premiumGate",
 ] as const
 
 export type FreeBlockType = (typeof FREE_BLOCK_TYPES)[number]
@@ -27,7 +34,7 @@ export const PREMIUM_BLOCK_TYPES = [
 ] as const
 
 const FREE_SET = new Set<string>(FREE_BLOCK_TYPES)
-const PREMIUM_SET = new Set<string>(PREMIUM_BLOCK_TYPES)
+const HUMAN_ONLY_SET = new Set<string>(HUMAN_ONLY_BLOCK_TYPES)
 
 const TEXT_CONTENT_TYPES = new Set([
   "heading",
@@ -126,10 +133,10 @@ function validateBlock(
 
   const type = typed.type
 
-  if (PREMIUM_SET.has(type)) {
+  if (HUMAN_ONLY_SET.has(type)) {
     issues.push({
       path: `${path}.type`,
-      message: `${type} is not allowed for MCP/AI free content; wrap premium sections manually in the editor`,
+      message: `${type} is not allowed for MCP/AI content; add YouTube, Storylane, and premium sections manually in the editor`,
     })
     return
   }
@@ -170,28 +177,6 @@ function validateBlock(
       issues.push({
         path: `${path}.props.level`,
         message: "heading level must be 1–6",
-      })
-    }
-  }
-
-  if (type === "youtubeEmbed") {
-    const props = isRecord(typed.props) ? typed.props : {}
-    const videoUrl = props.videoUrl ?? props.url
-    if (videoUrl != null && typeof videoUrl !== "string") {
-      issues.push({
-        path: `${path}.props.videoUrl`,
-        message: "videoUrl must be a string",
-      })
-    }
-  }
-
-  if (type === "storylaneEmbed") {
-    const props = isRecord(typed.props) ? typed.props : {}
-    const demoUrl = props.demoUrl ?? props.url
-    if (demoUrl != null && typeof demoUrl !== "string") {
-      issues.push({
-        path: `${path}.props.demoUrl`,
-        message: "demoUrl must be a string",
       })
     }
   }
@@ -268,12 +253,5 @@ export const FREE_BLOCKS_EXAMPLE = [
     type: "codeBlock",
     props: { language: "bash" },
     content: "echo hello",
-  },
-  {
-    type: "youtubeEmbed",
-    props: {
-      videoUrl: "https://www.youtube.com/watch?v=example",
-      title: "Overview video",
-    },
   },
 ] as const

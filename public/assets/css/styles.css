@@ -23091,6 +23091,7 @@ button {
 .soc-fundamentals-topic .course-blocknote-editor .bn-editor {
   padding-inline-start: 3.25rem;
   padding-inline-end: 0.5rem;
+  margin-inline-start: -3.25rem;
   background: transparent;
 }
 .soc-fundamentals-topic .course-blocknote-editor .bn-block-group .bn-block-outer {

@@ -232,10 +232,12 @@ button {
       background: transparent;
     }
 
-    /* Leave room for BlockNote drag handle + side menu so they don't sit under the app sidebar */
+    /* Drag handle + side menu live in the padding; the negative margin pulls that
+       padding into the lesson column's left gutter so text lines up with the title. */
     .bn-editor {
       padding-inline-start: 3.25rem;
       padding-inline-end: 0.5rem;
+      margin-inline-start: -3.25rem;
       background: transparent;
     }
 
