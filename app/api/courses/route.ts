@@ -101,6 +101,19 @@ export async function POST(request: NextRequest) {
     // MCP creates are always unpublished for human review.
     const published = auth.viaMcp ? false : body.published !== false
 
+    let instructor_name = body.instructorName?.trim() || ""
+    if (!instructor_name && auth.userId) {
+      const { data: membership } = await admin
+        .from("user_memberships")
+        .select("username")
+        .eq("user_id", auth.userId)
+        .maybeSingle()
+      instructor_name = membership?.username?.trim() || ""
+    }
+    if (!instructor_name) {
+      instructor_name = "Shubham Khuspe"
+    }
+
     const row = {
       id,
       title,
@@ -113,7 +126,7 @@ export async function POST(request: NextRequest) {
       duration_hours: Number(body.durationHours) || 0,
       modules: Number(body.modules) || 0,
       lessons: Number(body.lessons) || 0,
-      instructor_name: body.instructorName?.trim() || "SOC Academy",
+      instructor_name,
       sort_order,
       published,
       updated_at: new Date().toISOString(),

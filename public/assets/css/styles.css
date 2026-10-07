@@ -23052,6 +23052,42 @@ button {
   color: var(--primary-color);
 }
 
+/* Course lesson loading: centered three-dot wave */
+.lesson-loading-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: min(50vh, 22rem);
+  width: 100%;
+}
+.lesson-loading-dots span {
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  animation: lesson-loading-wave 1.2s ease-in-out infinite;
+}
+.lesson-loading-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.lesson-loading-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes lesson-loading-wave {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-0.45rem);
+    opacity: 1;
+  }
+}
+
 /* Course topic pages: shared middle-column inset (SOC Fundamentals + Securonix) */
 .soc-fundamentals-topic {
   /* Extra gap between left sidebar and lesson text */

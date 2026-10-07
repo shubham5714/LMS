@@ -1,6 +1,7 @@
 "use client"
 
 import { CourseTopicDocument } from "@/shared/components/courses/CourseTopicDocument"
+import { LessonLoadingDots } from "@/shared/components/courses/LessonLoadingDots"
 import { PremiumSectionOverlay } from "@/shared/components/courses/PremiumSectionOverlay"
 import {
   courseProgressEventName,
@@ -54,7 +55,7 @@ export function DbCourseTopicLesson({ courseId, topicId }: Props) {
   }, [courseId, topicId])
 
   if (loadState === "loading") {
-    return <p className="text-muted">Loading lesson…</p>
+    return <LessonLoadingDots />
   }
 
   if (loadState === "missing" || !topic) {

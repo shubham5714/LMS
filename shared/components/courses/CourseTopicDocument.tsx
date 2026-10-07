@@ -8,12 +8,13 @@ import { supabase } from "@/shared/lib/supabase"
 import dynamic from "next/dynamic"
 import React, { useCallback, useEffect, useState } from "react"
 import type { CourseTopicDocumentEditorProps } from "./CourseTopicDocumentEditor"
+import { LessonLoadingDots } from "./LessonLoadingDots"
 
 const CourseTopicDocumentEditor = dynamic(
   () => import("./CourseTopicDocumentEditor"),
   {
     ssr: false,
-    loading: () => <p className="text-muted">Loading lesson…</p>,
+    loading: () => <LessonLoadingDots />,
   }
 )
 
@@ -132,8 +133,7 @@ export function CourseTopicDocument({
         <div className="soc-fundamentals-topic course-topic-lesson">
           <div className="soc-fundamentals-topic-layout">
             <div className="soc-fundamentals-topic-main">
-              <h1 className="course-topic-lesson__title">{topicTitle}</h1>
-              <p className="text-muted">Loading lesson…</p>
+              <LessonLoadingDots />
             </div>
           </div>
         </div>
