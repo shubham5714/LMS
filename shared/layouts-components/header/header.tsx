@@ -377,11 +377,15 @@ const Header: React.FC<HeaderProps> = () => {
                         {/*<!-- End::header-element -->*/}
 
                         {courseHeader && (
-                            <div className="header-element d-none d-sm-flex align-items-center min-w-0 ms-1 ms-lg-2 ps-2 ps-lg-3 border-start border-primary border-opacity-25">
+                            <div className="header-element d-none d-sm-flex align-items-center min-w-0 flex-grow-1 ms-1 ms-lg-2 ps-2 ps-lg-3 border-start border-primary border-opacity-25">
                                 <nav
-                                    className="header-course-breadcrumb mb-0 text-truncate"
-                                    style={{ maxWidth: 'min(46vw, 24rem)' }}
+                                    className="header-course-breadcrumb mb-0"
                                     aria-label="Current course"
+                                    title={
+                                        courseHeader.topicTitle
+                                            ? `${courseHeader.courseTitle} / ${courseHeader.topicTitle}`
+                                            : courseHeader.courseTitle
+                                    }
                                 >
                                     <Link
                                         scroll={false}
@@ -389,7 +393,7 @@ const Header: React.FC<HeaderProps> = () => {
                                         className="header-course-breadcrumb__link d-inline-flex align-items-center gap-2"
                                     >
                                         <i className="ri-book-open-line header-course-breadcrumb__icon" aria-hidden />
-                                        <span>{courseHeader.courseTitle}</span>
+                                        <span className="header-course-breadcrumb__title">{courseHeader.courseTitle}</span>
                                     </Link>
                                     {courseHeader.topicTitle ? (
                                         <>

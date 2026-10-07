@@ -24,7 +24,7 @@ mcp = FastMCP("LMS Courses")
 FREE_BLOCKS_EXAMPLE = [
     {
         "type": "heading",
-        "props": {"level": 2},
+        "props": {"level": 3},
         "content": [{"type": "text", "text": "Introduction", "styles": {}}],
     },
     {
@@ -428,6 +428,11 @@ def validate_blocks(blocks: list[dict[str, Any]]) -> dict[str, Any]:
         "replacing everything. Use for new lessons or full rewrites only; to change part "
         "of a lesson use edit_lesson. Rejected if the lesson already has human-managed "
         "blocks (YouTube, Storylane, premium); use edit_lesson for those. "
+        "Do NOT start the lesson with a heading that repeats the topic title — the LMS "
+        "page already shows the topic title as H1; begin with intro body or a section "
+        "heading (e.g. Introduction). Use heading level 3 for section/group headings "
+        "and level 4 for subsections; never use level 1, and avoid level 2 (too large "
+        "next to the page title). "
         "Free text/media only — no youtubeEmbed, storylaneEmbed, or premium markers. "
         f"Allowed types: {ALLOWED_BLOCK_TYPES} "
         f"Example blocks: {json.dumps(FREE_BLOCKS_EXAMPLE)} "
@@ -586,7 +591,7 @@ Research is opt-in. Only use search_web / fetch_url when the user asks for resea
 - Condense sources into a short brief (vendor, product, version, key facts, steps,
   gotchas, URLs) and write the lesson only from it. Don't add facts the sources
   don't support, and never paste page text verbatim.
-- End the lesson with a "Sources" heading listing the URLs used as bullets.
+- End the lesson with a level-3 "Sources" heading listing the URLs used as bullets.
 
 BlockNote rules:
 - Emit a JSON array of blocks.
@@ -594,6 +599,13 @@ BlockNote rules:
 - codeBlock content is a plain string.
 - Allowed types: heading, paragraph, bulletListItem, numberedListItem, checkListItem, codeBlock, image, quote, divider.
 - Never emit youtubeEmbed, storylaneEmbed, premiumStart, premiumEnd, or premiumGate — humans add those in the editor.
+- Do NOT repeat the topic title as the first heading (or anywhere as a lesson H1).
+  The LMS UI already shows the topic title above the editor. Start with a short
+  intro paragraph, or a section heading like "Introduction" / "Overview" that is
+  not a copy of the topic name.
+- Heading levels: use level 3 for section/group headings (Introduction, Architecture,
+  Sources, etc.) and level 4 for subsections. Never use level 1. Avoid level 2 —
+  it looks too large beside the page title.
 
 Example free blocks:
 {FREE_BLOCKS_EXAMPLE_JSON}

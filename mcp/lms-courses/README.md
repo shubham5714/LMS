@@ -85,6 +85,10 @@ Point a local MCP client at stdio, or use Horizon for remote Streamable HTTP.
 2. Per topic: write the lesson → `validate_blocks` → `write_lesson`
 3. Stop — human reviews in `/courses/manage` and adds YouTube, Storylane, and premium sections
 
+Do not start lesson bodies with a heading that repeats the topic title — the page already shows it as H1. Begin with intro text or a section heading (e.g. Introduction).
+
+Heading hierarchy in lesson bodies: use **level 3** for section/group headings and **level 4** for subsections. Never use level 1; avoid level 2 (too large next to the page title).
+
 Updating a lesson: `get_lesson` → `edit_lesson` with only the changed blocks, passing `updated_at` as `expected_updated_at`. Edits apply all-or-nothing. YouTube, Storylane, and premium-marker blocks can't be replaced or deleted. If the lesson changed since it was loaded (for example, you saved in the editor), the edit is rejected with 409 rather than overwriting your save.
 
 Research is opt-in: agents use `search_web` / `fetch_url` only when your prompt asks for research or supplies URLs. Then they fetch at most 3 sources per topic, write from a short brief, and end the lesson with a Sources list.

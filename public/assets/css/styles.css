@@ -23107,10 +23107,13 @@ button {
 }
 .soc-fundamentals-topic .course-topic-lesson__title,
 .soc-fundamentals-topic > .soc-fundamentals-topic-layout > .soc-fundamentals-topic-main > h1 {
-  font-size: clamp(2rem, 1.85rem + 0.85vw, 2.5rem);
+  font-size: clamp(1.5rem, 1.4rem + 0.45vw, 1.85rem);
   font-weight: 700;
-  line-height: 1.2;
-  margin-block: 0 1.25rem;
+  line-height: 1.25;
+  margin-block: 0 1rem;
+}
+.soc-fundamentals-topic .course-topic-lesson__title.mb-0 {
+  margin-block-end: 0;
 }
 .soc-fundamentals-topic .course-topic-lesson__lead {
   font-size: 1.125rem;
@@ -31468,6 +31471,8 @@ ul.followers-segmentation-list li:last-child {
 .app-header .header-course-breadcrumb {
   font-size: 1rem;
   line-height: 1.35;
+  max-width: min(70vw, 48rem);
+  white-space: normal;
 }
 
 .app-header .header-course-breadcrumb__icon {
@@ -31480,6 +31485,12 @@ ul.followers-segmentation-list li:last-child {
   font-weight: 600;
   text-decoration: none;
   color: var(--default-text-color);
+  min-width: 0;
+}
+
+.app-header .header-course-breadcrumb__title {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .app-header .header-course-breadcrumb__sep {
@@ -31531,8 +31542,7 @@ ul.followers-segmentation-list li:last-child {
 }
 
 .app-header .header-course-breadcrumb__link:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.15rem;
+  text-decoration: none;
 }
 
 /* End:: header */

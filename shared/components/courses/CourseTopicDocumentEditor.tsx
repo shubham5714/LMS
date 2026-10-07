@@ -181,22 +181,17 @@ export default function CourseTopicDocumentEditor({
       <div className="soc-fundamentals-topic course-topic-lesson">
         <div className="soc-fundamentals-topic-layout">
           <div className="soc-fundamentals-topic-main">
-            <div className="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
               <h1 className="course-topic-lesson__title mb-0">{topicTitle}</h1>
               {canEdit ? (
-                <div className="d-flex align-items-center gap-2">
-                  <span className="badge bg-warning-transparent text-warning">
-                    Editing
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-primary"
-                    disabled={saveState === "saving" || !dirty}
-                    onClick={() => void save()}
-                  >
-                    {saveState === "saving" ? "Saving…" : "Save"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  disabled={saveState === "saving" || !dirty}
+                  onClick={() => void save()}
+                >
+                  {saveState === "saving" ? "Saving…" : "Save"}
+                </button>
               ) : null}
             </div>
             {canEdit && saveState === "saved" ? (
