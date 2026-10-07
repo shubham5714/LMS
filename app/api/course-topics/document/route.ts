@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateFreeBlockNoteBlocks } from "@/shared/courses/blocknote-blocks-schema"
+import { documentHasHumanOnlyBlocks } from "@/shared/courses/blocknote-edit-ops"
 import { normalizeStorylaneEmbedUrl } from "@/shared/courses/storylane-embed-url"
 import { normalizeYoutubeEmbedUrl } from "@/shared/courses/youtube-embed-url"
 import {
@@ -153,6 +154,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const admin = createSupabaseAdminClient()
+
     // MCP/AI path: free blocks only. Admin UI may still save premium markers.
     if (auth.viaMcp) {
       const validation = validateFreeBlockNoteBlocks(blocks)
@@ -165,11 +168,31 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+
+      // A full rewrite would silently drop human-managed embeds / premium markers.
+      const { data: existing } = await admin
+        .from("course_topic_documents")
+        .select("blocks")
+        .eq("course_id", courseId)
+        .eq("topic_id", topicId)
+        .maybeSingle()
+      if (
+        Array.isArray(existing?.blocks) &&
+        documentHasHumanOnlyBlocks(existing.blocks)
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "This lesson contains human-managed blocks (YouTube, Storylane, or premium). " +
+              "Use edit_lesson to change specific blocks instead of rewriting the whole lesson.",
+          },
+          { status: 409 }
+        )
+      }
     }
 
     const normalizedBlocks = normalizeBlocksForSave(blocks as AnyBlock[])
 
-    const admin = createSupabaseAdminClient()
     const { data, error } = await admin
       .from("course_topic_documents")
       .upsert(

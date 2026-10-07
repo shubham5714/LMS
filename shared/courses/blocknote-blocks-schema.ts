@@ -36,6 +36,10 @@ export const PREMIUM_BLOCK_TYPES = [
 const FREE_SET = new Set<string>(FREE_BLOCK_TYPES)
 const HUMAN_ONLY_SET = new Set<string>(HUMAN_ONLY_BLOCK_TYPES)
 
+export function isHumanOnlyBlockType(type: unknown): boolean {
+  return typeof type === "string" && HUMAN_ONLY_SET.has(type)
+}
+
 const TEXT_CONTENT_TYPES = new Set([
   "heading",
   "paragraph",

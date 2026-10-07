@@ -27,8 +27,9 @@ MCP client  →  Prefect Horizon (/mcp)  →  this FastMCP server  →  LMS HTTP
 | `create_topic` | Add topic + starter document |
 | `update_topic` | Patch title / paid_only / sort_order |
 | `validate_blocks` | Dry-run free BlockNote validation |
-| `write_lesson` | Save BlockNote `blocks` |
-| `get_lesson` | Load saved document |
+| `write_lesson` | Write a whole lesson (new lessons / full rewrites); refused if the lesson has human-managed blocks |
+| `edit_lesson` | Replace, insert, or delete specific blocks by id; human-managed blocks stay untouched |
+| `get_lesson` | Load a lesson; compact by default (`id`, `type`, `text`, `protected`) |
 
 Prompt: `course_authoring_playbook` — recommended authoring sequence.
 
@@ -83,6 +84,8 @@ Point a local MCP client at stdio, or use Horizon for remote Streamable HTTP.
 1. `create_course` (unpublished) → `create_topic` for each lesson (overview already exists)
 2. Per topic: write the lesson → `validate_blocks` → `write_lesson`
 3. Stop — human reviews in `/courses/manage` and adds YouTube, Storylane, and premium sections
+
+Updating a lesson: `get_lesson` → `edit_lesson` with only the changed blocks, passing `updated_at` as `expected_updated_at`. Edits apply all-or-nothing. YouTube, Storylane, and premium-marker blocks can't be replaced or deleted. If the lesson changed since it was loaded (for example, you saved in the editor), the edit is rejected with 409 rather than overwriting your save.
 
 Research is opt-in: agents use `search_web` / `fetch_url` only when your prompt asks for research or supplies URLs. Then they fetch at most 3 sources per topic, write from a short brief, and end the lesson with a Sources list.
 

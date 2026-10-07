@@ -424,7 +424,10 @@ def validate_blocks(blocks: list[dict[str, Any]]) -> dict[str, Any]:
 
 @mcp.tool(
     description=(
-        "Save a lesson body as BlockNote JSON blocks for course_id/topic_id. "
+        "Write a whole lesson body as BlockNote JSON blocks for course_id/topic_id, "
+        "replacing everything. Use for new lessons or full rewrites only; to change part "
+        "of a lesson use edit_lesson. Rejected if the lesson already has human-managed "
+        "blocks (YouTube, Storylane, premium); use edit_lesson for those. "
         "Free text/media only — no youtubeEmbed, storylaneEmbed, or premium markers. "
         f"Allowed types: {ALLOWED_BLOCK_TYPES} "
         f"Example blocks: {json.dumps(FREE_BLOCKS_EXAMPLE)} "
@@ -448,14 +451,111 @@ def write_lesson(
     )
 
 
+HUMAN_ONLY_TYPES = {
+    "youtubeEmbed",
+    "storylaneEmbed",
+    "premiumStart",
+    "premiumEnd",
+    "premiumGate",
+}
+
+
+def _inline_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return ""
+    parts = []
+    for node in content:
+        if not isinstance(node, dict):
+            continue
+        if node.get("type") == "text":
+            parts.append(node.get("text", ""))
+        elif node.get("type") == "link":
+            parts.append(_inline_text(node.get("content")))
+    return "".join(parts)
+
+
+def _compact_block(block: dict[str, Any]) -> dict[str, Any]:
+    btype = block.get("type", "")
+    props = block.get("props") or {}
+    item: dict[str, Any] = {"id": block.get("id"), "type": btype}
+    if btype == "heading":
+        item["level"] = props.get("level")
+    if btype == "image":
+        item["text"] = props.get("caption") or props.get("name") or ""
+        item["url"] = props.get("url", "")
+    elif btype in HUMAN_ONLY_TYPES:
+        item["text"] = props.get("title") or ""
+    else:
+        item["text"] = _inline_text(block.get("content"))
+    if btype in HUMAN_ONLY_TYPES:
+        item["protected"] = True
+    children = block.get("children") or []
+    if children:
+        item["children"] = [_compact_block(c) for c in children if isinstance(c, dict)]
+    return item
+
+
 @mcp.tool
-def get_lesson(course_id: str, topic_id: str) -> dict[str, Any]:
-    """Load the saved BlockNote document for a course topic."""
-    return _request(
+def get_lesson(course_id: str, topic_id: str, compact: bool = True) -> dict[str, Any]:
+    """
+    Load a lesson. compact=True (default) returns each block as
+    {id, type, text, protected?, children?} plus updated_at: enough to plan edit_lesson
+    operations at a fraction of the tokens. Blocks marked protected (YouTube, Storylane,
+    premium markers) are human-managed: never replace or delete them. Use compact=False
+    only if you need the raw BlockNote JSON (e.g. inline styles).
+    """
+    result = _request(
         "GET",
         "/api/course-topics/document",
         params={"courseId": course_id, "topicId": topic_id},
     )
+    if not compact or not result.get("ok"):
+        return result
+    document = result.get("document") or {}
+    blocks = document.get("blocks") or []
+    return {
+        "ok": True,
+        "course_id": course_id,
+        "topic_id": topic_id,
+        "updated_at": document.get("updated_at"),
+        "blocks": [_compact_block(b) for b in blocks if isinstance(b, dict)],
+    }
+
+
+@mcp.tool(
+    description=(
+        "Change specific blocks of an existing lesson without rewriting it. "
+        "Human-managed blocks (YouTube, Storylane, premium markers) stay untouched. "
+        "Get block ids from get_lesson first and pass its updated_at as expected_updated_at. "
+        "operations is an ordered list; each item is one of: "
+        '{"op":"replace","blockId":"<id>","blocks":[...]} | '
+        '{"op":"insert","afterBlockId":"<id>","blocks":[...]} | '
+        '{"op":"insert","beforeBlockId":"<id>","blocks":[...]} | '
+        '{"op":"insert","position":"start"|"end","blocks":[...]} | '
+        '{"op":"delete","blockId":"<id>"}. '
+        f"New blocks follow the same rules as write_lesson. Allowed types: {ALLOWED_BLOCK_TYPES} "
+        "All operations apply together or not at all. The response's insertedIds lists the "
+        "ids of new blocks, one array per operation. Replacing a block with several blocks "
+        "or inserting inside a premium section is fine; the blocks you add there become premium."
+    )
+)
+def edit_lesson(
+    course_id: str,
+    topic_id: str,
+    operations: list[dict[str, Any]],
+    expected_updated_at: str | None = None,
+) -> dict[str, Any]:
+    """Apply block-level edits to a lesson."""
+    body: dict[str, Any] = {
+        "courseId": course_id,
+        "topicId": topic_id,
+        "operations": operations,
+    }
+    if expected_updated_at:
+        body["expectedUpdatedAt"] = expected_updated_at
+    return _request("POST", "/api/course-topics/document/edit", json_body=body)
 
 
 @mcp.prompt
@@ -471,6 +571,11 @@ Accuracy matters more than length. Follow this sequence:
    then write_lesson.
 4. Stop. Do NOT publish. A human reviews in /courses/manage and adds YouTube,
    Storylane, and premium sections manually.
+
+Updating an existing lesson: get_lesson (compact) -> edit_lesson with only the blocks
+that need to change, passing updated_at as expected_updated_at. Do not use write_lesson
+for small changes; it replaces the whole lesson. Never replace or delete blocks marked
+protected. If edit_lesson returns 409, call get_lesson again and redo the edit.
 
 Research is opt-in. Only use search_web / fetch_url when the user asks for research
 (or gives you URLs to use). When research is requested:
