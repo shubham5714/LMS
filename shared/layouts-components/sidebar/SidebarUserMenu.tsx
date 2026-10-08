@@ -1,7 +1,9 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { Dropdown } from "react-bootstrap"
+import { useUserContext } from "@/shared/contextapi/UserContext"
 
 type Props = {
   username?: string | null
@@ -10,6 +12,26 @@ type Props = {
 }
 
 export function SidebarUserMenu({ username, membership, onLogout }: Props) {
+  const { isAuthenticated } = useUserContext()
+  const signedIn = isAuthenticated || Boolean(username?.trim())
+
+  if (!signedIn) {
+    return (
+      <div className="d-flex align-items-center sidebar-user-menu">
+        <div className="avatar avatar-md bg-primary-transparent avatar-rounded me-2 flex-shrink-0">
+          <i className="ri-user-line fs-16" aria-hidden />
+        </div>
+        <Link
+          href="/signin"
+          scroll={false}
+          className="btn btn-sm btn-primary sidebar-user-menu__signin"
+        >
+          Sign In
+        </Link>
+      </div>
+    )
+  }
+
   const displayName = username?.trim() || "—"
   const displayMembership = membership?.trim() || "—"
 

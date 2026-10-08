@@ -22981,6 +22981,11 @@ button {
   width: 100%;
 }
 
+.app-sidebar .sidebar-user-menu__signin {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .app-sidebar .sidebar-user-menu__toggle {
   display: inline-flex;
   align-items: center;

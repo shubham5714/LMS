@@ -33,7 +33,9 @@ export function DbCourseTopicLesson({ courseId, topicId }: Props) {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      setLoadState("loading")
+      // Only blank the page on first load. Topic switches keep the previous
+      // lesson mounted until metadata arrives, so we don't flash a second loader.
+      setLoadState((prev) => (prev === "ready" ? prev : "loading"))
       const [course, topicRow] = await Promise.all([
         fetchCourseById(courseId),
         fetchCourseTopic(courseId, topicId),
@@ -55,7 +57,7 @@ export function DbCourseTopicLesson({ courseId, topicId }: Props) {
   }, [courseId, topicId])
 
   if (loadState === "loading") {
-    return <LessonLoadingDots />
+    return <LessonLoadingDots inLessonShell />
   }
 
   if (loadState === "missing" || !topic) {
@@ -74,6 +76,7 @@ export function DbCourseTopicLesson({ courseId, topicId }: Props) {
   return (
     <Fragment>
       <CourseTopicDocument
+        key={`${courseId}:${topicId}`}
         courseId={courseId}
         topicId={topicId}
         topicTitle={topic.title}

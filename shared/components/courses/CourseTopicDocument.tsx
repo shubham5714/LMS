@@ -14,7 +14,8 @@ const CourseTopicDocumentEditor = dynamic(
   () => import("./CourseTopicDocumentEditor"),
   {
     ssr: false,
-    loading: () => <LessonLoadingDots />,
+    // Parent already shows LessonLoadingDots while blocks load; avoid a second flash.
+    loading: () => null,
   }
 )
 
@@ -58,7 +59,11 @@ export function CourseTopicDocument({
     let cancelled = false
     const load = async () => {
       setLoadState("loading")
+      setInitialBlocks(null)
       setLoadError(null)
+      setDirty(false)
+      setSaveState("idle")
+      setSaveError(null)
       try {
         const { data, error } = await supabase
           .from("course_topic_documents")
