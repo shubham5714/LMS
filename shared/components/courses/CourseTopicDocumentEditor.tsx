@@ -98,10 +98,33 @@ export default function CourseTopicDocumentEditor({
     [initialBlocks, canEdit, hasPaidAccess]
   )
 
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const body = new FormData()
+      body.set("file", file)
+      body.set("courseId", courseId)
+      body.set("topicId", topicId)
+      const res = await fetch("/api/courses/images", {
+        method: "POST",
+        body,
+      })
+      const json = (await res.json().catch(() => ({}))) as {
+        url?: string
+        error?: string
+      }
+      if (!res.ok || !json.url) {
+        throw new Error(json.error || "Image upload failed")
+      }
+      return json.url
+    },
+    [courseId, topicId]
+  )
+
   const editor = useCreateBlockNote({
     schema: courseBlockNoteSchema,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialContent: viewerBlocks as any,
+    uploadFile: canEdit ? uploadFile : undefined,
   })
 
   const [outlineBlocks, setOutlineBlocks] = useState(viewerBlocks)
