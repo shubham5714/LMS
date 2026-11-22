@@ -1181,13 +1181,13 @@ button {
   }
 }
 
-/* Sidebar: larger dark-mode wordmark (desktop-dark) than default 2rem lock from _vertical.scss */
+/* Sidebar wordmark. Slightly under the 2rem lock from _vertical.scss. */
 [data-theme-mode="dark"] .app-sidebar .main-sidebar-header .header-logo img.desktop-dark {
-  height: 2.25rem;
+  height: 1.875rem;
   width: auto;
-  max-width: 12.5rem;
+  max-width: 10.5rem;
   object-fit: contain;
-  line-height: 2.25rem;
+  line-height: 1.875rem;
 }
 
 /* Start::App Content */

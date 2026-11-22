@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises"
+import { readFile, stat } from "fs/promises"
 import path from "path"
 import { NextResponse } from "next/server"
 
@@ -180,7 +180,7 @@ const PRODUCTION_HIDE_STYLE = `<style id="lms-production-hide">
     max-width:calc(100vw - 32px)!important;
   }
   nav [data-framer-name="Nav Menu"]{
-    margin-left:28px!important;
+    margin-left:40px!important;
     gap:16px!important;
     flex-wrap:nowrap!important;
   }
@@ -193,25 +193,18 @@ const PRODUCTION_HIDE_STYLE = `<style id="lms-production-hide">
 }
 nav a[data-framer-name=White]{
   width:auto!important;
-  height:30px!important;
+  height:auto!important;
   overflow:visible!important;
   display:flex!important;
   align-items:center!important;
+  text-decoration:none!important;
+  flex:none!important;
 }
-nav a[data-framer-name=White] [data-framer-background-image-wrapper]{
-  position:relative!important;
-  inset:auto!important;
-  width:auto!important;
-  height:24px!important;
-  display:block!important;
-}
-nav a[data-framer-name=White] img{
-  position:relative!important;
-  width:auto!important;
-  height:24px!important;
-  max-width:none!important;
-  object-fit:contain!important;
-  display:block!important;
+nav a[data-framer-name=White] [data-framer-background-image-wrapper]{display:none!important}
+nav a[data-framer-name=White] .lms-wordmark{
+  display:block;
+  height:30px;
+  width:auto;
 }
 @media (min-width:1016px){
   nav .lms-mobile-toggle,
@@ -449,12 +442,13 @@ const NAV_SCRIPT = `<script id="lms-nav-script">
       var link=links[i];
       link.setAttribute("href","/");
       link.setAttribute("aria-label","Cyber Peers");
-      var img=link.querySelector("img");
-      if(!img)continue;
-      img.src="/assets/images/brand-logos/lms-logo.png";
-      img.alt="Cyber Peers";
-      img.removeAttribute("width");
-      img.removeAttribute("height");
+      if(link.querySelector(".lms-wordmark"))continue;
+      var mark=document.createElement("img");
+      mark.className="lms-wordmark";
+      mark.src="__LMS_LOGO__";
+      mark.alt="Cyber Peers";
+      mark.draggable=false;
+      link.appendChild(mark);
     }
   }
   function applyMenu(){
@@ -592,7 +586,11 @@ export async function GET() {
     ? html.replace("</head>", `${PRODUCTION_HIDE_STYLE}</head>`)
     : `${PRODUCTION_HIDE_STYLE}${html}`
 
-  const bootScripts = `${HERO_ROLE_SCRIPT}${NAV_SCRIPT}`
+  const logoStat = await stat(
+    path.join(process.cwd(), "public", "assets", "images", "brand-logos", "lms-logo.png")
+  )
+  const logoSrc = `/assets/images/brand-logos/lms-logo.png?v=${Math.floor(logoStat.mtimeMs)}`
+  const bootScripts = `${HERO_ROLE_SCRIPT}${NAV_SCRIPT.replace("__LMS_LOGO__", logoSrc)}`
   if (html.includes("</body>")) {
     html = html.replace("</body>", `${bootScripts}</body>`)
   } else {

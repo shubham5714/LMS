@@ -32,22 +32,22 @@
   line-height: 1.875rem !important;
 }
 
-/* Light mode: match dark sidebar wordmark size (desktop-dark) */
+/* Light mode: match dark sidebar wordmark size */
 [data-theme-mode="light"] {
   .app-sidebar .main-sidebar-header .header-logo img.desktop-logo {
-    height: 2.25rem !important;
+    height: 1.75rem !important;
     width: auto !important;
-    line-height: 2.25rem !important;
+    line-height: 1.75rem !important;
     object-fit: contain;
   }
 }
 
-/* Dark mode: desktop-dark wordmark — sidebar slightly reduced vs prior 2.5rem */
+/* Dark mode: sidebar wordmark */
 [data-theme-mode="dark"] {
   .app-sidebar .main-sidebar-header .header-logo img.desktop-dark {
-    height: 2.25rem !important;
+    height: 1.75rem !important;
     width: auto !important;
-    line-height: 2.25rem !important;
+    line-height: 1.75rem !important;
     object-fit: contain;
   }
 
