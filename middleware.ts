@@ -4,10 +4,18 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
-  
+
+  // Serve the reference landing HTML at the site root, outside the app shell.
+  if (pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/landing-template'
+    return NextResponse.rewrite(url)
+  }
+
   // Define public routes that don't require authentication
   const publicRoutes = [
     '/',
+    '/landing-template',
     '/signin',
     '/authentication',
     '/authentication/coming-soon',
