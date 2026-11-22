@@ -31,6 +31,34 @@ type TopicRow = {
   paid_only: boolean
 }
 
+type SkillDraft = {
+  key: string
+  name: string
+  weight: string
+}
+
+type CatalogSkill = {
+  id: string
+  name: string
+}
+
+function emptySkillDraft(): SkillDraft {
+  return {
+    key: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: "",
+    weight: "1",
+  }
+}
+
+function draftsToPayload(drafts: SkillDraft[]) {
+  return drafts
+    .map((d) => ({
+      name: d.name.trim(),
+      weight: Number(d.weight),
+    }))
+    .filter((d) => d.name && Number.isFinite(d.weight) && d.weight > 0)
+}
+
 export default function ManageCoursesPage() {
   const { canEditCourseContent, isLoading: membershipLoading } =
     useMembershipContext()
@@ -47,6 +75,12 @@ export default function ManageCoursesPage() {
   const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
   const [newLogoPreview, setNewLogoPreview] = useState<string | null>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
+  const [newCourseSkills, setNewCourseSkills] = useState<SkillDraft[]>([
+    emptySkillDraft(),
+  ])
+  const [catalogSkills, setCatalogSkills] = useState<CatalogSkill[]>([])
+  const [selectedSkills, setSelectedSkills] = useState<SkillDraft[]>([])
+  const [skillsBusy, setSkillsBusy] = useState(false)
 
   const [newTopicTitle, setNewTopicTitle] = useState("")
   const [newTopicPaid, setNewTopicPaid] = useState(false)
@@ -119,18 +153,53 @@ export default function ManageCoursesPage() {
     setTopics(json.topics || [])
   }, [])
 
+  const loadCatalogSkills = useCallback(async () => {
+    const res = await fetch("/api/skills")
+    const json = (await res.json().catch(() => ({}))) as {
+      skills?: CatalogSkill[]
+    }
+    if (res.ok) setCatalogSkills(json.skills || [])
+  }, [])
+
+  const loadCourseSkills = useCallback(async (courseId: string) => {
+    setError(null)
+    const res = await fetch(`/api/courses/${courseId}`)
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string
+      skills?: { name: string; weight: number }[]
+    }
+    if (!res.ok) {
+      setError(json.error || "Failed to load course skills")
+      setSelectedSkills([])
+      return
+    }
+    const rows = json.skills || []
+    setSelectedSkills(
+      rows.length
+        ? rows.map((s) => ({
+            key: `${s.name}-${s.weight}`,
+            name: s.name,
+            weight: String(s.weight),
+          }))
+        : [emptySkillDraft()]
+    )
+  }, [])
+
   useEffect(() => {
     if (!canEditCourseContent) return
     void loadCourses()
-  }, [canEditCourseContent, loadCourses])
+    void loadCatalogSkills()
+  }, [canEditCourseContent, loadCourses, loadCatalogSkills])
 
   useEffect(() => {
     if (!selectedId) {
       setTopics([])
+      setSelectedSkills([])
       return
     }
     void loadTopics(selectedId)
-  }, [selectedId, loadTopics])
+    void loadCourseSkills(selectedId)
+  }, [selectedId, loadTopics, loadCourseSkills])
 
   const createCourse = async () => {
     setBusy(true)
@@ -163,14 +232,17 @@ export default function ManageCoursesPage() {
           focusArea: newFocus,
           skillLevel: newSkill,
           logoUrl,
+          skills: draftsToPayload(newCourseSkills),
         }),
       })
       const json = (await res.json().catch(() => ({}))) as { error?: string; course?: CourseRow }
       if (!res.ok) throw new Error(json.error || "Create failed")
       setNewCourseTitle("")
       setNewCourseDesc("")
+      setNewCourseSkills([emptySkillDraft()])
       clearLogoSelection()
       await loadCourses()
+      await loadCatalogSkills()
       if (json.course?.id) setSelectedId(json.course.id)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Create failed")
@@ -243,6 +315,48 @@ export default function ManageCoursesPage() {
       setError(e instanceof Error ? e.message : "Delete failed")
     } finally {
       setBusy(false)
+    }
+  }
+
+  const updateSkillDraft = (
+    list: SkillDraft[],
+    setList: React.Dispatch<React.SetStateAction<SkillDraft[]>>,
+    key: string,
+    patch: Partial<SkillDraft>
+  ) => {
+    setList(list.map((row) => (row.key === key ? { ...row, ...patch } : row)))
+  }
+
+  const saveSelectedSkills = async () => {
+    if (!selectedId) return
+    setSkillsBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/courses/${selectedId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skills: draftsToPayload(selectedSkills) }),
+      })
+      const json = (await res.json().catch(() => ({}))) as {
+        error?: string
+        skills?: { name: string; weight: number }[]
+      }
+      if (!res.ok) throw new Error(json.error || "Failed to save skills")
+      const rows = json.skills || []
+      setSelectedSkills(
+        rows.length
+          ? rows.map((s) => ({
+              key: `${s.name}-${s.weight}`,
+              name: s.name,
+              weight: String(s.weight),
+            }))
+          : [emptySkillDraft()]
+      )
+      await loadCatalogSkills()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save skills")
+    } finally {
+      setSkillsBusy(false)
     }
   }
 
@@ -398,7 +512,7 @@ export default function ManageCoursesPage() {
                   </Form.Select>
                 </Col>
                 <Col>
-                  <Form.Label>Skill</Form.Label>
+                  <Form.Label>Level</Form.Label>
                   <Form.Select
                     value={newSkill}
                     onChange={(e) => setNewSkill(e.target.value as typeof newSkill)}
@@ -411,6 +525,82 @@ export default function ManageCoursesPage() {
                   </Form.Select>
                 </Col>
               </Row>
+              <Form.Group className="mb-3">
+                <Form.Label>Skills &amp; weights</Form.Label>
+                <Form.Text muted className="d-block mb-2">
+                  Radar axes for career tracks. Weight controls how much this
+                  course contributes to each skill&apos;s completion.
+                </Form.Text>
+                <datalist id="skill-name-options">
+                  {catalogSkills.map((s) => (
+                    <option key={s.id} value={s.name} />
+                  ))}
+                </datalist>
+                {newCourseSkills.map((row) => (
+                  <Row key={row.key} className="g-2 mb-2 align-items-center">
+                    <Col xs={7}>
+                      <Form.Control
+                        size="sm"
+                        list="skill-name-options"
+                        placeholder="e.g. SIEM"
+                        value={row.name}
+                        onChange={(e) =>
+                          updateSkillDraft(
+                            newCourseSkills,
+                            setNewCourseSkills,
+                            row.key,
+                            { name: e.target.value }
+                          )
+                        }
+                      />
+                    </Col>
+                    <Col xs={3}>
+                      <Form.Control
+                        size="sm"
+                        type="number"
+                        min={0.1}
+                        step={0.5}
+                        placeholder="Weight"
+                        value={row.weight}
+                        onChange={(e) =>
+                          updateSkillDraft(
+                            newCourseSkills,
+                            setNewCourseSkills,
+                            row.key,
+                            { weight: e.target.value }
+                          )
+                        }
+                      />
+                    </Col>
+                    <Col xs={2}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline-secondary"
+                        disabled={newCourseSkills.length <= 1}
+                        onClick={() =>
+                          setNewCourseSkills((prev) =>
+                            prev.filter((r) => r.key !== row.key)
+                          )
+                        }
+                      >
+                        ×
+                      </Button>
+                    </Col>
+                  </Row>
+                ))}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="link"
+                  className="px-0"
+                  onClick={() =>
+                    setNewCourseSkills((prev) => [...prev, emptySkillDraft()])
+                  }
+                >
+                  Add skill
+                </Button>
+              </Form.Group>
               <Button
                 variant="primary"
                 disabled={busy || !newCourseTitle.trim()}
@@ -511,6 +701,91 @@ export default function ManageCoursesPage() {
                       Open overview lesson
                     </Link>
                   </div>
+
+                  <Form className="border rounded p-3 mb-4">
+                    <div className="fw-semibold mb-1">Skills &amp; weights</div>
+                    <Form.Text muted className="d-block mb-2">
+                      Used on the dashboard career-track radar. Higher weight =
+                      more influence on that skill&apos;s completion %.
+                    </Form.Text>
+                    {selectedSkills.map((row) => (
+                      <Row key={row.key} className="g-2 mb-2 align-items-center">
+                        <Col md={7}>
+                          <Form.Control
+                            size="sm"
+                            list="skill-name-options"
+                            placeholder="Skill name"
+                            value={row.name}
+                            onChange={(e) =>
+                              updateSkillDraft(
+                                selectedSkills,
+                                setSelectedSkills,
+                                row.key,
+                                { name: e.target.value }
+                              )
+                            }
+                          />
+                        </Col>
+                        <Col md={3}>
+                          <Form.Control
+                            size="sm"
+                            type="number"
+                            min={0.1}
+                            step={0.5}
+                            placeholder="Weight"
+                            value={row.weight}
+                            onChange={(e) =>
+                              updateSkillDraft(
+                                selectedSkills,
+                                setSelectedSkills,
+                                row.key,
+                                { weight: e.target.value }
+                              )
+                            }
+                          />
+                        </Col>
+                        <Col md={2}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline-secondary"
+                            disabled={selectedSkills.length <= 1}
+                            onClick={() =>
+                              setSelectedSkills((prev) =>
+                                prev.filter((r) => r.key !== row.key)
+                              )
+                            }
+                          >
+                            ×
+                          </Button>
+                        </Col>
+                      </Row>
+                    ))}
+                    <div className="d-flex flex-wrap gap-2 mt-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline-secondary"
+                        onClick={() =>
+                          setSelectedSkills((prev) => [
+                            ...prev,
+                            emptySkillDraft(),
+                          ])
+                        }
+                      >
+                        Add skill
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        disabled={skillsBusy}
+                        onClick={() => void saveSelectedSkills()}
+                      >
+                        {skillsBusy ? "Saving…" : "Save skills"}
+                      </Button>
+                    </div>
+                  </Form>
 
                   <Form className="border rounded p-3 mb-4">
                     <div className="fw-semibold mb-2">Add topic</div>

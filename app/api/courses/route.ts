@@ -9,6 +9,12 @@ import {
   assertMcpOrAdmin,
   assertMcpOrAuthenticated,
 } from "@/shared/lib/assert-mcp-or-admin"
+import {
+  normalizeCourseSkillInputs,
+  replaceCourseSkills,
+  type CourseSkillInput,
+  type CourseSkillRow,
+} from "@/shared/lib/courseSkills"
 import { createSupabaseAdminClient } from "@/shared/lib/supabase-admin"
 
 export const runtime = "nodejs"
@@ -29,6 +35,7 @@ type CreateBody = {
   published?: boolean
   /** First topic title; topic_id defaults to overview */
   overviewTitle?: string
+  skills?: CourseSkillInput[]
 }
 
 export async function GET(request: NextRequest) {
@@ -184,7 +191,23 @@ export async function POST(request: NextRequest) {
       { onConflict: "course_id,topic_id" }
     )
 
-    return NextResponse.json({ course }, { status: 201 })
+    let skills: CourseSkillRow[] = []
+    if (body.skills !== undefined) {
+      const skillResult = await replaceCourseSkills(
+        admin,
+        id,
+        normalizeCourseSkillInputs(body.skills)
+      )
+      if (!skillResult.ok) {
+        return NextResponse.json(
+          { error: skillResult.error, course },
+          { status: 500 }
+        )
+      }
+      skills = skillResult.skills
+    }
+
+    return NextResponse.json({ course, skills }, { status: 201 })
   } catch (e) {
     console.error(e)
     return NextResponse.json(

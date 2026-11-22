@@ -127,27 +127,49 @@ export default function CourseTopicDocumentEditor({
     uploadFile: canEdit ? uploadFile : undefined,
   })
 
-  const [outlineBlocks, setOutlineBlocks] = useState(viewerBlocks)
+  // Prefer the live editor document for TOC ids. Stored JSON (especially MCP/AI
+  // lessons) often omits block ids; BlockNote then assigns UUIDs on load. Building
+  // the outline from the raw JSON would invent `heading-N` ids that never match
+  // the DOM, so right-nav clicks silently do nothing.
+  const [outlineBlocks, setOutlineBlocks] = useState<unknown[] | null>(null)
   const sections = useMemo(
     () =>
       outlineFromBlocks(
-        outlineBlocks as Parameters<typeof outlineFromBlocks>[0]
+        (outlineBlocks ?? (editor.document as unknown[])) as Parameters<
+          typeof outlineFromBlocks
+        >[0]
       ),
-    [outlineBlocks]
+    [outlineBlocks, editor]
   )
   const sectionIds = useMemo(() => sections.map((s) => s.id), [sections])
   const readingPercent = useReadingProgress()
   const activeSectionId = useActiveOutlineSection(sectionIds, 110)
 
   useEffect(() => {
-    for (const id of sectionIds) {
-      const el = document.querySelector(
-        `[data-id="${CSS.escape(id)}"]`
-      ) as HTMLElement | null
-      if (el && !el.id) {
-        el.id = id
+    setOutlineBlocks(editor.document as unknown[])
+  }, [editor])
+
+  useEffect(() => {
+    let cancelled = false
+    const bindSectionAnchors = () => {
+      if (cancelled) return
+      for (const id of sectionIds) {
+        const el = document.querySelector(
+          `[data-id="${CSS.escape(id)}"]`
+        ) as HTMLElement | null
+        if (!el) continue
+        if (!el.id) el.id = id
         el.style.scrollMarginTop = "6.5rem"
       }
+    }
+    // BlockNote paints block DOM after the first React commit.
+    bindSectionAnchors()
+    const raf = window.requestAnimationFrame(bindSectionAnchors)
+    const t = window.setTimeout(bindSectionAnchors, 50)
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(raf)
+      window.clearTimeout(t)
     }
   }, [sectionIds])
 

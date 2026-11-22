@@ -1,0 +1,4 @@
+/* Clear series area fill only — do not target .apexcharts-marker (hollow dots). */
+.skills-radar-chart .apexcharts-series > path {
+  fill: none !important;
+}

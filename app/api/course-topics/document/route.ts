@@ -25,9 +25,34 @@ type AnyBlock = {
   children?: AnyBlock[]
 }
 
+function ensureBlockIds(blocks: AnyBlock[]): AnyBlock[] {
+  const used = new Set<string>()
+  const walk = (list: AnyBlock[]): AnyBlock[] =>
+    list.map((block) => {
+      let id = typeof block.id === "string" ? block.id.trim() : ""
+      if (!id || used.has(id)) {
+        do {
+          id =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? crypto.randomUUID()
+              : `block-${Math.random().toString(36).slice(2, 11)}`
+        } while (used.has(id))
+      }
+      used.add(id)
+      return {
+        ...block,
+        id,
+        children: Array.isArray(block.children)
+          ? walk(block.children)
+          : block.children,
+      }
+    })
+  return walk(blocks)
+}
+
 /** Ensure embed blocks persist a proper iframe src. */
 function normalizeBlocksForSave(blocks: AnyBlock[]): AnyBlock[] {
-  return blocks.map((block) => {
+  return ensureBlockIds(blocks).map((block) => {
     if (block.type === "storylaneEmbed") {
       const raw =
         (typeof block.props?.demoUrl === "string" && block.props.demoUrl) ||

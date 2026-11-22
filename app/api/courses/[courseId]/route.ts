@@ -4,6 +4,13 @@ import {
   assertMcpOrAdmin,
   assertMcpOrAuthenticated,
 } from "@/shared/lib/assert-mcp-or-admin"
+import {
+  fetchCourseSkills,
+  normalizeCourseSkillInputs,
+  replaceCourseSkills,
+  type CourseSkillInput,
+  type CourseSkillRow,
+} from "@/shared/lib/courseSkills"
 import { createSupabaseAdminClient } from "@/shared/lib/supabase-admin"
 
 export const runtime = "nodejs"
@@ -22,6 +29,7 @@ type PatchBody = {
   instructorName?: string
   published?: boolean
   sortOrder?: number
+  skills?: CourseSkillInput[]
 }
 
 type Ctx = { params: Promise<{ courseId: string }> }
@@ -60,7 +68,16 @@ export async function GET(request: NextRequest, context: Ctx) {
       .eq("course_id", courseId)
       .order("sort_order", { ascending: true })
 
-    return NextResponse.json({ course, topics: topics || [] })
+    const skillsResult = await fetchCourseSkills(admin, courseId)
+    if (!skillsResult.ok) {
+      return NextResponse.json({ error: skillsResult.error }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      course,
+      topics: topics || [],
+      skills: skillsResult.skills,
+    })
   } catch (e) {
     console.error(e)
     return NextResponse.json(
@@ -117,7 +134,23 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ course: data })
+    let skills: CourseSkillRow[] | undefined
+    if (body.skills !== undefined) {
+      const skillResult = await replaceCourseSkills(
+        admin,
+        courseId,
+        normalizeCourseSkillInputs(body.skills)
+      )
+      if (!skillResult.ok) {
+        return NextResponse.json({ error: skillResult.error }, { status: 500 })
+      }
+      skills = skillResult.skills
+    } else {
+      const skillsResult = await fetchCourseSkills(admin, courseId)
+      if (skillsResult.ok) skills = skillsResult.skills
+    }
+
+    return NextResponse.json({ course: data, skills })
   } catch (e) {
     console.error(e)
     return NextResponse.json(

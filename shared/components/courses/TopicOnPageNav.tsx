@@ -26,16 +26,37 @@ export function TopicOnPageNav({
 }: Props) {
   if (sections.length === 0) return null
 
-  const scrollTo = (id: string) => {
+  const scrollTo = (id: string, title: string) => {
+    const scrollEl = (el: HTMLElement) => {
+      el.style.scrollMarginTop = el.style.scrollMarginTop || "6.5rem"
+      el.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+
     const byId = document.getElementById(id)
     if (byId) {
-      byId.scrollIntoView({ behavior: "smooth", block: "start" })
+      scrollEl(byId)
       return
     }
     const byDataId = document.querySelector(
       `[data-id="${CSS.escape(id)}"]`
     ) as HTMLElement | null
-    byDataId?.scrollIntoView({ behavior: "smooth", block: "start" })
+    if (byDataId) {
+      scrollEl(byDataId)
+      return
+    }
+
+    // Last resort: match heading text (covers id mismatches from id-less JSON).
+    const needle = title.trim().toLowerCase()
+    if (!needle) return
+    const headings = document.querySelectorAll(
+      ".course-blocknote-editor h1, .course-blocknote-editor h2, .course-blocknote-editor h3, .course-blocknote-editor h4"
+    )
+    for (const heading of headings) {
+      if ((heading.textContent || "").trim().toLowerCase() === needle) {
+        scrollEl(heading as HTMLElement)
+        return
+      }
+    }
   }
 
   return (
@@ -74,7 +95,7 @@ export function TopicOnPageNav({
                     className={`btn btn-link text-start p-0 text-decoration-none lh-sm w-100 d-inline-flex align-items-start gap-1 ${
                       active ? "text-primary fw-semibold" : "text-muted"
                     }`}
-                    onClick={() => scrollTo(s.id)}
+                    onClick={() => scrollTo(s.id, s.title)}
                   >
                     <span className="flex-grow-1">{s.title}</span>
                     {lockedNav ? (
