@@ -292,6 +292,48 @@ nav a[data-framer-name=White] .lms-wordmark{
     flex:none!important;
   }
 }
+#features > :not(.lms-paths){display:none!important}
+#features{display:block!important;height:auto!important;overflow:visible!important}
+.lms-paths{width:100%;max-width:1240px;margin:0 auto;padding:88px 0 72px;box-sizing:border-box}
+.lms-paths__header{display:flex;flex-direction:column;gap:28px;margin-bottom:28px}
+.lms-paths__copy{display:flex;flex-direction:column;align-items:flex-start;gap:48px}
+.lms-paths__eyebrow{display:inline-flex;align-items:center;gap:8px;width:max-content;margin:0;padding:4px 8px;position:relative;background:rgba(122,95,255,.1);border:1px solid rgba(255,255,255,.05);color:#ececec;font-family:Inter,"Inter Placeholder",sans-serif;font-size:14px;font-weight:500;letter-spacing:-.6px;line-height:1.3}
+.lms-paths__eyebrow svg{display:block;flex:none}
+.lms-paths__rocket{width:14px;height:14px}
+.lms-paths__corner{position:absolute;width:5px;height:5px;pointer-events:none}
+.lms-paths__corner--tr{top:0;right:0}
+.lms-paths__corner--br{right:0;bottom:0}
+.lms-paths__corner--bl{bottom:0;left:0}
+.lms-paths__corner--tl{top:0;left:0}
+.lms-paths__title{margin:0;font-family:"Inter Display","Inter Display Placeholder",sans-serif;font-weight:500;font-size:56px;letter-spacing:-2px;line-height:1.1;color:#ececec}
+.lms-paths__subtitle{margin:20px 0 0;max-width:36rem;font-family:Inter,"Inter Placeholder",sans-serif;font-weight:500;font-size:18px;letter-spacing:-.8px;line-height:1.3;color:#ddd}
+.lms-paths__tabs{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:#242424;flex:none}
+.lms-paths__tabs button{height:36px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.65);font:500 13px/1 Inter,sans-serif;cursor:pointer;white-space:nowrap}
+.lms-paths__tabs button.is-active{background:#3a3a3a;color:#fff}
+.lms-paths__panel{border-radius:24px;background:#111;padding:20px}
+.lms-paths__grid{display:grid;gap:16px}
+.lms-paths__card{display:flex;flex-direction:column;height:100%;padding:22px;border-radius:16px;background:#242424;text-decoration:none;color:inherit}
+.lms-paths__card:hover h3{color:rgb(121,97,245)}
+.lms-paths__card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.lms-paths__card-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:999px;background:rgba(121,97,245,.16);color:rgb(176,164,255)}
+.lms-paths__card-icon svg{width:22px;height:22px;display:block}
+.lms-paths__card-level{padding:6px 10px;border-radius:6px;background:rgba(121,97,245,.16);color:rgb(176,164,255);font:500 11px/1.2 Inter,sans-serif;white-space:nowrap}
+.lms-paths__card h3{margin:18px 0 10px;font-family:"Inter Display","Inter Display Placeholder",sans-serif;font-size:17px;font-weight:500;letter-spacing:0;line-height:1.35;color:#ececec}
+.lms-paths__card p{margin:0;flex:1;font:400 13.5px/1.5 Inter,sans-serif;color:rgba(236,236,236,.72)}
+.lms-paths__card-meta{margin-top:14px;font:400 12px/1.3 Inter,sans-serif;color:rgba(255,255,255,.5)}
+.lms-paths__more{margin-top:16px;text-align:center}
+.lms-paths__more a{color:#ececec;font:500 14px/1 Inter,sans-serif;text-decoration:none}
+.lms-paths__more a:hover{color:rgb(121,97,245)}
+@media (min-width:768px){.lms-paths__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:900px){.lms-paths__header{flex-direction:row;align-items:flex-end;justify-content:space-between}}
+@media (min-width:992px){.lms-paths__grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:1199px) and (min-width:810px){.lms-paths__title{font-size:45px}}
+@media (max-width:809.98px){
+  .lms-paths{padding:56px 0 48px}
+  .lms-paths__title{font-size:36px}
+  .lms-paths__tabs{display:flex;width:100%}
+  .lms-paths__tabs button{flex:1;padding:0 8px}
+}
 </style>`
 
 /** Two lines: the sentence, then "a job-ready" plus the cycling role. */
@@ -548,6 +590,129 @@ const NAV_SCRIPT = `<script id="lms-nav-script">
 })();
 </script>`
 
+const PATHS_SCRIPT = `<script id="lms-paths">
+(function(){
+  var tabs=[
+    {id:"tracks",label:"Career Tracks"},
+    {id:"courses",label:"Courses"},
+    {id:"skills",label:"Skill Tracks"}
+  ];
+  var icons={
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3.5 19 6.3v5.4c0 4.2-2.8 7.2-7 8.8-4.2-1.6-7-4.6-7-8.8V6.3L12 3.5z"/></svg>',
+    radar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 12 17 9M12 8v4"/></svg>',
+    bug:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 9a4 4 0 0 1 8 0v2H8V9zM6 13h12M9 17v3M15 17v3M7 11 4 9M17 11l3-2"/></svg>',
+    cap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m3 10 9-5 9 5-9 5-9-5z"/><path d="M7 12v4c0 1.5 2.2 3 5 3s5-1.5 5-3v-4"/></svg>',
+    alarm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="13" r="7"/><path d="M12 9v5l3 2M5 4 3 6M19 4l2 2"/></svg>',
+    db:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
+    search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/></svg>',
+    flow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M6 9v3a3 3 0 0 0 3 3h6"/></svg>'
+  };
+  var data={
+    tracks:[
+      {title:"SOC Analyst",level:"Beginner → Intermediate",href:"/tracks/soc-analyst",description:"Zero to job-ready SOC analyst — roles, threat lifecycle, triage, SIEM fundamentals, and log analysis, with hands-on labs after every stage.",meta:"4.9 · 12+ hours · 2 courses · guided path",icon:"shield"},
+      {title:"SIEM Practitioner",level:"Intermediate",href:"/tracks/siem-practitioner",description:"Operate Securonix in production — architecture, tenant activation, UI workflows, AI agents, and Hub installation.",meta:"4.8 · 9 hours · 6 modules · labs",icon:"radar"},
+      {title:"Detection Engineer",level:"Intermediate → Advanced",href:"/courses",description:"Build detection use cases, tune alert quality, and validate investigations across SIEM and security telemetry.",meta:"4.8 · skill-focused · scenarios",icon:"bug"}
+    ],
+    courses:[
+      {title:"SOC Fundamentals",level:"Beginner",href:"/courses/soc-fundamentals",description:"Core security operations concepts: roles, threat lifecycle, triage, SIEM basics, and log analysis.",meta:"6 hrs · 6 modules · 28 lessons",icon:"cap"},
+      {title:"Securonix SIEM",level:"Intermediate",href:"/courses/securonix-siem",description:"Platform architecture, tenant activation, UI tour, AI agents, and Hub installation.",meta:"9 hrs · 6 modules · 42 lessons",icon:"radar"},
+      {title:"Incident Triage Lab",level:"Beginner",href:"/courses/soc-fundamentals/incident-triage",description:"Practice real alert workflows — prioritize, investigate, and document like a day-one analyst.",meta:"hands-on · SOC workflows",icon:"alarm"}
+    ],
+    skills:[
+      {title:"SIEM Fundamentals",level:"Beginner → Intermediate",href:"/courses/soc-fundamentals/siem-fundamentals",description:"Query, correlate, and operationalize SIEM alerts with confidence.",meta:"skill track · detection basics",icon:"db"},
+      {title:"Log Analysis",level:"Beginner",href:"/courses/soc-fundamentals/log-analysis",description:"Read telemetry, spot anomalies, and turn raw logs into investigation leads.",meta:"skill track · evidence first",icon:"search"},
+      {title:"Threat Lifecycle",level:"Beginner",href:"/courses/soc-fundamentals/threat-lifecycle",description:"Map attacker behavior from initial access through impact and recovery.",meta:"skill track · kill chain",icon:"flow"}
+    ]
+  };
+  function el(tag, cls, text){
+    var node=document.createElement(tag);
+    if(cls) node.className=cls;
+    if(text) node.textContent=text;
+    return node;
+  }
+  function render(grid, id){
+    grid.replaceChildren();
+    data[id].forEach(function(card){
+      var link=el("a","lms-paths__card");
+      link.href=card.href;
+      var top=el("div","lms-paths__card-top");
+      var icon=el("span","lms-paths__card-icon");
+      icon.innerHTML=icons[card.icon];
+      top.appendChild(icon);
+      top.appendChild(el("span","lms-paths__card-level",card.level));
+      link.appendChild(top);
+      link.appendChild(el("h3","",card.title));
+      link.appendChild(el("p","",card.description));
+      link.appendChild(el("span","lms-paths__card-meta",card.meta));
+      grid.appendChild(link);
+    });
+  }
+  function corner(cls, d1, d2){
+    return '<svg class="lms-paths__corner lms-paths__corner--'+cls+'" viewBox="0 0 5 5" aria-hidden="true"><path d="'+d1+'" fill="#EDEDFA"/><path d="'+d2+'" fill="#EDEDFA"/></svg>';
+  }
+  function eyebrow(){
+    var node=el("p","lms-paths__eyebrow");
+    node.innerHTML='<svg class="lms-paths__rocket" viewBox="0 0 14 15" fill="none" aria-hidden="true"><path stroke="#ECECEC" stroke-linecap="round" stroke-linejoin="round" stroke-width=".875" d="M9.094 8.485a3.5 3.5 0 0 1-3.407 4.305v-2.8m3.407-1.505a8.74 8.74 0 0 0 3.594-7.07 8.74 8.74 0 0 0-7.07 3.593m3.476 3.477A8.7 8.7 0 0 1 5.688 9.99m-.07-4.982a3.5 3.5 0 0 0-4.306 3.407h2.8m1.506-3.407a8.7 8.7 0 0 0-1.505 3.407M5.687 9.99l-.181.035a8.8 8.8 0 0 1-1.428-1.428l.035-.182M2.807 9.81a2.62 2.62 0 0 0-1.026 2.511 2.62 2.62 0 0 0 2.512-1.026m5.332-5.942a.875.875 0 1 1-1.75 0 .875.875 0 0 1 1.75 0"/></svg><span>Choose your path</span>'
+      +corner("tr","M4.50781 0.0869141H3.50781V4.08691H4.50781V0.0869141Z","M4.50781 0.0869141H0.507812V1.08691H4.50781V0.0869141Z")
+      +corner("br","M4.50781 4.08887H3.50781V0.0888672H4.50781V4.08887Z","M4.50781 4.08887H0.507812V3.08887H4.50781V4.08887Z")
+      +corner("bl","M0.492188 4.08301H1.49219V0.0830078H0.492188V4.08301Z","M0.492188 4.08301H4.49219V3.08301H0.492188V4.08301Z")
+      +corner("tl","M0.492188 0.0869141H1.49219V4.08691H0.492188V0.0869141Z","M0.492188 0.0869141H4.49219V1.08691H0.492188V0.0869141Z");
+    return node;
+  }
+  function mount(){
+    var section=document.getElementById("features");
+    if(!section||section.querySelector(".lms-paths")) return;
+    var root=el("div","lms-paths");
+    var head=el("div","lms-paths__header");
+    var copy=el("div","lms-paths__copy");
+    copy.appendChild(eyebrow());
+    var text=el("div","lms-paths__text");
+    var title=el("h2","lms-paths__title","Pick the role. Follow the path.");
+    title.id="landing-paths-heading";
+    text.appendChild(title);
+    text.appendChild(el("p","lms-paths__subtitle","Follow a complete career track, or focus on one skill at a time. Every path starts with the foundations and builds toward job-ready skills."));
+    copy.appendChild(text);
+    head.appendChild(copy);
+    var tablist=el("div","lms-paths__tabs");
+    tablist.setAttribute("role","tablist");
+    tablist.setAttribute("aria-label","Learning catalog");
+    head.appendChild(tablist);
+    root.appendChild(head);
+    var panel=el("div","lms-paths__panel");
+    panel.setAttribute("role","tabpanel");
+    var grid=el("div","lms-paths__grid");
+    panel.appendChild(grid);
+    var more=el("div","lms-paths__more");
+    var moreLink=el("a","","Explore all tracks");
+    moreLink.href="/tracks";
+    more.appendChild(moreLink);
+    panel.appendChild(more);
+    root.appendChild(panel);
+    section.setAttribute("aria-labelledby","landing-paths-heading");
+    section.appendChild(root);
+    tabs.forEach(function(tab){
+      var button=el("button", tab.id==="tracks"?"is-active":"");
+      button.type="button";
+      button.setAttribute("role","tab");
+      button.setAttribute("aria-selected", tab.id==="tracks"?"true":"false");
+      button.textContent=tab.label;
+      button.addEventListener("click", function(){
+        tablist.querySelectorAll("button").forEach(function(other){
+          var on=other===button;
+          other.classList.toggle("is-active", on);
+          other.setAttribute("aria-selected", on?"true":"false");
+        });
+        render(grid, tab.id);
+      });
+      tablist.appendChild(button);
+    });
+    render(grid, "tracks");
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", mount);
+  else mount();
+})();
+</script>`
+
 function applyHeroCopy(html: string) {
   if (!html.includes(PREVIOUS_HERO_TITLE) || !html.includes(PREVIOUS_HERO_SUBTITLE)) {
     throw new Error("Hero title or subtitle was not found in references/template.html")
@@ -590,7 +755,7 @@ export async function GET() {
     path.join(process.cwd(), "public", "assets", "images", "brand-logos", "lms-logo.png")
   )
   const logoSrc = `/assets/images/brand-logos/lms-logo.png?v=${Math.floor(logoStat.mtimeMs)}`
-  const bootScripts = `${HERO_ROLE_SCRIPT}${NAV_SCRIPT.replace("__LMS_LOGO__", logoSrc)}`
+  const bootScripts = `${HERO_ROLE_SCRIPT}${NAV_SCRIPT.replace("__LMS_LOGO__", logoSrc)}${PATHS_SCRIPT}`
   if (html.includes("</body>")) {
     html = html.replace("</body>", `${bootScripts}</body>`)
   } else {
