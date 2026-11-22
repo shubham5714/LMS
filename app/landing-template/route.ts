@@ -13,7 +13,20 @@ export const runtime = "nodejs"
 const PRODUCTION_HIDE_STYLE = `<style id="lms-production-hide">
 #__framer-badge-container,
 .framer-x1unk3-container,
-[data-framer-name="Footer Bottom"] [data-framer-name="Rating"]{
+[data-framer-name="Footer Bottom"] [data-framer-name="Rating"],
+[data-framer-name="Big Logo"],
+[data-framer-name="Compare Table"],
+section.framer-02N4Y,
+[data-framer-name="Section Case Study"] [data-framer-name="Stats Wrapper"],
+#pricing .framer-asdo3j-container,
+[data-framer-name="Section Use Cases"] svg,
+[data-framer-name="Section Benefits"] svg,
+[data-framer-name="Section Use Cases"] [data-framer-name="Corner Vector"],
+[data-framer-name="Section Use Cases"] [data-framer-name="Visual BG"] > :not([data-framer-background-image-wrapper]),
+[data-framer-name="Section Benefits"] [data-framer-name="Chat Container"],
+[data-framer-name="Section Benefits"] [data-framer-name="Content Wrap"] > :not([data-framer-name="Task Container"]),
+[data-framer-name="Section Use Cases"] [data-framer-background-image-wrapper]:has(img[src^="data:image/svg"]),
+[data-framer-name="Section Benefits"] [data-framer-background-image-wrapper]:has(img[src^="data:image/svg"]){
   display:none!important;
   visibility:hidden!important;
   pointer-events:none!important;
@@ -201,11 +214,22 @@ nav a[data-framer-name=White]{
   flex:none!important;
 }
 nav a[data-framer-name=White] [data-framer-background-image-wrapper]{display:none!important}
-nav a[data-framer-name=White] .lms-wordmark{
+nav a[data-framer-name=White] .lms-wordmark,
+a[data-framer-name="Footer Logo"] .lms-wordmark{
   display:block;
   height:30px;
   width:auto;
 }
+a[data-framer-name="Footer Logo"]{
+  width:auto!important;
+  height:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  overflow:visible!important;
+  text-decoration:none!important;
+}
+a[data-framer-name="Footer Logo"] [data-framer-background-image-wrapper]{display:none!important}
 @media (min-width:1016px){
   nav .lms-mobile-toggle,
   .lms-mobile-panel,
@@ -310,7 +334,7 @@ nav a[data-framer-name=White] .lms-wordmark{
 .lms-paths__tabs{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:#242424;flex:none}
 .lms-paths__tabs button{height:36px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.65);font:500 13px/1 Inter,sans-serif;cursor:pointer;white-space:nowrap}
 .lms-paths__tabs button.is-active{background:#3a3a3a;color:#fff}
-.lms-paths__panel{border-radius:24px;background:#111;padding:20px}
+.lms-paths__panel{border-radius:0;background:transparent;padding:0}
 .lms-paths__grid{display:grid;gap:16px}
 .lms-paths__card{display:flex;flex-direction:column;height:100%;padding:22px;border-radius:16px;background:#242424;text-decoration:none;color:inherit}
 .lms-paths__card:hover h3{color:rgb(121,97,245)}
@@ -333,6 +357,77 @@ nav a[data-framer-name=White] .lms-wordmark{
   .lms-paths__title{font-size:36px}
   .lms-paths__tabs{display:flex;width:100%}
   .lms-paths__tabs button{flex:1;padding:0 8px}
+}
+.framer-xchttm{justify-content:center!important}
+.framer-nagrx9-container{display:none!important}
+@media (max-width:809.98px){
+  .framer-xchttm{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    align-self:center!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .framer-xchttm > .ssr-variant,
+  .framer-xchttm .framer-1b99c8j-container{
+    display:flex!important;
+    justify-content:center!important;
+    align-items:center!important;
+    width:auto!important;
+    max-width:100%!important;
+    height:auto!important;
+    flex:0 0 auto!important;
+    align-self:center!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  .framer-xchttm a[data-framer-name=Secondary]{
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
+#pricing .framer-16383ym{
+  justify-content:center!important;
+  align-items:stretch!important;
+  width:100%!important;
+}
+#pricing .framer-126g1z5-container,
+#pricing .framer-1togsfs-container{
+  flex:1 1 0!important;
+  width:auto!important;
+  max-width:480px!important;
+  min-width:0!important;
+}
+#pricing [data-framer-name="Cost Wrapper"] > [data-framer-name="Yearly"],
+#pricing [data-framer-name="Cost Wrapper"] > [data-framer-name=Yearly]{
+  display:none!important;
+}
+#pricing.is-yearly [data-framer-name="Cost Wrapper"] > [data-framer-name="Monthly"],
+#pricing.is-yearly [data-framer-name="Cost Wrapper"] > [data-framer-name=Monthly]{
+  display:none!important;
+}
+#pricing.is-yearly [data-framer-name="Cost Wrapper"] > [data-framer-name="Yearly"],
+#pricing.is-yearly [data-framer-name="Cost Wrapper"] > [data-framer-name=Yearly]{
+  display:flex!important;
+  transform:none!important;
+}
+@media (max-width:809.98px){
+  #pricing .framer-16383ym{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    justify-content:flex-start!important;
+    width:100%!important;
+    gap:16px!important;
+  }
+  #pricing .framer-126g1z5-container,
+  #pricing .framer-1togsfs-container,
+  #pricing .framer-SCFnl{
+    flex:none!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
 }
 </style>`
 
@@ -491,6 +586,17 @@ const NAV_SCRIPT = `<script id="lms-nav-script">
       mark.alt="Cyber Peers";
       mark.draggable=false;
       link.appendChild(mark);
+    }
+    var footer=document.querySelector('a[data-framer-name="Footer Logo"]');
+    if(footer&&!footer.querySelector(".lms-wordmark")){
+      footer.setAttribute("href","/");
+      footer.setAttribute("aria-label","Cyber Peers");
+      var footerMark=document.createElement("img");
+      footerMark.className="lms-wordmark";
+      footerMark.src="__LMS_LOGO__";
+      footerMark.alt="Cyber Peers";
+      footerMark.draggable=false;
+      footer.appendChild(footerMark);
     }
   }
   function applyMenu(){
@@ -713,6 +819,721 @@ const PATHS_SCRIPT = `<script id="lms-paths">
 })();
 </script>`
 
+const SPAN = "span style=display:inline-block;opacity:1;filter:blur(0px);transform:none;will-change:transform"
+
+function headingWords(sentence: string) {
+  return sentence
+    .split(" ")
+    .map((word) => `<${SPAN}>${word}</span>`)
+    .join(" ")
+}
+
+function replaceOnce(html: string, from: string, to: string, label: string) {
+  const at = html.indexOf(from)
+  if (at < 0 || html.indexOf(from, at + from.length) >= 0) {
+    throw new Error(`${label} was not found once in references/template.html`)
+  }
+  return html.slice(0, at) + to + html.slice(at + from.length)
+}
+
+function applyIntegrationsCopy(html: string) {
+  const title =
+    ["Works", "with", "the", "tools", "your", "team", "already", "loves"]
+      .map((word) => `<${SPAN}>${word}</span>`)
+      .join(" ")
+  const subtitle =
+    '<p class="framer-text framer-styles-preset-ywza5g" data-styles-preset=Yky4VveaB>Planquo replaces disconnected tools with a unified workspace—tasks, goals, docs, and automations, all in sync.</p>'
+
+  let next = replaceOnce(html, ">INTEGRATIONS</p>", ">Tech stacks</p>", "Integrations label")
+  next = replaceOnce(next, title, headingWords("Master the tools companies actually use"), "Integrations title")
+  return replaceOnce(
+    next,
+    subtitle,
+    '<p class="framer-text framer-styles-preset-ywza5g" data-styles-preset=Yky4VveaB>Learn the high-demand SOC stack — from SIEM platforms to detection and response workflows.</p>',
+    "Integrations subtitle"
+  )
+}
+
+const TOOL_LOGOS = [
+  { name: "Microsoft Sentinel", src: "/assets/images/brand-logos/landing-sentinel.png" },
+  { name: "Elastic", src: "/assets/images/brand-logos/landing-elastic.png" },
+  { name: "Palo Alto", src: "/assets/images/brand-logos/landing-paloalto.png" },
+  { name: "CrowdStrike", src: "/assets/images/brand-logos/landing-crowdstrike.png" },
+  { name: "Trend Micro", src: "/assets/images/brand-logos/landing-trendmicro.png" },
+  { name: "QRadar", src: "/assets/images/brand-logos/landing-qradar.png" },
+  { name: "Splunk", src: "/assets/images/brand-logos/landing-splunk.png" },
+  { name: "Zscaler", src: "/assets/images/brand-logos/landing-zscaler.png" },
+]
+
+/** Framer leaves the integration icon row at translateX(-0px) with no runtime. */
+const FAQ_STYLE = `<style id="lms-faq-tabs">
+[data-framer-name="Section FAQ"] [data-framer-name="In Active"],
+[data-framer-name="Section FAQ"] [data-framer-name="Category"]>:has([data-framer-name="In Active"]),
+[data-framer-name="Section FAQ"] [data-framer-name=Category]>:has([data-framer-name="In Active"]){
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  flex:none!important;
+  width:0!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+[data-framer-name="Section FAQ"] [data-framer-name="Category"]>:has([data-framer-name="Active"]),
+[data-framer-name="Section FAQ"] [data-framer-name="Category"]>:has([data-framer-name=Active]),
+[data-framer-name="Section FAQ"] [data-framer-name=Category]>:has([data-framer-name="Active"]),
+[data-framer-name="Section FAQ"] [data-framer-name=Category]>:has([data-framer-name=Active]){
+  display:flex!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:100%!important;
+  min-width:0!important;
+  justify-content:center!important;
+  align-items:center!important;
+}
+[data-framer-name="Section FAQ"] .framer-z11nfj-container,
+[data-framer-name="Section FAQ"] [data-framer-name="Desktop - Getting Started"],
+[data-framer-name="Section FAQ"] .framer-1x4jug6{
+  display:flex!important;
+  flex-direction:column!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow:visible!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  place-content:unset!important;
+  box-sizing:border-box!important;
+}
+[data-framer-name="Section FAQ"] [data-framer-name="Category"],
+[data-framer-name="Section FAQ"] [data-framer-name=Category],
+[data-framer-name="Section FAQ"] .framer-1a1riar{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0 auto!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+  place-content:center!important;
+  gap:0!important;
+  overflow:visible!important;
+  box-sizing:border-box!important;
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  transform:none!important;
+}
+[data-framer-name="Section FAQ"] [data-framer-name="Active"],
+[data-framer-name="Section FAQ"] [data-framer-name=Active]{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:max-content!important;
+  max-width:100%!important;
+  margin:0!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:center!important;
+  gap:24px!important;
+  padding:0 16px!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+}
+[data-framer-name="Section FAQ"] [data-framer-name="Title"],
+[data-framer-name="Section FAQ"] [data-framer-name=Title]{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  flex:none!important;
+  width:auto!important;
+  white-space:pre!important;
+  overflow:visible!important;
+}
+[data-framer-name="Section FAQ"] [data-framer-name="Title"] p,
+[data-framer-name="Section FAQ"] [data-framer-name=Title] p{
+  white-space:pre!important;
+  overflow:visible!important;
+  text-overflow:unset!important;
+  text-align:center!important;
+  width:auto!important;
+  margin:0!important;
+}
+[data-framer-name="Section FAQ"] [data-framer-name="Active"] [data-framer-name="Underline"],
+[data-framer-name="Section FAQ"] [data-framer-name=Active] [data-framer-name=Underline],
+[data-framer-name="Section FAQ"] [data-framer-name=Active] [data-framer-name="Underline"]{
+  flex:none!important;
+  align-self:stretch!important;
+  width:100%!important;
+  height:2px!important;
+  background-color:rgb(122,95,255)!important;
+  box-shadow:rgb(122,95,255) 0 -4px 18px 3px!important;
+  overflow:hidden!important;
+}
+@media (max-width:1015.98px){
+  [data-framer-name="Section FAQ"] .framer-z11nfj-container,
+  [data-framer-name="Section FAQ"] [data-framer-name="Desktop - Getting Started"],
+  [data-framer-name="Section FAQ"] .framer-1x4jug6,
+  [data-framer-name="Section FAQ"] [data-framer-name="Accordion Wrapper"]{
+    width:100%!important;
+    max-width:100%!important;
+    align-items:center!important;
+    box-sizing:border-box!important;
+  }
+}
+[data-framer-name="Section FAQ"] [data-lms-faq-item] [data-lms-faq-panel]{
+  overflow:hidden;
+  transition:height .32s ease;
+}
+[data-framer-name="Section FAQ"] [data-lms-faq-item] [data-lms-faq-icon]{
+  transition:transform .28s ease;
+  transform-origin:center center;
+}
+[data-framer-name="Section FAQ"] [data-lms-faq-item].is-open [data-lms-faq-icon]{
+  transform:rotate(45deg)!important;
+}
+@media (prefers-reduced-motion:reduce){
+  [data-framer-name="Section FAQ"] [data-lms-faq-item] [data-lms-faq-panel],
+  [data-framer-name="Section FAQ"] [data-lms-faq-item] [data-lms-faq-icon]{transition:none!important}
+}
+</style>`
+
+const FAQ_SCRIPT = `<script id="lms-faq-tabs">
+(function(){
+  function faqRoot(){
+    return document.querySelector('[data-framer-name="Section FAQ"]');
+  }
+  function setImp(el, prop, val){
+    if(el)el.style.setProperty(prop, val, "important");
+  }
+  function centerFaqTabs(){
+    var root=faqRoot();
+    if(!root)return;
+    var desktop=root.querySelector('[data-framer-name="Desktop - Getting Started"]');
+    var category=root.querySelector('[data-framer-name="Category"],[data-framer-name=Category]');
+    if(desktop){
+      setImp(desktop,"display","flex");
+      setImp(desktop,"flex-direction","column");
+      setImp(desktop,"align-items","center");
+      setImp(desktop,"justify-content","flex-start");
+      setImp(desktop,"width","100%");
+      setImp(desktop,"max-width","100%");
+      setImp(desktop,"overflow","visible");
+      if(desktop.parentElement){
+        setImp(desktop.parentElement,"width","100%");
+        setImp(desktop.parentElement,"max-width","100%");
+        setImp(desktop.parentElement,"display","flex");
+        setImp(desktop.parentElement,"flex-direction","column");
+        setImp(desktop.parentElement,"align-items","center");
+      }
+    }
+    if(category){
+      setImp(category,"display","flex");
+      setImp(category,"flex-direction","row");
+      setImp(category,"flex-wrap","nowrap");
+      setImp(category,"justify-content","center");
+      setImp(category,"align-items","stretch");
+      setImp(category,"width","100%");
+      setImp(category,"max-width","100%");
+      setImp(category,"min-width","0");
+      setImp(category,"margin","0 auto");
+      setImp(category,"gap","0");
+      setImp(category,"position","relative");
+      setImp(category,"left","auto");
+      setImp(category,"right","auto");
+      setImp(category,"transform","none");
+      setImp(category,"align-self","stretch");
+      var wrappers=category.children;
+      for(var w=0;w<wrappers.length;w++){
+        var wrap=wrappers[w];
+        var inactive=wrap.querySelector('[data-framer-name="In Active"]');
+        var activeTab=wrap.querySelector('[data-framer-name="Active"],[data-framer-name=Active]');
+        if(inactive && !activeTab){
+          setImp(wrap,"display","none");
+          setImp(wrap,"flex","0 0 0");
+          setImp(wrap,"width","0");
+          setImp(inactive,"display","none");
+          continue;
+        }
+        setImp(wrap,"display","flex");
+        setImp(wrap,"flex","0 0 auto");
+        setImp(wrap,"width","auto");
+        setImp(wrap,"max-width","100%");
+        setImp(wrap,"justify-content","center");
+        setImp(wrap,"align-items","center");
+      }
+    }
+    var tabs=root.querySelectorAll('[data-framer-name="Active"],[data-framer-name=Active],[data-framer-name="In Active"]');
+    for(var t=0;t<tabs.length;t++){
+      var tab=tabs[t];
+      if(tab.getAttribute("data-framer-name")==="In Active"){
+        setImp(tab,"display","none");
+        continue;
+      }
+      setImp(tab,"display","flex");
+      setImp(tab,"flex-direction","column");
+      setImp(tab,"flex","0 0 auto");
+      setImp(tab,"width","auto");
+      setImp(tab,"max-width","100%");
+      setImp(tab,"margin","0");
+      setImp(tab,"align-items","center");
+      setImp(tab,"justify-content","center");
+      setImp(tab,"align-self","center");
+      setImp(tab,"gap","24px");
+    }
+  }
+  function items(){
+    var root=faqRoot();
+    if(!root)return [];
+    return Array.prototype.slice.call(
+      root.querySelectorAll('[class*="force-styles"][class*="-item-"]')
+    );
+  }
+  function panelOf(item){
+    return item.querySelector('[style*="will-change:height"],[style*="will-change: height"]')||
+      item.querySelector('div[style*="overflow:hidden"]');
+  }
+  function headerOf(item){
+    return item.querySelector('[style*="cursor:pointer"]')||item.firstElementChild;
+  }
+  function iconOf(header){
+    return header?header.querySelector("img"):null;
+  }
+  function setOpen(item, open, animate){
+    var panel=panelOf(item);
+    var header=headerOf(item);
+    var icon=iconOf(header);
+    if(!panel)return;
+    item.classList.toggle("is-open", open);
+    item.setAttribute("data-lms-faq-item","1");
+    panel.setAttribute("data-lms-faq-panel","1");
+    if(icon)icon.setAttribute("data-lms-faq-icon","1");
+    if(header){
+      header.setAttribute("role","button");
+      header.setAttribute("tabindex","0");
+      header.setAttribute("aria-expanded", open?"true":"false");
+    }
+    if(!animate){
+      panel.style.height=open?"auto":"0px";
+      return;
+    }
+    if(open){
+      panel.style.height=panel.scrollHeight+"px";
+      var onEnd=function(ev){
+        if(ev.propertyName!=="height")return;
+        panel.removeEventListener("transitionend",onEnd);
+        if(item.classList.contains("is-open"))panel.style.height="auto";
+      };
+      panel.addEventListener("transitionend",onEnd);
+    }else{
+      panel.style.height=panel.scrollHeight+"px";
+      void panel.offsetHeight;
+      panel.style.height="0px";
+    }
+  }
+  function runAccordion(){
+    var list=items();
+    if(!list.length)return;
+    for(var i=0;i<list.length;i++){
+      (function(item){
+        setOpen(item, false, false);
+        var header=headerOf(item);
+        if(!header||header.dataset.lmsFaqBound==="1")return;
+        header.dataset.lmsFaqBound="1";
+        header.addEventListener("click", function(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+          var open=!item.classList.contains("is-open");
+          for(var j=0;j<list.length;j++){
+            if(list[j]!==item)setOpen(list[j], false, true);
+          }
+          setOpen(item, open, true);
+        });
+        header.addEventListener("keydown", function(ev){
+          if(ev.key==="Enter"||ev.key===" "){
+            ev.preventDefault();
+            header.click();
+          }
+        });
+      })(list[i]);
+    }
+  }
+  function run(){ centerFaqTabs(); runAccordion(); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", run);
+  else run();
+  window.addEventListener("resize", centerFaqTabs);
+  setTimeout(centerFaqTabs, 0);
+  setTimeout(centerFaqTabs, 250);
+})();
+</script>`
+
+const PRICING_SCRIPT = `<script id="lms-pricing">
+(function(){
+  function setBilling(yearly){
+    var root=document.getElementById("pricing");
+    if(!root)return;
+    root.classList.toggle("is-yearly", yearly);
+    var monthly=root.querySelector('[data-framer-name="Tabs Links"] [data-framer-name=Monthly]');
+    var yearTab=root.querySelector('[data-framer-name="Tabs Links"] [data-framer-name=Yearly]');
+    if(monthly) monthly.style.backgroundColor=yearly?"transparent":"rgb(122,95,255)";
+    if(yearTab) yearTab.style.backgroundColor=yearly?"rgb(122,95,255)":"transparent";
+  }
+  function run(){
+    var root=document.getElementById("pricing");
+    if(!root)return;
+    var monthly=root.querySelector('[data-framer-name="Tabs Links"] [data-framer-name=Monthly]');
+    var yearTab=root.querySelector('[data-framer-name="Tabs Links"] [data-framer-name=Yearly]');
+    if(monthly&&monthly.dataset.lmsBilling!=="1"){
+      monthly.dataset.lmsBilling="1";
+      monthly.addEventListener("click", function(){ setBilling(false); });
+    }
+    if(yearTab&&yearTab.dataset.lmsBilling!=="1"){
+      yearTab.dataset.lmsBilling="1";
+      yearTab.addEventListener("click", function(){ setBilling(true); });
+    }
+    setBilling(false);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", run);
+  else run();
+})();
+</script>`
+
+const BENEFITS_STYLE = `<style id="lms-benefits">
+[data-framer-name="Section Benefits"] [data-framer-name="Benefit Tab Left"]{
+  gap:12px!important;
+  height:auto!important;
+  align-self:flex-start!important;
+  align-items:stretch!important;
+}
+[data-framer-name="Section Benefits"] [data-framer-name="Benefit Tab Left"]>[class*="-container"]{
+  flex:none!important;
+  height:auto!important;
+  width:100%!important;
+}
+[data-framer-name="Section Benefits"] [data-framer-name="Desktop - Tab Link Active"],
+[data-framer-name="Section Benefits"] [data-framer-name="Desktop - Tab Link Inactive"]{
+  cursor:pointer!important;
+  height:auto!important;
+  min-height:88px!important;
+  overflow:hidden!important;
+  align-items:center!important;
+  place-content:center!important;
+  transition:min-height .35s ease!important;
+}
+[data-framer-name="Section Benefits"] [data-framer-name="Feature section"]{
+  overflow:visible!important;
+  min-width:0!important;
+  gap:8px!important;
+  place-content:center flex-start!important;
+  justify-content:center!important;
+}
+[data-framer-name="Section Benefits"] [data-framer-name="Feature title"],
+[data-framer-name="Section Benefits"] [data-framer-name="Feature title"] h3{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:unset!important;
+  line-height:1.3em!important;
+}
+.lms-benefit-desc{
+  display:grid!important;
+  width:100%!important;
+  position:relative!important;
+  top:auto!important;
+  left:auto!important;
+  transform:none!important;
+  grid-template-rows:0fr!important;
+  opacity:0!important;
+  transition:grid-template-rows .4s cubic-bezier(.22,1,.36,1),opacity .35s ease!important;
+}
+.lms-benefit-desc>*{min-height:0!important;overflow:hidden!important}
+.lms-benefit-desc.is-off{pointer-events:none!important}
+.lms-benefit-desc.is-on{grid-template-rows:1fr!important;opacity:1!important}
+.lms-benefit-desc.is-off [data-framer-name="Feature description"],
+.lms-benefit-desc.is-off p{opacity:0!important}
+.lms-benefit-desc.is-on [data-framer-name="Feature description"],
+.lms-benefit-desc.is-on p{opacity:1!important}
+[data-framer-name="Section Benefits"] [data-framer-name="Visual Wrapper"],
+[data-framer-name="Section Benefits"] [data-framer-name="Benefit Tab Right"]{position:relative!important}
+.lms-benefit-visual{
+  transition:opacity .5s ease!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+}
+.lms-benefit-visual.is-off{opacity:0!important;visibility:hidden!important;pointer-events:none!important;z-index:1!important}
+.lms-benefit-visual.is-on{opacity:1!important;visibility:visible!important;pointer-events:auto!important;z-index:2!important}
+@media (max-width:809.98px){
+  [data-framer-name="Section Benefits"] [data-framer-name="Tab1 / Desktop"]{
+    flex-direction:column!important;
+    flex-wrap:nowrap!important;
+    align-items:stretch!important;
+    justify-content:flex-start!important;
+    gap:20px!important;
+    height:auto!important;
+    width:100%!important;
+  }
+  [data-framer-name="Section Benefits"] [data-framer-name="Benefit Tab Left"],
+  [data-framer-name="Section Benefits"] [data-framer-name="Benefit Tab Right"]{
+    width:100%!important;
+    max-width:100%!important;
+    flex:none!important;
+    align-self:stretch!important;
+  }
+  [data-framer-name="Section Benefits"] [data-framer-name="Benefit Tab Left"]{order:1!important}
+  [data-framer-name="Section Benefits"] [data-framer-name="Benefit Tab Right"]{
+    order:2!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:16px!important;
+    overflow:visible!important;
+  }
+  [data-framer-name="Section Benefits"] [data-framer-name="Visual Wrapper"]{
+    width:100%!important;
+    height:auto!important;
+    min-height:240px!important;
+    flex:none!important;
+    position:relative!important;
+    overflow:hidden!important;
+  }
+  [data-framer-name="Section Benefits"] .lms-benefit-visual.is-on{
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:240px!important;
+  }
+  [data-framer-name="Section Benefits"] .lms-benefit-visual.is-off{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .lms-benefit-desc,.lms-benefit-visual{transition:none!important}
+}
+</style>`
+
+const BENEFITS_SCRIPT = `<script id="lms-benefits">
+(function(){
+  var ACTIVE_NAME="Desktop - Tab Link Active";
+  var INACTIVE_NAME="Desktop - Tab Link Inactive";
+  var ACTIVE_VARIANT="framer-v-xtjs40";
+  var INACTIVE_VARIANT="framer-v-1ckrodh";
+  var VISUALS=["Real Time Discussion","Flexible Views","Shared Docs","Integrated Workflows"];
+  var current=-1;
+  function benefitsRoot(){
+    return document.querySelector('[data-framer-name="Section Benefits"]')||document;
+  }
+  function tabs(){
+    var left=benefitsRoot().querySelector('[data-framer-name="Benefit Tab Left"]')||benefitsRoot();
+    return Array.prototype.slice.call(left.querySelectorAll('[data-framer-name="Desktop - Tab Link Active"],[data-framer-name="Desktop - Tab Link Inactive"]'));
+  }
+  function visuals(){
+    var wrap=benefitsRoot().querySelector('[data-framer-name="Benefit Tab Right"] [data-framer-name="Visual Wrapper"]');
+    if(!wrap)return [];
+    return VISUALS.map(function(name){
+      var nodes=wrap.querySelectorAll(':scope > [data-framer-name="'+name+'"]');
+      return nodes.length?nodes[0]:wrap.querySelector('[data-framer-name="'+name+'"]');
+    });
+  }
+  function prepDesc(desc){
+    if(desc)desc.classList.add("lms-benefit-desc");
+  }
+  function setDesc(desc, on){
+    if(!desc)return;
+    prepDesc(desc);
+    desc.style.position="relative";
+    desc.style.top="auto";
+    desc.style.left="auto";
+    desc.style.transform="none";
+    desc.style.width="100%";
+    desc.classList.toggle("is-on", on);
+    desc.classList.toggle("is-off", !on);
+  }
+  function setTabState(tab, active){
+    if(!tab)return;
+    tab.setAttribute("data-framer-name", active?ACTIVE_NAME:INACTIVE_NAME);
+    tab.classList.remove(ACTIVE_VARIANT,INACTIVE_VARIANT);
+    tab.classList.add(active?ACTIVE_VARIANT:INACTIVE_VARIANT);
+    var desc=tab.querySelector("[data-framer-name=description]")||tab.querySelector(".framer-31togp");
+    setDesc(desc, active);
+  }
+  function showVisual(index){
+    var panels=visuals();
+    var visualIndex=Math.min(index, Math.max(panels.length-1, 0));
+    for(var i=0;i<panels.length;i++){
+      var panel=panels[i];
+      if(!panel)continue;
+      panel.classList.add("lms-benefit-visual");
+      var on=i===visualIndex;
+      panel.classList.toggle("is-on", on);
+      panel.classList.toggle("is-off", !on);
+    }
+  }
+  function activate(index){
+    var list=tabs();
+    for(var i=0;i<list.length;i++)setTabState(list[i], i===index);
+    showVisual(index);
+    current=index;
+  }
+  function run(){
+    var list=tabs();
+    if(list.length<2)return;
+    activate(0);
+    for(var t=0;t<list.length;t++){
+      (function(index){
+        var tab=list[index];
+        tab.setAttribute("role","button");
+        tab.setAttribute("tabindex","0");
+        tab.addEventListener("click", function(ev){
+          ev.preventDefault();
+          activate(index);
+        });
+      })(t);
+    }
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded", run);
+  else run();
+})();
+</script>`
+
+const MARQUEE_STYLE = `<style id="lms-logo-marquee">
+@keyframes lms-marquee-rtl{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+section[style*="mask-image"]>ul.lms-marquee-track{
+  width:max-content!important;
+  max-width:none!important;
+  will-change:transform;
+  animation:lms-marquee-rtl 65s linear infinite;
+}
+section[style*="mask-image"]>ul.lms-marquee-track[data-lms-gap="tight"]{
+  animation-duration:55s;
+}
+[data-framer-name="Intergration Icon"] [data-framer-name="Icon"]{
+  width:48px!important;
+  height:48px!important;
+}
+[data-framer-name="Intergration Icon"] img{
+  object-fit:contain!important;
+  object-position:center!important;
+  padding:0;
+  box-sizing:border-box;
+}
+section[style*="mask-image"]:has(>ul[data-lms-static]){
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+  justify-content:center!important;
+}
+ul[data-lms-static]{
+  width:100%!important;
+  max-width:100%!important;
+  justify-content:center!important;
+  transform:none!important;
+  animation:none!important;
+}
+@media (prefers-reduced-motion:reduce){
+  section[style*="mask-image"]>ul.lms-marquee-track{animation:none!important;transform:none!important}
+}
+</style>`
+
+const MARQUEE_SCRIPT = `<script id="lms-logo-marquee-script">
+(function(){
+  function armMarquee(ul){
+    if(!ul||ul.dataset.lmsMarquee==="1"||ul.hasAttribute("data-lms-static"))return;
+    ul.dataset.lmsMarquee="1";
+    var kids=Array.prototype.slice.call(ul.children);
+    if(!kids.length)return;
+    for(var i=0;i<kids.length;i++){
+      ul.appendChild(kids[i].cloneNode(true));
+    }
+    if((ul.getAttribute("style")||"").indexOf("gap:20px")!==-1){
+      ul.setAttribute("data-lms-gap","tight");
+    }
+    ul.classList.add("lms-marquee-track");
+    matchDrxSpeed(ul);
+  }
+  // DRX Public moves a short row: 4 company logos in 65s (~9.9px/s), 8 integration tiles in 55s (~14.4px/s).
+  function matchDrxSpeed(ul){
+    var tight=ul.getAttribute("data-lms-gap")==="tight";
+    var pxPerSec=tight ? (790/55) : (644/65);
+    var travel=ul.scrollWidth/2;
+    if(travel>0) ul.style.animationDuration=(travel/pxPerSec).toFixed(1)+"s";
+  }
+  function run(){
+    var sections=document.querySelectorAll('section[style*="mask-image"]');
+    for(var s=0;s<sections.length;s++){
+      var ul=sections[s].querySelector(":scope > ul");
+      if(ul)armMarquee(ul);
+    }
+    var uls=document.querySelectorAll('ul[style*="translateX(0px)"],ul[style*="translateX(-0px)"]');
+    for(var u=0;u<uls.length;u++)armMarquee(uls[u]);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",run);
+  else run();
+})();
+</script>`
+
+function applyTrustedLogo(html: string) {
+  const marker = "Trusted by 4,000+ teams across 25 countries"
+  const at = html.indexOf(marker)
+  const start = at < 0 ? -1 : html.indexOf("<ul", at)
+  const end = start < 0 ? -1 : html.indexOf("</ul>", start)
+  if (start < 0 || end < 0) {
+    throw new Error("Trusted-by logo row was not found in references/template.html")
+  }
+  const ul = html.slice(start, end)
+  const openEnd = ul.indexOf(">")
+  const firstLi = ul.indexOf("<li")
+  const secondLi = ul.indexOf("<li", firstLi + 3)
+  if (openEnd < 0 || firstLi < 0 || secondLi < 0) {
+    throw new Error("Trusted-by company logos were not found in references/template.html")
+  }
+  const item = ul.slice(firstLi, secondLi).replace(
+    /src=(?:"data:image\/svg\+xml;base64,[^"]+"|data:image\/svg\+xml;base64,[^\s>]+)(?: alt="[^"]*")?/,
+    'src="/assets/images/brand-logos/astra-logo.png" alt="Astra Cybertech"'
+  )
+  if (!item.includes("astra-logo.png")) {
+    throw new Error("Trusted-by company logo image was not found in references/template.html")
+  }
+  const open = ul.slice(0, openEnd).replace("<ul", "<ul data-lms-static=1")
+  return replaceOnce(
+    html.slice(0, start) + open + ">" + item + html.slice(end),
+    marker,
+    "Trusted by 500+ Aspiring &amp; Working Security Practitioners",
+    "Trusted-by line"
+  )
+}
+
+function applyToolLogos(html: string) {
+  const marker = "gap:20px;position:relative;flex-direction:row;will-change:auto;transform:translateX(-0px)"
+  const at = html.indexOf(marker)
+  const start = at < 0 ? -1 : html.lastIndexOf("<ul", at)
+  const end = start < 0 ? -1 : html.indexOf("</ul>", start)
+  if (start < 0 || end < 0) {
+    throw new Error("Integrations icon row was not found in references/template.html")
+  }
+  let count = 0
+  const row = html.slice(start, end).replace(
+    /src=(?:"data:image\/svg\+xml;base64,[^"]+"|data:image\/svg\+xml;base64,[^\s>]+)(?: alt="[^"]*")?/g,
+    () => {
+      const tool = TOOL_LOGOS[count % TOOL_LOGOS.length]
+      count += 1
+      return `src="${tool.src}" alt="${tool.name}"`
+    }
+  )
+  if (count !== 35) {
+    throw new Error("Integrations icons were not found in references/template.html")
+  }
+  return html.slice(0, start) + row + html.slice(end)
+}
+
 function applyHeroCopy(html: string) {
   if (!html.includes(PREVIOUS_HERO_TITLE) || !html.includes(PREVIOUS_HERO_SUBTITLE)) {
     throw new Error("Hero title or subtitle was not found in references/template.html")
@@ -729,16 +1550,170 @@ function applyHeroCopy(html: string) {
   }
 
   let cta = next.slice(start, end)
-  const primaryLabel = cta.replace(">Start for free</p>", ">Browse Courses</p>")
-  const secondaryLabel = primaryLabel.replace(">Book a demo</p>", ">Explore Tracks</p>")
-  if (secondaryLabel === cta) {
-    throw new Error("Hero CTA labels were not found in references/template.html")
+  const primaryBlock = '<div class="ssr-variant hidden-98qijj hidden-do64xo"><div class=framer-nagrx9-container>'
+  const secondaryBlock = '<div class="ssr-variant hidden-98qijj hidden-do64xo"><div class=framer-1b99c8j-container>'
+  const primaryAt = cta.indexOf(primaryBlock)
+  const secondaryAt = cta.indexOf(secondaryBlock)
+  if (primaryAt < 0 || secondaryAt <= primaryAt) {
+    throw new Error("Hero primary button was not found in references/template.html")
   }
-  cta = secondaryLabel
-    .replace("href=https://oma-planquo.framer.website/download", 'href="/courses"')
+  cta = cta.slice(0, primaryAt) + cta.slice(secondaryAt)
+  cta = cta
+    .replace(">Book a demo</p>", ">Explore Tracks</p>")
     .replace("href=https://oma-planquo.framer.website/contact", 'href="/tracks"')
+  if (!cta.includes(">Explore Tracks</p>")) {
+    throw new Error("Hero Explore Tracks button was not found in references/template.html")
+  }
 
   return next.slice(0, start) + cta + next.slice(end)
+}
+
+function sectionBounds(html: string, name: string) {
+  const marker = `data-framer-name="${name}"`
+  const at = html.indexOf(marker)
+  if (at < 0 || html.indexOf(marker, at + marker.length) >= 0) {
+    throw new Error(`${name} was not found once in references/template.html`)
+  }
+  const start = html.lastIndexOf("<section", at)
+  if (start < 0) throw new Error(`${name} section tag was not found`)
+  const open = "<section"
+  const close = "</section>"
+  let depth = 0
+  let i = start
+  while (i < html.length) {
+    const nextOpen = html.indexOf(open, i)
+    const nextClose = html.indexOf(close, i)
+    if (nextClose < 0) break
+    if (nextOpen >= 0 && nextOpen < nextClose) {
+      depth++
+      i = nextOpen + open.length
+    } else {
+      depth--
+      i = nextClose + close.length
+      if (depth === 0) return { start, end: i }
+    }
+  }
+  throw new Error(`${name} section did not close`)
+}
+
+function closeDiv(html: string, start: number) {
+  const open = "<div"
+  const close = "</div>"
+  let depth = 0
+  let i = start
+  while (i < html.length) {
+    const nextOpen = html.indexOf(open, i)
+    const nextClose = html.indexOf(close, i)
+    if (nextClose < 0) break
+    if (nextOpen >= 0 && nextOpen < nextClose) {
+      depth++
+      i = nextOpen + open.length
+    } else {
+      depth--
+      i = nextClose + close.length
+      if (depth === 0) return i
+    }
+  }
+  throw new Error("A Start for free button did not close")
+}
+
+/** Section CTAs only. The menu button and the pricing-plan buttons stay. */
+function removeSectionStartButtons(html: string) {
+  const targets = [
+    ["framer-skm08v-container", "Features Start for free"],
+    ["framer-1a3vi86-container", "Benefits Start for free"],
+    ["framer-1ywn3pl-container", "Tech stacks Start for free"],
+    ["framer-x1p2j3-container", "Closing Start for free"],
+    ["framer-1mtwr21-container", "Footer Start for free"],
+  ] as const
+  const variant = '<div class="ssr-variant hidden-98qijj hidden-do64xo">'
+  let next = html
+  for (const [className, label] of targets) {
+    const token = `class=${className}`
+    const at = next.indexOf(token)
+    if (at < 0 || next.indexOf(token, at + token.length) >= 0) {
+      throw new Error(`${label} was not found once in references/template.html`)
+    }
+    let start = next.lastIndexOf("<div", at)
+    if (next.slice(start - variant.length, start) === variant) start -= variant.length
+    const end = closeDiv(next, start)
+    const block = next.slice(start, end)
+    if (!/>Start for [Ff]ree</.test(block)) {
+      throw new Error(`${label} was not a Start for free button`)
+    }
+    next = next.slice(0, start) + next.slice(end)
+  }
+  const kept = next.split(">Start for Free</p>").length - 1
+  const removed = next.split(">Start for free</p>").length - 1
+  if (kept !== 4 || removed !== 0) {
+    throw new Error("Start for free buttons outside the menu and pricing were not removed")
+  }
+  return next
+}
+
+/** Tech stacks lives in Section Integrations. Place it directly after Choose your path. */
+function moveTechStacksAfterPaths(html: string) {
+  const paths = sectionBounds(html, "Section Features")
+  const stacks = sectionBounds(html, "Section Integrations")
+  if (stacks.start < paths.end) {
+    throw new Error("Tech stacks section is already before Choose your path")
+  }
+  const block = html.slice(stacks.start, stacks.end)
+  const without = html.slice(0, stacks.start) + html.slice(stacks.end)
+  return without.slice(0, paths.end) + block + without.slice(paths.end)
+}
+
+function applyAnnouncement(html: string) {
+  return replaceOnce(
+    html,
+    ">Planquo 3.0 is here</p>",
+    ">Gurucul SIEM Masterclass</p>",
+    "Announcement"
+  )
+}
+
+/** First card is Free, the highlighted card is Premium. The duplicate third card stays hidden. */
+function applyPricingPlans(html: string) {
+  const plans = [
+    ["framer-126g1z5-container", "Free", "Sign Up", "/authentication/sign-up/sign-up-cover/"],
+    ["framer-1togsfs-container", "Premium", "Upgrade", "/pages/pricing"],
+  ] as const
+  let next = html
+  for (const [className, name, cta, href] of plans) {
+    const token = `class=${className}`
+    const at = next.indexOf(token)
+    if (at < 0 || next.indexOf(token, at + token.length) >= 0) {
+      throw new Error(`${name} pricing card was not found once in references/template.html`)
+    }
+    const start = next.lastIndexOf("<div", at)
+    const end = closeDiv(next, start)
+    let card = next.slice(start, end)
+    if (card.indexOf(">Starter</p>") < 0 || card.indexOf(">Starter</p>") !== card.lastIndexOf(">Starter</p>")) {
+      throw new Error(`${name} plan title was not found once`)
+    }
+    if (card.indexOf(">Start for Free</p>") < 0 || card.indexOf(">Start for Free</p>") !== card.lastIndexOf(">Start for Free</p>")) {
+      throw new Error(`${name} plan button was not found once`)
+    }
+    const link = "href=https://oma-planquo.framer.website/download"
+    if (card.indexOf(link) < 0 || card.indexOf(link) !== card.lastIndexOf(link)) {
+      throw new Error(`${name} plan link was not found once`)
+    }
+    card = card
+      .replace(">Starter</p>", `>${name}</p>`)
+      .replace(">Start for Free</p>", `>${cta}</p>`)
+      .replace(link, `href="${href}"`)
+    if (name === "Free") {
+      if (card.indexOf(">$29</p>") < 0 || card.indexOf(">$29</p>") !== card.lastIndexOf(">$29</p>")) {
+        throw new Error("Free monthly price was not found once")
+      }
+      if (card.indexOf(">$290</p>") < 0 || card.indexOf(">$290</p>") !== card.lastIndexOf(">$290</p>")) {
+        throw new Error("Free yearly price was not found once")
+      }
+      card = card.replace(">$29</p>", ">$0</p>").replace(">$290</p>", ">$0</p>")
+    }
+    next = next.slice(0, start) + card + next.slice(end)
+  }
+  return next
 }
 
 export async function GET() {
@@ -746,16 +1721,25 @@ export async function GET() {
     path.join(process.cwd(), "references", "template.html"),
     "utf8"
   )
-  let html = applyHeroCopy(raw)
-  html = html.includes("</head>")
-    ? html.replace("</head>", `${PRODUCTION_HIDE_STYLE}</head>`)
-    : `${PRODUCTION_HIDE_STYLE}${html}`
-
   const logoStat = await stat(
     path.join(process.cwd(), "public", "assets", "images", "brand-logos", "lms-logo.png")
   )
   const logoSrc = `/assets/images/brand-logos/lms-logo.png?v=${Math.floor(logoStat.mtimeMs)}`
-  const bootScripts = `${HERO_ROLE_SCRIPT}${NAV_SCRIPT.replace("__LMS_LOGO__", logoSrc)}${PATHS_SCRIPT}`
+  let html = applyPricingPlans(
+    applyAnnouncement(
+      removeSectionStartButtons(
+        moveTechStacksAfterPaths(
+          applyTrustedLogo(applyToolLogos(applyIntegrationsCopy(applyHeroCopy(raw))))
+        )
+      )
+    )
+  )
+  const headStyle = `${PRODUCTION_HIDE_STYLE}${FAQ_STYLE}${BENEFITS_STYLE}${MARQUEE_STYLE}`
+  html = html.includes("</head>")
+    ? html.replace("</head>", `${headStyle}</head>`)
+    : `${headStyle}${html}`
+
+  const bootScripts = `${HERO_ROLE_SCRIPT}${NAV_SCRIPT.replaceAll("__LMS_LOGO__", logoSrc)}${PATHS_SCRIPT}${MARQUEE_SCRIPT}${FAQ_SCRIPT}${PRICING_SCRIPT}${BENEFITS_SCRIPT}`
   if (html.includes("</body>")) {
     html = html.replace("</body>", `${bootScripts}</body>`)
   } else {
